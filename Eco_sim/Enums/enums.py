@@ -21,3 +21,8 @@ class Consumption(IntEnum):
 class Consumption_Policy(IntEnum):
     DOMESTIC_CONS = 0,
     EXPORT = 1,
+
+class Global_Market_Prices(IntEnum):
+    GRAIN_PRICE = 10,
+    WOOD_PRICE = 10,
+    WATER_PRICE = 10

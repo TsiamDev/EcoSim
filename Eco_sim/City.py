@@ -2,14 +2,16 @@
 """
 Created on Mon Mar 28 11:47:03 2022
 
-@author: HomeTheater
+@author: TsiamDev
 """
 
 from Enums.enums import *
 
 class City:
-    def __init__(self, j, prices, cons_policy):
+    def __init__(self, j, prices, cons_policy, reserve):
         self.id = j
+        
+        self.reserve = reserve
         
         self.consumption_policy = cons_policy
         
@@ -48,27 +50,31 @@ class City:
         print("City Resources: " + str(self.goods_amounts))
         
         # Calculate surplus
+        avail_goods_cnt = 0
         i = 0
         for cons in Consumption:
             #print(self.consumption)
             #print("c" + str(int(cons)))
             #print("cons: " + str(int(cons) * self.consumption) )
-            if self.goods_amounts[i] >= int(cons) * self.consumption:
-                self.goods_amounts[i] = self.goods_amounts[i] - int(cons) * self.consumption
-                print("City consumed " + str(int(cons) * self.consumption) + " of " + str(i))
-            else:
+            amount = int(cons) * self.consumption
+            if self.goods_amounts[i] >= amount:
+                self.goods_amounts[i] = self.goods_amounts[i] - amount
+                print("City consumed " + str(amount) + " of " + str(i))
+                self.reserve = self.reserve + amount * self.goods_prices[i]
+                avail_goods_cnt = avail_goods_cnt + 1
+            elif self.goods_amounts[i] > 0:
                 print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i))
                 self.goods_amounts[i] = 0
+                self.reserve = self.reserve + self.consumption * self.goods_prices[i]
+                avail_goods_cnt = avail_goods_cnt + 1
+            else:
+                print("City did not have enough, of resource " + str(i) + ", to consume.")
+            print("City reserve: " + str(self.reserve))
             i = i + 1
         #print(avail_goods_cnt)
         print("City Surplus: " + str(self.goods_amounts))
         
-        # Enforce Policy
-        avail_goods_cnt = 0
-        # if there is enough GRAIN
-        if self.goods_amounts[0] > 0:
-            avail_goods_cnt = avail_goods_cnt + 1
-                
+        # Enforce Policy                
         if self.consumption_policy == Consumption_Policy.DOMESTIC_CONS:
             # Consume Surplus
             for i in range(1, len(self.goods_amounts)):
