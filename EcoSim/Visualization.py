@@ -21,24 +21,52 @@ WINDOW_H = 600
 CITY_NUM = 3
 CITY_W = 20
 
-def Simulate(coords):
+LAKES_NUM = 4
+FORESTS_NUM = 5
+
+# Initialize Colors
+CITY_COLOR = (255,0,0)
+LINE_COLOR = (0,0,0)
+FOREST_COLOR = (0,255,0)
+LAKE_COLOR = (0,0,255)
+
+BACK_COLOR = (255,255,255)
+
+def Draw_Lakes(surface, lakes):
+    for i in range(0, LAKES_NUM):
+        pygame.draw.circle(surface, LAKE_COLOR, lakes[i], 10, 0)
+
+def Draw_Forests(surface, forests):
+    for i in range(0, FORESTS_NUM):
+        pygame.draw.circle(surface, FOREST_COLOR, forests[i], 10, 0)
+
+def Draw_Env(surface, lakes, forests):
+    Draw_Lakes(surface, lakes)
+    Draw_Forests(surface, forests)
+
+def Draw_Cities(surface, coords):
+    # Draw Cities
+    for i in range(0, CITY_NUM):
+        pygame.draw.rect(surface, CITY_COLOR, pygame.Rect(coords[i][0], coords[i][1], CITY_W, CITY_W))
+
+def Draw_Routes(surface, centers):
+    # Draw Routes
+    for i in range(0, CITY_NUM-1):
+        pygame.draw.line(surface, LINE_COLOR, centers[i], centers[i+1])
+    pygame.draw.line(surface, LINE_COLOR, centers[0], centers[CITY_NUM-1])
+
+def Simulate(coords, centers, lakes, forests):
     # Initializing Pygame
     pygame.init()
       
     # Initializing surface
     surface = pygame.display.set_mode((WINDOW_W, WINDOW_H))
-      
-    # Initializing Color
-    city_color = (255,0,0)
-    line_color = (0,255,0)
-      
-    # Draw Cities
-    for i in range(0, CITY_NUM):
-        pygame.draw.rect(surface, city_color, pygame.Rect(coords[i][0], coords[i][1], CITY_W, CITY_W))
+    surface.fill(BACK_COLOR)
     
-    # Draw Routes
-    for i in range(0, CITY_NUM-10):
-        pygame.draw.line(surface, line_color, (coords[i][0] + CITY_W/2, coords[i][1] + CITY_W/2), (coords[i+1][0] + CITY_W/2, coords[i+1][1] + CITY_W/2), 2)
+    Draw_Env(surface, lakes, forests)
+    
+    Draw_Cities(surface, coords)
+    Draw_Routes(surface, centers)
     
     pygame.display.flip()
     
@@ -59,12 +87,32 @@ if __name__ == "__main__":
     #cities.append(City(1, [5, 1, 5], Consumption_Policy.EXPORT, 1000))
     #cities.append(City(2, [5, 5, 1], Consumption_Policy.DOMESTIC_CONS, 1000))
     
+    #Cities
     coords = []
+    centers = []
+    
+    #Lakes
+    lakes = []
+    forests = []
     for i in range(0, CITY_NUM):
+        #Cities
         x = random.randint(0, WINDOW_W)
         y = random.randint(0, WINDOW_H)
         coords.append([x, y])
+        centers.append([x + CITY_W/2, y + CITY_W/2])
+    
+    for i in range(0, LAKES_NUM):
+        #Lakes
+        x = random.randint(0, WINDOW_W)
+        y = random.randint(0, WINDOW_H)
+        lakes.append([x, y])
+        
+    for i in range(0, FORESTS_NUM):
+        #Forests
+        x = random.randint(0, WINDOW_W)
+        y = random.randint(0, WINDOW_H)
+        forests.append([x, y])
     
     print(coords)
     
-    Simulate(coords)
+    Simulate(coords, centers, lakes, forests)
