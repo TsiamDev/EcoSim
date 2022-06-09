@@ -12,6 +12,7 @@ import random
 from Enums.enums import *
 
 from City import City
+from Scout import Scout
 #from Merchant import Merchant
 #from Bank import Bank
 
@@ -21,6 +22,8 @@ WINDOW_H = 600
 CITY_NUM = 3
 CITY_W = 20
 
+SCOUT_W = 5
+
 LAKES_NUM = 4
 FORESTS_NUM = 5
 
@@ -29,6 +32,8 @@ CITY_COLOR = (255,0,0)
 LINE_COLOR = (0,0,0)
 FOREST_COLOR = (0,255,0)
 LAKE_COLOR = (0,0,255)
+
+SCOUT_COLOR = (50,50,50)
 
 BACK_COLOR = (255,255,255)
 
@@ -55,7 +60,12 @@ def Draw_Routes(surface, centers):
         pygame.draw.line(surface, LINE_COLOR, centers[i], centers[i+1])
     pygame.draw.line(surface, LINE_COLOR, centers[0], centers[CITY_NUM-1])
 
-def Simulate(coords, centers, lakes, forests):
+def Draw_Scouts(surface, scouts):
+    # Draw Scouts
+    for i in range(0, len(scouts)):
+        pygame.draw.rect(surface, SCOUT_COLOR, scouts[i].rect)
+    
+def Simulate(coords, centers, lakes, forests, scouts):
     # Initializing Pygame
     pygame.init()
       
@@ -68,6 +78,8 @@ def Simulate(coords, centers, lakes, forests):
     Draw_Cities(surface, coords)
     Draw_Routes(surface, centers)
     
+    Draw_Scouts(surface, scouts)
+    
     pygame.display.flip()
     
     run = True
@@ -79,14 +91,7 @@ def Simulate(coords, centers, lakes, forests):
     pygame.quit()
 
 
-if __name__ == "__main__":
-    
-    
-    #cities = []
-    #cities.append(City(0, [1, 5, 5], Consumption_Policy.EXPORT, 1000))
-    #cities.append(City(1, [5, 1, 5], Consumption_Policy.EXPORT, 1000))
-    #cities.append(City(2, [5, 5, 1], Consumption_Policy.DOMESTIC_CONS, 1000))
-    
+def Initialize():
     #Cities
     coords = []
     centers = []
@@ -112,7 +117,19 @@ if __name__ == "__main__":
         x = random.randint(0, WINDOW_W)
         y = random.randint(0, WINDOW_H)
         forests.append([x, y])
+        
+    return coords, centers, lakes, forests
+
+if __name__ == "__main__":
     
+    coords, centers, lakes, forests = Initialize()
     print(coords)
     
-    Simulate(coords, centers, lakes, forests)
+    cities = []
+    cities.append(City(0, [1, 5, 5], Consumption_Policy.EXPORT, 1000, coords[0], centers[0]))
+    scouts = []
+    scouts.append(Scout(centers[0], pygame.Rect(coords[0][0] + CITY_W/2 - SCOUT_W/2, coords[0][1] + CITY_W/2 - SCOUT_W/2, SCOUT_W, SCOUT_W)))
+    #cities.append(City(1, [5, 1, 5], Consumption_Policy.EXPORT, 1000))
+    #cities.append(City(2, [5, 5, 1], Consumption_Policy.DOMESTIC_CONS, 1000)) 
+    
+    Simulate(coords, centers, lakes, forests, scouts)

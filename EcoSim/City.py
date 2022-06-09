@@ -8,7 +8,11 @@ Created on Mon Mar 28 11:47:03 2022
 from Enums.enums import *
 
 class City:
-    def __init__(self, _id, prices, cons_policy, reserve):
+    def __init__(self, _id, prices, cons_policy, reserve, pos, center):
+        
+        self.pos = pos
+        self.center = center
+        
         assert (isinstance(_id, int)), "_id should be an Int"
         self.id = _id
         
