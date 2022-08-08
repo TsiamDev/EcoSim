@@ -6,19 +6,20 @@ Created on Sat Aug  6 14:07:50 2022
 """
 
 import random
-from PIL import Image
+#from PIL import Image
 import numpy as np
 #import scipy.misc as smp
 
 # import pygame module in this program
 import pygame
 import pygame_menu
-import time
+#import time
 import sys
-import copy
+#import copy
 
-from Construct import Construct
+#from Construct import Construct
 from Const import CONST
+from Const import TRACTOR_ACTIONS
 from Zone import Zone
 from Tractor import Tractor
 from Plant import Plant
@@ -27,6 +28,7 @@ from Plant import Plant
 def move_river():
     global data, river_W
     
+    #circularly shift the river portion of <data>
     data[0:river_W, (N+30):(N+60), :] = np.roll(data[0:river_W, (N+30):(N+60), :], 1, axis=0)
 
 
@@ -96,12 +98,19 @@ def Draw_Unexplored_Zones():
 
 # Player Action Buttons - Crude GUI
 def Draw_Action_Buttons():
-    global displlay_surface
+    global displlay_surface, cultivate_btn, sow_btn
     
-    cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-50, 0, 50, 50))
+    cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-70, 0, 70, 15))
+    font = pygame.font.SysFont("monospace", 10)
+    label = font.render("Cultivate", 1, blue)
     label_rect = label.get_rect(center=(cultivate_btn.center))
     display_surface.blit(label, label_rect)
 
+    sow_btn = pygame.draw.rect(display_surface, brown ,(X-70, 17, 70, 15))
+    font = pygame.font.SysFont("monospace", 10)
+    label = font.render("Sow", 1, blue)
+    label_rect = label.get_rect(center=(sow_btn.center))
+    display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
 def on_resize() -> None:
@@ -264,6 +273,10 @@ def Main_Menu():
 """"""""""""""""""""""""""""""""""""""
 
 if __name__ == "__main__":
+    global cultivate_btn, sow_btn
+    cultivate_btn = None
+    sow_btn = None
+    
     pygame.init()
     plant = Plant()
     Main_Menu()
@@ -304,18 +317,18 @@ if __name__ == "__main__":
     data = np.zeros( (X,Y,3), dtype=np.uint8 )
     
     #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-    #g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+    g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
     #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
     
     
     #plant a specific plant based on user input
-    r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
-    g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
-    b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+    #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+    #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+    #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
     
-    data[15:N+15,15:N+15,0] = r
+    #data[15:N+15,15:N+15,0] = r
     data[15:N+15,15:N+15,1] = g
-    data[15:N+15,15:N+15,2] = b
+    #data[15:N+15,15:N+15,2] = b
     rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
     #unexplored_zones.append(Zone(0, rect))
     zones.append(Zone(3, rect, 1))
@@ -433,11 +446,8 @@ if __name__ == "__main__":
         
         
         # Tractor Action
-        data = tractor.cultivate(data)
-        #data = tractor.sow(data)
-        #data = tractor.fertilize(data)
-        #move_tractor(tr_rect)
-        tractor.move(waypoints, tr_rect, right_expz, left_expz)
+        data = tractor.act(data, waypoints, tr_rect, right_expz, left_expz)
+
       
         #"""
       
@@ -459,7 +469,10 @@ if __name__ == "__main__":
                 #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
                 
                 #Player Actions
-                #if 
+                if cultivate_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
+                elif sow_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['SOW']
                 
                 # Explore clicked zone
                 for key, ez in unexplored_zones.items():

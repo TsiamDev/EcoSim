@@ -7,6 +7,8 @@ Created on Mon Aug  8 03:58:15 2022
 
 import random
 
+from Const import TRACTOR_ACTIONS
+
 class Tractor:
     static_id = 0
     
@@ -24,6 +26,8 @@ class Tractor:
         self.y = y
         
         self.move_right = False
+        
+        self.action = TRACTOR_ACTIONS.types['IDLE']
         
     def move(self, waypoints, tr_rect, right_expz, left_expz):
         
@@ -61,7 +65,20 @@ class Tractor:
                     self.x = 15
                     del waypoints[0]
                     
-
+    def act(self, data, waypoints, tr_rect, right_expz, left_expz):
+        if self.action == TRACTOR_ACTIONS.types['IDLE']:
+            print("tractor idling")
+        elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
+            data = self.cultivate(data)
+            self.move(waypoints, tr_rect, right_expz, left_expz)
+        elif self.action == TRACTOR_ACTIONS.types['SOW']:
+            data = self.sow(data)
+            self.move(waypoints, tr_rect, right_expz, left_expz)
+        elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
+            data = self.fertilize(data)
+            self.move(waypoints, tr_rect, right_expz, left_expz)
+        
+        return data
 
     def fertilize(self, data):
         data[self.x:self.x+self.width, self.y:self.y+self.width] = (0, 0, 255)
