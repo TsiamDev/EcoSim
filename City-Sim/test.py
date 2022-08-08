@@ -21,6 +21,7 @@ from Construct import Construct
 from Const import CONST
 from Zone import Zone
 from Tractor import Tractor
+from Plant import Plant
 
 
 def move_river():
@@ -103,11 +104,6 @@ def Draw_Action_Buttons():
 
 
 """"""""""""""""""""""""""""""""""" GUI """
-
-#import sys
-
-#from Test import Loop as loop
-
 def on_resize() -> None:
     """
     Function checked if the window is resized.
@@ -128,8 +124,52 @@ def start_sim():
     running = False
     #menu.disable()
 
+#My plants Menu
+
+def get_heat_val(rng):
+    global plant, pb
+    
+    plant.heat_rng = rng
+    print(rng)
+    
+    # the middle point of a line segment is calculated as:
+    # (b-a)/2 + a
+    #r = (plant.PH_rng[1] - plant.PH_rng[0]) / 2 + plant.PH_rng[1]
+    g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[0]
+    #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
+    plant.c = (plant.c[0], int(g), plant.c[2])
+    pb.set_background_color(plant.c)
+    
+def get_hum_val(rng):
+    global plant, pb
+    
+    plant.hum_rng = rng
+    print(rng)
+    
+    # the middle point of a line segment is calculated as:
+    # (b-a)/2 + a
+    #r = (plant.PH_rng[1] - plant.PH_rng[0]) / 2 + plant.PH_rng[1]
+    #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
+    b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[0]
+    plant.c = (plant.c[0], plant.c[1], int(b))
+    pb.set_background_color(plant.c)
+
+def get_PH_val(rng):
+    global plant, pb
+    
+    plant.PH_rng = rng
+    print(rng)
+    
+    # the middle point of a line segment is calculated as:
+    # (b-a)/2 + a
+    r = (plant.PH_rng[1] - plant.PH_rng[0]) / 2 + plant.PH_rng[0]
+    #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
+    #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
+    plant.c = (int(r), plant.c[1], plant.c[2])
+    pb.set_background_color(plant.c)
+
 def Main_Menu():
-    global display_surface, menu, plant_menu, running, pygame
+    global display_surface, menu, plant_menu, running, pygame, plant, pb
     
     WINDOW_SIZE = []
     WINDOW_SIZE.append(700)
@@ -148,20 +188,34 @@ def Main_Menu():
     plant_menu = pygame_menu.Menu(
         height=WINDOW_SIZE[1] * 0.7,
         theme=pygame_menu.themes.THEME_BLUE,
-        title='Plants',
+        title='My Plants',
         width=WINDOW_SIZE[0] * 0.75
     )
     
     
     
-    #My plants Menu
+    
+    
     #show plant img
     plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
-    plant_menu.add.range_slider('heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1)
-    plant_menu.add.range_slider('% of water tolerance', default=[i[0], i[-1]], range_values=i, increment=1)
-    plant_menu.add.range_slider('PH tolerance', default=[i[0], i[-1]], range_values=i, increment=1)
+    plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
+                                       onchange=get_heat_val)
+    
+    plant_menu.add.range_slider('Humidity tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
+                                onchange=get_hum_val)
+    plant_menu.add.range_slider('PH tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
+                                onchange=get_PH_val)
+    
+    #sur = pygame.surface.Surface((15,15))
+    #plant_menu.draw.rect(sur, (128, 128, 128), pygame.Rect(0, 0, 15, 15))
+    #plant_menu.draw(sur, clear_surface=False)
+    #bi = pygame_menu.baseimage.BaseImage('placeholder.png', drawing_mode=pygame_menu.baseimage.IMAGE_MODE_SIMPLE, load_from_file=True)
+    #plant_menu.draw(bi.get_surface(), clear_surface=True)
+    pb = plant_menu.add.progress_bar('Preview average color of plant', box_background_color=(255, 0, 0),
+                                progress_text_enabled=False,)
+    plant_menu.add.button('Start', lambda: start_sim() )
     #TODO:
         #save changes
         #add selectable image
@@ -173,7 +227,7 @@ def Main_Menu():
     user_name = menu.add.text_input('Name: ', default='John Doe', maxchar=10)
     menu.add.selector('Difficulty: ', [('Easy', 1), ('Medium', 2), ('Hard', 3)])
     #pg = {'pg':pg}
-    menu.add.button('Start', lambda: start_sim() )
+    
     menu.add.button('My Plants', plant_menu)
     #menu.add.button('Quit', pygame_menu.events.EXIT) #restarts kernel
     menu.enable()
@@ -186,8 +240,8 @@ def Main_Menu():
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
-                running = False
-                break
+                pygame.display.quit()
+                sys.exit()
     
             if event.type == pygame.VIDEORESIZE:
                 # Update the surface
@@ -204,213 +258,221 @@ def Main_Menu():
     
             pygame.display.flip()
         
-    pygame.display.quit()
-    pygame.quit()
+    #pygame.display.quit()
+    #pygame.quit()
     #sys.exit()
 """"""""""""""""""""""""""""""""""""""
 
-pygame.init()
-Main_Menu()
-
-#def Loop(pg):
-#global unexplored_zones, zones, white, black, blue, brown, red, gray, X, Y, N, road_width, display_surface, data, pygame
-#pygame = pg
-
-pygame.init()
-
-# Zone lists
-unexplored_zones = {}
-zones = []
-
-# Colors
-white = (255, 255, 255)
-black = (0, 0, 0)
-blue = (0, 0, 255)
-brown = (255, 248, 220)
-red = (255, 0, 0)
-gray = (128, 128, 128)  
-#grass_col = (86, 125, 70)
-
-# init ground
-# assigning values to X and Y variable
-X = Y = 750
-N = 300
-road_width = 15
-
-# create the display surface object
-# of specific dimension..e(X, Y).
-display_surface = pygame.display.set_mode((X, Y ))
-
-# Create a 1024x1024x3 array of 8 bit unsigned integers
-data = np.zeros( (X,Y,3), dtype=np.uint8 )
-
-r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-
-#data[15:N+15,15:N+15,0] = r
-data[15:N+15,15:N+15,1] = g
-#data[15:N+15,15:N+15,2] = b
-rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
-#unexplored_zones.append(Zone(0, rect))
-zones.append(Zone(3, rect, 1))
-zones[0].field.has_init = True
-
-#data[512,512] = [254,0,0]       # Makes the middle pixel red
-#data[512,513] = [0,0,255]       # Makes the next pixel blue
-
-#img = Image.fromarray ( data )       # Create a PIL image
-#img.show()                      # View in default viewer
-
-  
-# activate the pygame library .
-# initiate pygame and give permission
-# to use pygame's functionality.
-#pygame.init()
-  
-# set the pygame window name
-pygame.display.set_caption('City-Sim')
-  
-
-#init tractor
-x = y = 15
-tractor = Tractor(x, y, pygame)
-
-
-lst = [[(300, 15 + tractor.width * i), (15, 15 + tractor.width * (i+1))] for i in range(0, 21, 2)]
-waypoints = [item for sublist in lst for item in sublist]
-#waypoints = [(300, 15 + tractor_width), (15, 15 + 2*tractor_width), (300, 15 + 3*tractor_width)]
-
-
-
-#river
-#river_data = np.zeros( (X,Y,3), dtype=np.uint8 )
-
-river_H = 30
-
-river_W = 2*N+6*road_width
-
-r = [[random.randint(0, 25) for i in range(river_H)] for j in range(river_W)]
-g = [[random.randint(0, 50) for i in range(river_H)] for j in range(river_W)]
-b = [[random.randint(100, 255) for i in range(river_H)] for j in range(river_W)]
-
-data[0:river_W, (N+river_H):(N+60), 0] = r
-data[0:river_W, (N+river_H):(N+60), 1] = g
-data[0:river_W, (N+river_H):(N+60), 2] = b
-
-#expansion zones
-font = pygame.font.SysFont("monospace", 15)
-label = font.render("Expansion zone", 1, blue)
-
-#init unexplored zones
-#if len(unexplored_zones) > 0:
-zone_W = N#+2*road_width
-zone_H = N#+2*road_width
-exp_z_len = len(unexplored_zones)
-rng = range(0, exp_z_len)
-
-if len(unexplored_zones) == 0:
-    rect0 = pygame.draw.rect(display_surface, gray, (330+river_H+road_width, 15, zone_W, zone_H))
-    rect1 = pygame.draw.rect(display_surface, gray, (15, 330+river_H+road_width, zone_W, zone_H))
-    rect2 = pygame.draw.rect(display_surface, gray, (330+river_H+road_width, 330+river_H+road_width, zone_W, zone_H))
-
-    unexplored_zones[0] = Zone(0, rect0)
-    unexplored_zones[1] = Zone(1, rect1)
-    unexplored_zones[2] = Zone(2, rect2)
-
-# infinite loop
-while True :
-  
-    # clear the screen
-    display_surface.fill(black)
-  
+if __name__ == "__main__":
+    pygame.init()
+    plant = Plant()
+    Main_Menu()
     
-  
+    print(repr(plant))
+    plant.calc_color()
     
-  
-    move_river()  
-  
-    # copying the image surface object
-    # to the display surface object at
-    # (0, 0) coordinate.
-    #display_surface.blit_array(data, (0, 0))
+    #def Loop(pg):
+    #global unexplored_zones, zones, white, black, blue, brown, red, gray, X, Y, N, road_width, display_surface, data, pygame
+    #pygame = pg
     
-    #Update the initial zone and the river
-    pygame.surfarray.blit_array( display_surface, data )
-    #Update the explored Zones
-    Draw_Unexplored_Zones()
-    Draw_Explored_Zones()
+    #pygame.init()
+    
+    # Zone lists
+    unexplored_zones = {}
+    zones = []
+    
+    # Colors
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    blue = (0, 0, 255)
+    brown = (255, 248, 220)
+    red = (255, 0, 0)
+    gray = (128, 128, 128)  
+    #grass_col = (86, 125, 70)
+    
+    # init ground
+    # assigning values to X and Y variable
+    X = Y = 750
+    N = 300
+    road_width = 15
+    
+    # create the display surface object
+    # of specific dimension..e(X, Y).
+    display_surface = pygame.display.set_mode((X, Y ))
+    
+    # Create a 1024x1024x3 array of 8 bit unsigned integers
+    data = np.zeros( (X,Y,3), dtype=np.uint8 )
+    
+    #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+    #g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+    #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+    
+    
+    #plant a specific plant based on user input
+    r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+    g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+    b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+    
+    data[15:N+15,15:N+15,0] = r
+    data[15:N+15,15:N+15,1] = g
+    data[15:N+15,15:N+15,2] = b
+    rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
+    #unexplored_zones.append(Zone(0, rect))
+    zones.append(Zone(3, rect, 1))
+    zones[0].field.has_init = True
+    
+    #data[512,512] = [254,0,0]       # Makes the middle pixel red
+    #data[512,513] = [0,0,255]       # Makes the next pixel blue
+    
+    #img = Image.fromarray ( data )       # Create a PIL image
+    #img.show()                      # View in default viewer
+    
+      
+    # activate the pygame library .
+    # initiate pygame and give permission
+    # to use pygame's functionality.
+    #pygame.init()
+      
+    # set the pygame window name
+    pygame.display.set_caption('City-Sim')
+      
+    
+    #init tractor
+    x = y = 15
+    tractor = Tractor(x, y, pygame)
+    
+    
+    lst = [[(300, 15 + tractor.width * i), (15, 15 + tractor.width * (i+1))] for i in range(0, 21, 2)]
+    waypoints = [item for sublist in lst for item in sublist]
+    #waypoints = [(300, 15 + tractor_width), (15, 15 + 2*tractor_width), (300, 15 + 3*tractor_width)]
     
     
     
-    #"""
+    #river
+    #river_data = np.zeros( (X,Y,3), dtype=np.uint8 )
     
-    # draw the unexplored zone rectangles
-    left_expz, bot_expz, right_expz, top_expz = Display_Roads()
+    river_H = 30
     
-
+    river_W = 2*N+6*road_width
     
-    Draw_Action_Buttons()
+    r = [[random.randint(0, 25) for i in range(river_H)] for j in range(river_W)]
+    g = [[random.randint(0, 50) for i in range(river_H)] for j in range(river_W)]
+    b = [[random.randint(100, 255) for i in range(river_H)] for j in range(river_W)]
     
+    data[0:river_W, (N+river_H):(N+60), 0] = r
+    data[0:river_W, (N+river_H):(N+60), 1] = g
+    data[0:river_W, (N+river_H):(N+60), 2] = b
     
+    #expansion zones
+    font = pygame.font.SysFont("monospace", 15)
+    label = font.render("Expansion zone", 1, blue)
     
+    #init unexplored zones
+    #if len(unexplored_zones) > 0:
+    zone_W = N#+2*road_width
+    zone_H = N#+2*road_width
+    exp_z_len = len(unexplored_zones)
+    rng = range(0, exp_z_len)
     
+    if len(unexplored_zones) == 0:
+        rect0 = pygame.draw.rect(display_surface, gray, (330+river_H+road_width, 15, zone_W, zone_H))
+        rect1 = pygame.draw.rect(display_surface, gray, (15, 330+river_H+road_width, zone_W, zone_H))
+        rect2 = pygame.draw.rect(display_surface, gray, (330+river_H+road_width, 330+river_H+road_width, zone_W, zone_H))
     
-    # draw the tractor and move the tractor
-    #tractor = pygame.draw.rect(display_surface, (0, 255, 0), tractor)
-    #tractor_img = pygame.transform.flip(tractor_img, True, False)
-    tr_rect = tractor.img.get_rect()
-    tr_rect = tr_rect.move((tractor.x, tractor.y))
-    #print(tr_rect)
-    display_surface.blit(tractor.img, tr_rect)#(x, y))#, (15, 15))
-    #display_surface.blit()
+        unexplored_zones[0] = Zone(0, rect0)
+        unexplored_zones[1] = Zone(1, rect1)
+        unexplored_zones[2] = Zone(2, rect2)
     
-    
-    # Tractor Action
-    #data = tractor.cultivate(data)
-    #data = tractor.sow(data)
-    data = tractor.fertilize(data)
-    #move_tractor(tr_rect)
-    tractor.move(waypoints, tr_rect, right_expz, left_expz)
-  
-    #"""
-  
-    
-  
-    # Event loop
-    # iterate over the list of Event objects
-    # that was returned by pygame.event.get() method.
-    for event in pygame.event.get() :
-  
-        # if event object type is QUIT
-        # then quitting the pygame
-        # and program both.
-        if event.type == pygame.QUIT :
-  
-            # deactivates the pygame library
-            pygame.quit()
-  
-            # quit the program.
-            sys.exit()
-            
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
-            
-            #Player Actions
-            #if 
-            
-            # Explore clicked zone
-            for key, ez in unexplored_zones.items():
-                if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
-                    print("Expanded to zone " + str(key))
-                    unexplored_zones[key].explore()
-                    zones.append(unexplored_zones[key])
-            
-                    if key in unexplored_zones.keys():
-                        del unexplored_zones[key]
-                    break
-  
-    #Draw the surface object to the screen.  
-    pygame.display.update() 
+    # infinite loop
+    while True :
+      
+        # clear the screen
+        display_surface.fill(black)
+      
         
-    #time.sleep(1./120)
+      
+        
+      
+        move_river()  
+      
+        # copying the image surface object
+        # to the display surface object at
+        # (0, 0) coordinate.
+        #display_surface.blit_array(data, (0, 0))
+        
+        #Update the initial zone and the river
+        pygame.surfarray.blit_array( display_surface, data )
+        #Update the explored Zones
+        Draw_Unexplored_Zones()
+        Draw_Explored_Zones()
+    
+        
+        
+        
+        #"""
+        
+        # draw the unexplored zone rectangles
+        left_expz, bot_expz, right_expz, top_expz = Display_Roads()
+        
+    
+        
+        Draw_Action_Buttons()
+        
+        
+        
+        
+        
+        # draw the tractor and move the tractor
+        #tractor = pygame.draw.rect(display_surface, (0, 255, 0), tractor)
+        #tractor_img = pygame.transform.flip(tractor_img, True, False)
+        tr_rect = tractor.img.get_rect()
+        tr_rect = tr_rect.move((tractor.x, tractor.y))
+        #print(tr_rect)
+        display_surface.blit(tractor.img, tr_rect)#(x, y))#, (15, 15))
+        #display_surface.blit()
+        
+        
+        # Tractor Action
+        data = tractor.cultivate(data)
+        #data = tractor.sow(data)
+        #data = tractor.fertilize(data)
+        #move_tractor(tr_rect)
+        tractor.move(waypoints, tr_rect, right_expz, left_expz)
+      
+        #"""
+      
+        
+      
+        # Event loop
+        # iterate over the list of Event objects
+        # that was returned by pygame.event.get() method.
+        for event in pygame.event.get() :
+      
+            # if event object type is QUIT
+            # then quitting the pygame
+            # and program both.
+            if event.type == pygame.QUIT :
+                pygame.display.quit()
+                sys.exit()
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
+                
+                #Player Actions
+                #if 
+                
+                # Explore clicked zone
+                for key, ez in unexplored_zones.items():
+                    if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
+                        print("Expanded to zone " + str(key))
+                        unexplored_zones[key].explore()
+                        zones.append(unexplored_zones[key])
+                
+                        if key in unexplored_zones.keys():
+                            del unexplored_zones[key]
+                        break
+      
+        #Draw the surface object to the screen.  
+        pygame.display.update() 
+            
+        #time.sleep(1./120)

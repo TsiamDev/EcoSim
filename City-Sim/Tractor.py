@@ -75,7 +75,7 @@ class Tractor:
         #g = random.randint(45, 50)
         data[self.x:self.x+self.width, self.y:self.y+self.width, 0] = r#(r, g, 0)
         data[self.x:self.x+self.width, self.y:self.y+self.width, 1] = g#(r, g, 0)
-        
+        data[self.x:self.x+self.width, self.y:self.y+self.width, 2] = 0
         return data
 
     def sow(self, data):
