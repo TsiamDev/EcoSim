@@ -9,11 +9,18 @@ class CONST(object):
     def __init__(self):
         self.types = {}
         self.types['FIELD'] = 1
-        self.types['PROD_BUILDING'] = 2
+        self.types['BARN_SILO'] = 2
+        
+class FIELD(object):
+    def __init__(self):
+        self.types = {}
+        self.types['BARREN'] = 1
+        self.types['CULTIVATED'] = 2
+        self.types['PLANTED'] = 3
     
 
 # instantiate Constants
 CONST = CONST()
 #print(len(CONST.types))
 
-
+FIELD = FIELD()
