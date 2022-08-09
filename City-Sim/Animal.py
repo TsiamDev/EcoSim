@@ -36,3 +36,4 @@ class Animal:
         self.img_rect = self.img_rect.move((x_off, y_off))
         print(self.img_rect)
         display_surface.blit(self.img, self.img_rect)
+        

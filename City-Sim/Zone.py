@@ -41,11 +41,13 @@ class Zone:
             self.field = Field(self.rect)
         elif self._is(CONST.types['PASTURE']):
             self.pasture = Pasture(self.rect, pygame)
+            self.field = Field(self.rect)
         elif self._is(CONST.types['BARN_SILO']):
             # constructs list
             #self.constructs = []
             #self.constructs.append(Construct())
             self.construct = Construct()
+            self.field = None
             
 
 

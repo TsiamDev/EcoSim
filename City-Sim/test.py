@@ -16,7 +16,7 @@ import time
 import sys
 
 
-from Const import CONST, TRACTOR_ACTIONS, OVERLAY, FIELD
+from Const import CONST, TRACTOR_ACTIONS, OVERLAY, FIELD, TIME
 
 from Zone import Zone
 from Tractor import Tractor
@@ -85,7 +85,7 @@ def Draw_Explored_Zones():
             display_surface.blit(building_img, bi_rect)
             
         elif zone.type == CONST.types['PASTURE']:
-            if zone.pasture.field.has_init == False:
+            if zone.field.has_init == False:
                 #plant the field
                 #plant a specific plant based on user input
                 r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
@@ -99,7 +99,7 @@ def Draw_Explored_Zones():
                 #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
                 #unexplored_zones.append(Zone(0, rect))
                 #zones.append(Zone(3, rect, 1))
-                zone.pasture.field.has_init = True
+                zone.field.has_init = True
             
             #draw the animals
             zone.pasture.draw_animals(pygame, display_surface)
@@ -117,7 +117,10 @@ def Draw_Unexplored_Zones():
 
 # Player Action Buttons - Crude GUI
 def Draw_Action_Buttons():
-    global displlay_surface, cultivate_btn, sow_btn, PH_btn
+    global display_surface
+    
+    #buttons
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn
     
     btn_h = 15
     btn_w = 70
@@ -138,6 +141,36 @@ def Draw_Action_Buttons():
     PH_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 2*btn_h + 2*btn_padding, btn_w, btn_h))
     label = font.render("PH", 1, blue)
     label_rect = label.get_rect(center=(PH_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    temp_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 3*btn_h + 3*btn_padding, btn_w, btn_h))
+    label = font.render("Temperature", 1, blue)
+    label_rect = label.get_rect(center=(temp_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    hum_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 4*btn_h + 4*btn_padding, btn_w, btn_h))
+    label = font.render("Humidity", 1, blue)
+    label_rect = label.get_rect(center=(hum_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    N_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 5*btn_h + 5*btn_padding, btn_w, btn_h))
+    label = font.render("N", 1, blue)
+    label_rect = label.get_rect(center=(N_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    P_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 6*btn_h + 6*btn_padding, btn_w, btn_h))
+    label = font.render("P", 1, blue)
+    label_rect = label.get_rect(center=(P_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    K_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 7*btn_h + 7*btn_padding, btn_w, btn_h))
+    label = font.render("K", 1, blue)
+    label_rect = label.get_rect(center=(K_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    crop_growth_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 8*btn_h + 8*btn_padding, btn_w, btn_h))
+    label = font.render("Crop Growth", 1, blue)
+    label_rect = label.get_rect(center=(crop_growth_btn.center))
     display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
@@ -237,13 +270,9 @@ def Main_Menu():
     plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
-    plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
-                                       onchange=get_heat_val)
-    
-    plant_menu.add.range_slider('Humidity tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
-                                onchange=get_hum_val)
-    plant_menu.add.range_slider('PH tolerance', default=[i[0], i[-1]], range_values=i, increment=1,
-                                onchange=get_PH_val)
+    plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_heat_val)
+    plant_menu.add.range_slider('Humidity tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_hum_val)
+    plant_menu.add.range_slider('PH tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_PH_val)
     
     #sur = pygame.surface.Surface((15,15))
     #plant_menu.draw.rect(sur, (128, 128, 128), pygame.Rect(0, 0, 15, 15))
@@ -298,29 +327,80 @@ def Main_Menu():
     #pygame.display.quit()
     #pygame.quit()
     #sys.exit()
-""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""        
+
+def Crop_Growth(data):
+    global zones, time_cnt
+    
+    time_cnt = time_cnt + 1
+    
+    if time_cnt > TIME.types['CROP']:
+        for z in zones:
+            if z.field is not None:
+                #crops grow - if <pixel> is planted
+                #to_grow = (z.field.crop_growth[:, :, 0] > 84) & (z.field.crop_growth[:, :, 1] > 50)
+                z.field.crop_growth[(z.field.crop_growth[:, :, 0] > 84) & (z.field.crop_growth[:, :, 1] > 50)] += 1
+                #z.field.crop_growth[z.field.crop_growth[:,:,1] < z.field.crop_growth[:,:,0]] += 1
+                #z.field.crop_growth[z.field.crop_growth[:,:,1] < z.field.crop_growth[:,:,0]] += 1
+                z.field.crop_growth[z.field.crop_growth > 255] = 255
+                z.field.crop_growth[z.field.crop_growth < 0] = 0
+            
+                #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
+        time_cnt = 0
+        
+    return data
 
 def Display_Overlay():
-    global display_surface, selected_overlay, data_PH
+    global display_surface, selected_overlay
+    
+    data_temp = np.zeros((X, Y, 3), dtype=np.uint8)
+    """
+    data_PH = np.zeros((X, Y, 3), dtype=np.uint8)
+    data_hum = np.zeros((X, Y, 3), dtype=np.uint8)
+    data_temp = np.zeros((X, Y, 3), dtype=np.uint8)
+    data_N = np.zeros((X, Y, 3), dtype=np.uint8)
+    data_P = np.zeros((X, Y, 3), dtype=np.uint8)
+    data_K = np.zeros((X, Y, 3), dtype=np.uint8)
+    """
     
     #if selected_overlay is None do nothing
     if selected_overlay is not None:
-        if selected_overlay is OVERLAY.types['PH']:
-            for zone in zones:
-                if zone.type is not CONST.types['BARN_SILO']:
-                    rect = zone.rect
-                    if zone.type is not CONST.types['PASTURE']:
-                        data_PH[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
-                    else:
-                        data_PH[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.pasture.field.PH
-            display_surface.fill(black)
-            pygame.surfarray.blit_array(display_surface, data_PH)
+        #clear the screen
+        display_surface.fill(black)
+        for zone in zones:
+            if zone.type is not CONST.types['BARN_SILO']:
+                if selected_overlay is OVERLAY.types['PH']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
+                elif selected_overlay is OVERLAY.types['HUM']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.hum
+                elif selected_overlay is OVERLAY.types['TEMP']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.temp
+                elif selected_overlay is OVERLAY.types['N']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.N
+                elif selected_overlay is OVERLAY.types['P']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.P
+                elif selected_overlay is OVERLAY.types['K']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
+                elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
+                    
+                pygame.surfarray.blit_array(display_surface, data_temp)
 
 if __name__ == "__main__":
-    global cultivate_btn, sow_btn, PH_btn
+    global time_cnt
+    
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn
     cultivate_btn = None
     sow_btn = None
     PH_btn = None
+    hum_btn = None
+    temp_btn = None
+    N_btn = None
+    P_btn = None
+    K_btn = None
+    crop_growth_btn = None
+    
+    time_cnt = 0
     
     pygame.init()
     plant = Plant()
@@ -355,6 +435,7 @@ if __name__ == "__main__":
     # Create a 1024x1024x3 array of 8 bit unsigned integers
     data = np.zeros( (X,Y,3), dtype=np.uint8 )
     
+    """ plant initial zone
     #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
     g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
     #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
@@ -368,6 +449,7 @@ if __name__ == "__main__":
     #data[15:N+15,15:N+15,0] = r
     data[15:N+15,15:N+15,1] = g
     #data[15:N+15,15:N+15,2] = b
+    """
     rect = pygame.draw.rect(display_surface, black, (15, 15, N, N))
     #unexplored_zones.append(Zone(0, rect))
     zones.append(Zone(3, rect, pygame, CONST.types['FIELD']))
@@ -391,7 +473,7 @@ if __name__ == "__main__":
     
     #init tractor
     x = y = 15
-    tractor = Tractor(x, y, pygame)
+    tractor = Tractor(x, y, zones[0], pygame)
     
     
     lst = [[(300, 15 + tractor.width * i), (15, 15 + tractor.width * (i+1))] for i in range(0, 21, 2)]
@@ -435,7 +517,9 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, rect1, pygame)
         unexplored_zones[2] = Zone(2, rect2, pygame)
     
-    data_PH = np.zeros((X, Y, 3), dtype=np.uint8)
+
+    
+    
     selected_overlay = None
     # infinite loop
     while True :
@@ -448,6 +532,8 @@ if __name__ == "__main__":
         
       
         move_river()  
+        
+        data = Crop_Growth(data)
       
         # copying the image surface object
         # to the display surface object at
@@ -525,8 +611,37 @@ if __name__ == "__main__":
                         selected_overlay = None
                     elif selected_overlay == None:
                         selected_overlay = OVERLAY.types['PH']
-                    
-                
+                elif hum_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['HUM']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['HUM']
+                elif temp_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['TEMP']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['TEMP']
+                elif N_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['N']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['N']
+                elif P_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['P']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['P']
+                elif K_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['K']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['K']
+                elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['CROP_GROWTH']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['CROP_GROWTH']
+                        
                 # Explore clicked zone
                 for key, ez in unexplored_zones.items():
                     if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
@@ -541,4 +656,4 @@ if __name__ == "__main__":
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
-        time.sleep(1./120)
+        time.sleep(1./60)

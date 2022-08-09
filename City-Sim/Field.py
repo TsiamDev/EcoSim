@@ -15,24 +15,61 @@ class Field:
         self.has_init = False
         
         #soil stuff
-        zone_w = 300
-        zone_h = 300
-        #zone_w = rect.topright[0] - rect.topleft[0]
-        #zone_h = rect.bottomright[1] - rect.topright[1]
+        empty = np.zeros((DISPLAY.field_w, DISPLAY.field_h))
         
         #self.PH = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
-        self.PH = np.zeros( (zone_w, zone_h, 3), dtype=np.uint8 )
+        self.PH = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
         #get gradient of red/green
-        r = [[random.randint(0, 255) for i in range(zone_w)] for j in range(zone_h)]
-        g = [[random.randint(0, 255) for i in range(zone_w)] for j in range(zone_h)]
+        r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        
         self.PH[:, :, 0] = r
         self.PH[:, :, 1] = g
-        #zero blue
-        self.PH[:, :, 2] = np.zeros((zone_w, zone_h))
-        #self.PH[:, : , 1] = np.zeros((zone_w, zone_h))
+        self.PH[:, :, 2] = empty
         
-        self.temp = np.zeros( (DISPLAY.X, DISPLAY.Y), dtype=np.uint8 )
-        self.hum = np.zeros( (DISPLAY.X, DISPLAY.Y), dtype=np.uint8 )
-        self.N = np.zeros( (DISPLAY.X, DISPLAY.Y), dtype=np.uint8 )
-        self.P = np.zeros( (DISPLAY.X, DISPLAY.Y), dtype=np.uint8 )
-        self.K = np.zeros( (DISPLAY.X, DISPLAY.Y), dtype=np.uint8 )
+        self.temp = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(0, 150) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        b = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        self.temp[:, :, 0] = r
+        self.temp[:, :, 1] = g
+        self.temp[:, :, 2] = b
+        
+        self.hum = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        #r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        #g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        b = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        self.hum[:, :, 0] = empty
+        self.hum[:, :, 1] = empty
+        self.hum[:, :, 2] = b
+        
+        self.N = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        self.N[:, :, 0] = r
+        self.N[:, :, 1] = g
+        self.N[:, :, 2] = empty
+        
+        self.P = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        self.P[:, :, 0] = r
+        self.P[:, :, 1] = g
+        self.P[:, :, 2] = empty
+        
+        self.K = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        self.K[:, :, 0] = r
+        self.K[:, :, 1] = g
+        self.K[:, :, 2] = empty
+        
+        self.crop_growth = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        r = [[random.randint(70, 83) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+        g = [[random.randint(45, 50) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+
+        self.crop_growth[:, :, 0] = r
+        self.crop_growth[:, :, 1] = g
+        self.crop_growth[:, :, 2] = empty
+        
+        self.is_planted = np.zeros( (DISPLAY.field_w, DISPLAY.field_h), dtype=np.uint8 )

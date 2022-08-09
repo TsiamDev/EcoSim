@@ -9,6 +9,8 @@ class DISPLAY(object):
     def __init__(self):
         self.X = 750
         self.Y = 750
+        self.field_w = 300
+        self.field_h = 300
 
 class CONST(object):
     def __init__(self):
@@ -46,6 +48,17 @@ class OVERLAY(object):
     def __init__(self):
         self.types = {}
         self.types['PH'] = 1
+        self.types['HUM'] = 2
+        self.types['TEMP'] = 3
+        self.types['N'] = 4
+        self.types['P'] = 5
+        self.types['K'] = 6
+        self.types['CROP_GROWTH'] = 7
+        
+class TIME(object):
+    def __init__(self):
+        self.types = {}
+        self.types['CROP'] = 100
     
 
 # instantiate Constants
@@ -61,3 +74,5 @@ ANIMAL_SIZE = ANIMAL_SIZE()
 
 DISPLAY = DISPLAY()
 OVERLAY = OVERLAY()
+
+TIME = TIME()

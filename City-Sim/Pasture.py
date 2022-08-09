@@ -24,8 +24,6 @@ class Pasture:
             
             self.animals.append(Animal(pos, self.animal_type, pygame))
         
-        self.field = Field(rect)
-        
     def draw_animals(self, pygame, display_surface):
         print("draw animals")
         for i in range (0, self.animals_num):
