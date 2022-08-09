@@ -10,16 +10,14 @@ import random
 import numpy as np
 #import scipy.misc as smp
 
-# import pygame module in this program
 import pygame
 import pygame_menu
 import time
 import sys
-#import copy
 
-#from Construct import Construct
-from Const import CONST
-from Const import TRACTOR_ACTIONS
+
+from Const import CONST, TRACTOR_ACTIONS, OVERLAY, FIELD
+
 from Zone import Zone
 from Tractor import Tractor
 from Plant import Plant
@@ -107,7 +105,6 @@ def Draw_Explored_Zones():
             zone.pasture.draw_animals(pygame, display_surface)
             
             #move the animals (?)
-    
 
 def Draw_Unexplored_Zones():
     global unexplored_zones, display_surface, gray, label
@@ -120,18 +117,27 @@ def Draw_Unexplored_Zones():
 
 # Player Action Buttons - Crude GUI
 def Draw_Action_Buttons():
-    global displlay_surface, cultivate_btn, sow_btn
+    global displlay_surface, cultivate_btn, sow_btn, PH_btn
     
-    cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-70, 0, 70, 15))
+    btn_h = 15
+    btn_w = 70
+    btn_padding = 2
+    
     font = pygame.font.SysFont("monospace", 10)
+    
+    cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 0, btn_w, btn_h))
     label = font.render("Cultivate", 1, blue)
     label_rect = label.get_rect(center=(cultivate_btn.center))
     display_surface.blit(label, label_rect)
 
-    sow_btn = pygame.draw.rect(display_surface, brown ,(X-70, 17, 70, 15))
-    font = pygame.font.SysFont("monospace", 10)
+    sow_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, btn_h + btn_padding, btn_w, btn_h))
     label = font.render("Sow", 1, blue)
     label_rect = label.get_rect(center=(sow_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    PH_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 2*btn_h + 2*btn_padding, btn_w, btn_h))
+    label = font.render("PH", 1, blue)
+    label_rect = label.get_rect(center=(PH_btn.center))
     display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
@@ -294,10 +300,27 @@ def Main_Menu():
     #sys.exit()
 """"""""""""""""""""""""""""""""""""""
 
+def Display_Overlay():
+    global display_surface, selected_overlay, data_PH
+    
+    #if selected_overlay is None do nothing
+    if selected_overlay is not None:
+        if selected_overlay is OVERLAY.types['PH']:
+            for zone in zones:
+                if zone.type is not CONST.types['BARN_SILO']:
+                    rect = zone.rect
+                    if zone.type is not CONST.types['PASTURE']:
+                        data_PH[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
+                    else:
+                        data_PH[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.pasture.field.PH
+            display_surface.fill(black)
+            pygame.surfarray.blit_array(display_surface, data_PH)
+
 if __name__ == "__main__":
-    global cultivate_btn, sow_btn
+    global cultivate_btn, sow_btn, PH_btn
     cultivate_btn = None
     sow_btn = None
+    PH_btn = None
     
     pygame.init()
     plant = Plant()
@@ -305,12 +328,6 @@ if __name__ == "__main__":
     
     print(repr(plant))
     plant.calc_color()
-    
-    #def Loop(pg):
-    #global unexplored_zones, zones, white, black, blue, brown, red, gray, X, Y, N, road_width, display_surface, data, pygame
-    #pygame = pg
-    
-    #pygame.init()
     
     # Zone lists
     unexplored_zones = {}
@@ -351,9 +368,9 @@ if __name__ == "__main__":
     #data[15:N+15,15:N+15,0] = r
     data[15:N+15,15:N+15,1] = g
     #data[15:N+15,15:N+15,2] = b
-    rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
+    rect = pygame.draw.rect(display_surface, black, (15, 15, N, N))
     #unexplored_zones.append(Zone(0, rect))
-    zones.append(Zone(3, rect, pygame, 1))
+    zones.append(Zone(3, rect, pygame, CONST.types['FIELD']))
     zones[0].field.has_init = True
     
     #data[512,512] = [254,0,0]       # Makes the middle pixel red
@@ -418,6 +435,8 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, rect1, pygame)
         unexplored_zones[2] = Zone(2, rect2, pygame)
     
+    data_PH = np.zeros((X, Y, 3), dtype=np.uint8)
+    selected_overlay = None
     # infinite loop
     while True :
       
@@ -436,7 +455,7 @@ if __name__ == "__main__":
         #display_surface.blit_array(data, (0, 0))
         
         #Update the initial zone and the river
-        pygame.surfarray.blit_array( display_surface, data )
+        pygame.surfarray.blit_array(display_surface, data)
         #Update the explored Zones
         Draw_Unexplored_Zones()
         Draw_Explored_Zones()
@@ -451,7 +470,7 @@ if __name__ == "__main__":
         
     
         
-        Draw_Action_Buttons()
+        
         
         
         
@@ -467,9 +486,15 @@ if __name__ == "__main__":
         #display_surface.blit()
         
         
+        
+        
         # Tractor Action
         data = tractor.act(data, waypoints, tr_rect, right_expz, left_expz)
 
+        # Display Overlay
+        Display_Overlay()
+        
+        Draw_Action_Buttons()
       
         #"""
       
@@ -495,6 +520,12 @@ if __name__ == "__main__":
                     tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
                 elif sow_btn.collidepoint(pygame.mouse.get_pos()):
                     tractor.action = TRACTOR_ACTIONS.types['SOW']
+                elif PH_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['PH']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['PH']
+                    
                 
                 # Explore clicked zone
                 for key, ez in unexplored_zones.items():

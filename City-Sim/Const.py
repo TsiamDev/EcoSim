@@ -5,6 +5,11 @@ Created on Sun Aug  7 21:21:26 2022
 @author: TsiamDev
 """
 
+class DISPLAY(object):
+    def __init__(self):
+        self.X = 750
+        self.Y = 750
+
 class CONST(object):
     def __init__(self):
         self.types = {}
@@ -36,6 +41,11 @@ class TRACTOR_ACTIONS(object):
         self.types['CULTIVATE'] = 2
         self.types['SOW'] = 3
         self.types['FERTILIZE'] = 4
+        
+class OVERLAY(object):
+    def __init__(self):
+        self.types = {}
+        self.types['PH'] = 1
     
 
 # instantiate Constants
@@ -48,3 +58,6 @@ TRACTOR_ACTIONS = TRACTOR_ACTIONS()
 
 ANIMAL = ANIMAL()
 ANIMAL_SIZE = ANIMAL_SIZE()
+
+DISPLAY = DISPLAY()
+OVERLAY = OVERLAY()

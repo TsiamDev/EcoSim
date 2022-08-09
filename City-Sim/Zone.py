@@ -6,7 +6,10 @@ Created on Sun Aug  7 21:38:52 2022
 """
 
 import random
+
 from Const import CONST
+
+
 from Construct import Construct
 from Field import Field
 from Pasture import Pasture
@@ -35,7 +38,7 @@ class Zone:
             
         if self._is(CONST.types['FIELD']):
             # field's state
-            self.field = Field()
+            self.field = Field(self.rect)
         elif self._is(CONST.types['PASTURE']):
             self.pasture = Pasture(self.rect, pygame)
         elif self._is(CONST.types['BARN_SILO']):
@@ -43,6 +46,8 @@ class Zone:
             #self.constructs = []
             #self.constructs.append(Construct())
             self.construct = Construct()
+            
+
 
     def explore(self):
         self.is_explored = True
