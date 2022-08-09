@@ -8,9 +8,9 @@ Created on Mon Aug  8 07:09:19 2022
 class Plant:
     def __init__(self):
         print("New Plant")
-        self.heat_rng = None
-        self.hum_rng = None
-        self.PH_rng = None
+        self.heat_rng = (0, 255)
+        self.hum_rng = (0, 255)
+        self.PH_rng = (0, 255)
         self.color = (0, 255)
         self.c = (0, 0, 0)
         

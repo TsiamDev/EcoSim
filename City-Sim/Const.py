@@ -10,6 +10,7 @@ class CONST(object):
         self.types = {}
         self.types['FIELD'] = 1
         self.types['BARN_SILO'] = 2
+        self.types['PASTURE'] = 3
         
 class FIELD(object):
     def __init__(self):
@@ -17,7 +18,17 @@ class FIELD(object):
         self.types['BARREN'] = 1
         self.types['CULTIVATED'] = 2
         self.types['PLANTED'] = 3
+
+class ANIMAL(object):
+    def __init__(self):
+        self.types = {}
+        self.types['COW'] = 1
         
+class ANIMAL_SIZE(object):
+    def __init__(self):
+        self.types = {}
+        self.types['COW'] = 15
+
 class TRACTOR_ACTIONS(object):
     def __init__(self):
         self.types = {}
@@ -34,3 +45,6 @@ CONST = CONST()
 FIELD = FIELD()
 
 TRACTOR_ACTIONS = TRACTOR_ACTIONS()
+
+ANIMAL = ANIMAL()
+ANIMAL_SIZE = ANIMAL_SIZE()

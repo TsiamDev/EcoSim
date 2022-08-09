@@ -13,7 +13,7 @@ import numpy as np
 # import pygame module in this program
 import pygame
 import pygame_menu
-#import time
+import time
 import sys
 #import copy
 
@@ -55,7 +55,7 @@ def Display_Roads():
 
     
 def Draw_Explored_Zones():
-    global data, display_surface, zones, N, road_width
+    global data, display_surface, zones, N, road_width, pygame
     
     for zone in zones:
     
@@ -85,6 +85,28 @@ def Draw_Explored_Zones():
             bi_rect = building_img.get_rect()
             bi_rect = bi_rect.move((zone.rect.topleft))
             display_surface.blit(building_img, bi_rect)
+            
+        elif zone.type == CONST.types['PASTURE']:
+            if zone.pasture.field.has_init == False:
+                #plant the field
+                #plant a specific plant based on user input
+                r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+                g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+                b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+                
+                rect = zone.rect
+                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = r
+                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
+                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = b
+                #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
+                #unexplored_zones.append(Zone(0, rect))
+                #zones.append(Zone(3, rect, 1))
+                zone.pasture.field.has_init = True
+            
+            #draw the animals
+            zone.pasture.draw_animals(pygame, display_surface)
+            
+            #move the animals (?)
     
 
 def Draw_Unexplored_Zones():
@@ -331,7 +353,7 @@ if __name__ == "__main__":
     #data[15:N+15,15:N+15,2] = b
     rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
     #unexplored_zones.append(Zone(0, rect))
-    zones.append(Zone(3, rect, 1))
+    zones.append(Zone(3, rect, pygame, 1))
     zones[0].field.has_init = True
     
     #data[512,512] = [254,0,0]       # Makes the middle pixel red
@@ -392,9 +414,9 @@ if __name__ == "__main__":
         rect1 = pygame.draw.rect(display_surface, gray, (15, 330+river_H+road_width, zone_W, zone_H))
         rect2 = pygame.draw.rect(display_surface, gray, (330+river_H+road_width, 330+river_H+road_width, zone_W, zone_H))
     
-        unexplored_zones[0] = Zone(0, rect0)
-        unexplored_zones[1] = Zone(1, rect1)
-        unexplored_zones[2] = Zone(2, rect2)
+        unexplored_zones[0] = Zone(0, rect0, pygame)
+        unexplored_zones[1] = Zone(1, rect1, pygame)
+        unexplored_zones[2] = Zone(2, rect2, pygame)
     
     # infinite loop
     while True :
@@ -488,4 +510,4 @@ if __name__ == "__main__":
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
-        #time.sleep(1./120)
+        time.sleep(1./120)

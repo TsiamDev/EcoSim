@@ -11,4 +11,3 @@ class Field:
     def __init__(self):
         self.state = FIELD.types['BARREN']
         self.has_init = False
-        

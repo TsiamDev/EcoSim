@@ -9,6 +9,7 @@ import random
 from Const import CONST
 from Construct import Construct
 from Field import Field
+from Pasture import Pasture
 
 class Zone:
     # ctors
@@ -18,13 +19,14 @@ class Zone:
         self.constructs = []
     
     # _ez_idx: explored zone index
-    def __init__(self, _ez_idx, _rect, _type=None):
+    def __init__(self, _ez_idx, _rect, pygame, _type=None):
 
         self.is_explored = True
         self.ez_idx = _ez_idx
                 
         #encompasing rectangle
         self.rect = _rect
+        print(self.rect)
         
         if _type is None:
             self.type = random.randint(1, len(CONST.types))
@@ -34,7 +36,9 @@ class Zone:
         if self._is(CONST.types['FIELD']):
             # field's state
             self.field = Field()
-        else:
+        elif self._is(CONST.types['PASTURE']):
+            self.pasture = Pasture(self.rect, pygame)
+        elif self._is(CONST.types['BARN_SILO']):
             # constructs list
             #self.constructs = []
             #self.constructs.append(Construct())

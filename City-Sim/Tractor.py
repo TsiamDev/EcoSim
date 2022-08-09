@@ -67,7 +67,8 @@ class Tractor:
                     
     def act(self, data, waypoints, tr_rect, right_expz, left_expz):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
-            print("tractor idling")
+            #print("tractor idling")
+            x = 1 # remove - placeholder
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
             data = self.cultivate(data)
             self.move(waypoints, tr_rect, right_expz, left_expz)
