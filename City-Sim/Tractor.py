@@ -22,64 +22,57 @@ class Tractor:
         self.img = pygame.image.load('tractor.jpg')
         self.img = pygame.transform.scale(self.img, (self.width, self.width))
         
+        self.rect = self.img.get_rect()
+        
+        
         self.x = _x
         self.y = _y
         
         self.zone = _zone
         
-        self.move_right = False
+        self.move_right = True
         
         self.action = TRACTOR_ACTIONS.types['IDLE']
         
-    def move(self, waypoints, tr_rect, right_expz, left_expz):
+    def move(self, waypoints, display_surface, right_expz, left_expz):
         
         if len(waypoints) > 0:
-            #move right
-            if self.move_right == True:
-                self.x = self.x + 1
-            elif self.move_right == False:
-                self.x = self.x - 1
-            #else:
-            #    print("dont move on <x>")
+            if waypoints[0][0] - self.rect.x < 0:
+                x_dir = -1
+            elif waypoints[0][0] - self.rect.x > 0:
+                x_dir = 1
+            else:
+                x_dir = 0
                 
-            #print(tr_rect)
-            if tr_rect.colliderect(right_expz):
-                #print("right col")
-                #move down
-                self.y = self.y + 1
-                self.move_right = None
-                
-                #start moving left once you've reached target y
-                if waypoints[0][1] < self.y:
-                    self.move_right = False
-                    self.x = 300
-                    del waypoints[0]
-                    
-                
-            if tr_rect.colliderect(left_expz):
-                #move down
-                self.y = self.y + 1
-                self.move_right = None
-                
-                #start moving right once you've reached target y
-                if waypoints[0][1] < self.y:
-                    self.move_right = True
-                    self.x = 15
-                    del waypoints[0]
-                    
-    def act(self, data, waypoints, tr_rect, right_expz, left_expz):
+            if x_dir == 0:
+                if waypoints[0][1] - self.rect.y < 0:
+                    y_dir = -1
+                elif waypoints[0][1] - self.rect.y > 0:
+                    y_dir = 1
+                else:
+                    y_dir = 0
+            else:
+                y_dir = 0
+            
+            self.rect = self.rect.move(x_dir, y_dir)
+            display_surface.blit(self.img, self.rect)
+            
+            if (x_dir == 0) & (y_dir == 0):
+                del waypoints[0]
+        
+    def act(self, data, waypoints, display_surface, right_expz, left_expz):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
             #print("tractor idling")
             pl = 1 # remove - placeholder
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
-            data = self.cultivate(data)
-            self.move(waypoints, tr_rect, right_expz, left_expz)
+            #data = self.cultivate(data)
+            self.move(waypoints, display_surface, right_expz, left_expz)
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
             data = self.sow(data)
-            self.move(waypoints, tr_rect, right_expz, left_expz)
+            self.move(waypoints, right_expz, left_expz)
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
             data = self.fertilize_N(data)
-            self.move(waypoints, tr_rect, right_expz, left_expz)
+            self.move(waypoints, right_expz, left_expz)
         
         return data
 
@@ -93,8 +86,8 @@ class Tractor:
     def cultivate(self, data):
         
         # pick random <ground> color
-        r = [[random.randint(70, 83) for i in range(self.y, self.y+self.width)] for j in range(self.y, self.y+self.width)]
-        g = [[random.randint(45, 50) for i in range(self.y, self.y+self.width)] for j in range(self.y, self.y+self.width)]
+        r = [[random.randint(70, 83) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
+        g = [[random.randint(45, 50) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
         
         """
         w = self.x + self.width
@@ -115,28 +108,34 @@ class Tractor:
         #if h >= len(self.zone.field.crop_growth[1]):
         h = len(self.zone.field.crop_growth[1])
         
-        print((self.x, w), (self.y, h))
-        if w - self.x < self.width:
+        #because tractor x,y is different from zone x,y
+        # - 15 => road width
+        x_off = self.x - 15 
+        y_off = self.y - 15
+        
+        #print((x_off, w), (y_off, h))
+        if w - x_off < self.width:
             x_low = w - self.width
         else:
-            x_low = self.x
+            x_low = x_off
             
-        x_high = self.x + self.width
+        x_high = x_off + self.width
         if x_high > w:
             x_high = w
             
-        if h - self.y < self.width:
+        if h - y_off < self.width:
             y_low = h - self.width
         else:
-            y_low = self.y
+            y_low = y_off
             
-        y_high = self.y + self.width
+        y_high = y_off + self.width
         if y_high > h:
             y_high = h
+        #print((x_low, x_high), '-', (y_low, y_high))
         #update crop state
-        self.zone.field.crop_growth[x_low:x_high, y_low:y_high, 0] = r
-        self.zone.field.crop_growth[x_low:x_high, y_low:y_high, 1] = g
-        self.zone.field.crop_growth[x_low:x_high, y_low:y_high, 2] = 0
+        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 0] = r
+        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 1] = g
+        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 2] = 0
         data[x_low:x_high, y_low:y_high, 0] = r
         data[x_low:x_high, y_low:y_high, 1] = g
         data[x_low:x_high, y_low:y_high, 2] = 0
@@ -147,7 +146,7 @@ class Tractor:
     def sow(self, data):
         
         #r = [[random.randint(70, 83) for i in range(y, y+tractor_width)] for j in range(y, y+tractor_width)]
-        g = [[random.randint(85, 150) for i in range(self.y, self.y+self.width)] for j in range(self.y, self.y+self.width)]
+        g = [[random.randint(85, 150) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
         #r = random.randint(70, 83)
         #g = random.randint(45, 50)
         #data[x:x+tractor_width, y:y+tractor_width, 0] = r#(r, g, 0)
@@ -175,8 +174,8 @@ class Tractor:
         return data
     
     def harvest(self, data):
-        r = [[random.randint(70, 83) for i in range(self.y, self.y+self.width)] for j in range(self.y, self.y+self.width)]
-        g = [[random.randint(45, 50) for i in range(self.y, self.y+self.width)] for j in range(self.y, self.y+self.width)]
+        r = [[random.randint(70, 83) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
+        g = [[random.randint(45, 50) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
 
         data[self.x:self.x+self.width, self.y:self.y+self.width, 0] = r
         data[self.x:self.x+self.width, self.y:self.y+self.width, 1] = g

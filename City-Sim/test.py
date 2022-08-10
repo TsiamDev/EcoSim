@@ -450,7 +450,7 @@ if __name__ == "__main__":
     data[15:N+15,15:N+15,1] = g
     #data[15:N+15,15:N+15,2] = b
     """
-    rect = pygame.draw.rect(display_surface, black, (15, 15, N, N))
+    rect = pygame.draw.rect(display_surface, black, (road_width, road_width, N, N))
     #unexplored_zones.append(Zone(0, rect))
     zones.append(Zone(3, rect, pygame, CONST.types['FIELD']))
     zones[0].field.has_init = True
@@ -565,17 +565,19 @@ if __name__ == "__main__":
         # draw the tractor and move the tractor
         #tractor = pygame.draw.rect(display_surface, (0, 255, 0), tractor)
         #tractor_img = pygame.transform.flip(tractor_img, True, False)
+        
         tr_rect = tractor.img.get_rect()
-        tr_rect = tr_rect.move((tractor.x, tractor.y))
+        #tr_rect = tr_rect.move((tractor.x, tractor.y))
+        
         #print(tr_rect)
-        display_surface.blit(tractor.img, tr_rect)#(x, y))#, (15, 15))
+        #display_surface.blit(tractor.img, tr_rect)#(x, y))#, (15, 15))
         #display_surface.blit()
         
         
         
         
         # Tractor Action
-        data = tractor.act(data, waypoints, tr_rect, right_expz, left_expz)
+        data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
 
         # Display Overlay
         Display_Overlay()
@@ -656,4 +658,4 @@ if __name__ == "__main__":
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
-        time.sleep(1./60)
+        time.sleep(1./600)
