@@ -552,7 +552,7 @@ if __name__ == "__main__":
         #"""
         
         # draw the unexplored zone rectangles
-        left_expz, bot_expz, right_expz, top_expz = Display_Roads()
+        #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
         
     
         
@@ -566,7 +566,7 @@ if __name__ == "__main__":
         #tractor = pygame.draw.rect(display_surface, (0, 255, 0), tractor)
         #tractor_img = pygame.transform.flip(tractor_img, True, False)
         
-        tr_rect = tractor.img.get_rect()
+        #tr_rect = tractor.img.get_rect()
         #tr_rect = tr_rect.move((tractor.x, tractor.y))
         
         #print(tr_rect)
@@ -577,7 +577,8 @@ if __name__ == "__main__":
         
         
         # Tractor Action
-        data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
+        #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
+        data = tractor.act(data, waypoints, display_surface)
 
         # Display Overlay
         Display_Overlay()
@@ -658,4 +659,4 @@ if __name__ == "__main__":
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
-        time.sleep(1./600)
+        #time.sleep(1./120)
