@@ -24,7 +24,6 @@ class Pasture:
             
             self.animals.append(Animal(pos, self.animal_type, pygame))
         
-    def draw_animals(self, pygame, display_surface):
-        print("draw animals")
+    def animals_act(self, pygame, display_surface, zone, data):
         for i in range (0, self.animals_num):
-            self.animals[i].draw(pygame, display_surface)
+            self.animals[i].act(pygame, display_surface, zone, data)

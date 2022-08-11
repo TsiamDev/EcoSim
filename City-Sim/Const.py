@@ -43,6 +43,8 @@ class TRACTOR_ACTIONS(object):
         self.types['CULTIVATE'] = 2
         self.types['SOW'] = 3
         self.types['FERTILIZE'] = 4
+        self.types['HARVEST'] = 5
+        self.types['WATER'] = 6
         
 class OVERLAY(object):
     def __init__(self):

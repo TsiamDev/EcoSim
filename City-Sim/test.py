@@ -16,7 +16,7 @@ import time
 import sys
 
 
-from Const import CONST, TRACTOR_ACTIONS, OVERLAY, FIELD, TIME
+from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY
 
 from Zone import Zone
 from Tractor import Tractor
@@ -88,23 +88,28 @@ def Draw_Explored_Zones():
             if zone.field.has_init == False:
                 #plant the field
                 #plant a specific plant based on user input
-                r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
-                g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
-                b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+                #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+                #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+                #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+                
+                #temporary
+                g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
                 
                 rect = zone.rect
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = r
+                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
                 data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = b
+                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
+                
+                zone.field.crop_growth[0:DISPLAY.field_w, 0:DISPLAY.field_h, 0] = 0
+                zone.field.crop_growth[0:DISPLAY.field_w, 0:DISPLAY.field_h, 1] = g
+                zone.field.crop_growth[0:DISPLAY.field_w, 0:DISPLAY.field_h, 2] = 0
                 #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
                 #unexplored_zones.append(Zone(0, rect))
                 #zones.append(Zone(3, rect, 1))
                 zone.field.has_init = True
             
-            #draw the animals
-            zone.pasture.draw_animals(pygame, display_surface)
-            
-            #move the animals (?)
+            #draw - move the animals
+            zone.pasture.animals_act(pygame, display_surface, zone, data)
 
 def Draw_Unexplored_Zones():
     global unexplored_zones, display_surface, gray, label
@@ -120,7 +125,7 @@ def Draw_Action_Buttons():
     global display_surface
     
     #buttons
-    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     
     btn_h = 15
     btn_w = 70
@@ -171,6 +176,16 @@ def Draw_Action_Buttons():
     crop_growth_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 8*btn_h + 8*btn_padding, btn_w, btn_h))
     label = font.render("Crop Growth", 1, blue)
     label_rect = label.get_rect(center=(crop_growth_btn.center))
+    display_surface.blit(label, label_rect)
+
+    harvest_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 9*btn_h + 9*btn_padding, btn_w, btn_h))
+    label = font.render("Harvest", 1, blue)
+    label_rect = label.get_rect(center=(harvest_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    water_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 10*btn_h + 10*btn_padding, btn_w, btn_h))
+    label = font.render("Water", 1, blue)
+    label_rect = label.get_rect(center=(water_btn.center))
     display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
@@ -338,13 +353,12 @@ def Crop_Growth(data):
         for z in zones:
             if z.field is not None:
                 #crops grow - if <pixel> is planted
-                #to_grow = (z.field.crop_growth[:, :, 0] > 84) & (z.field.crop_growth[:, :, 1] > 50)
-                z.field.crop_growth[(z.field.crop_growth[:, :, 0] > 84) & (z.field.crop_growth[:, :, 1] > 50)] += 1
-                #z.field.crop_growth[z.field.crop_growth[:,:,1] < z.field.crop_growth[:,:,0]] += 1
-                #z.field.crop_growth[z.field.crop_growth[:,:,1] < z.field.crop_growth[:,:,0]] += 1
-                z.field.crop_growth[z.field.crop_growth > 255] = 255
+                z.field.crop_growth[z.field.is_planted[:, :] == 1] += (5, 0, 0)
+                #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
+                #print(z.field.crop_growth[:, :, 0])
+                z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
                 z.field.crop_growth[z.field.crop_growth < 0] = 0
-            
+                
                 #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
         time_cnt = 0
         
@@ -389,7 +403,7 @@ def Display_Overlay():
 if __name__ == "__main__":
     global time_cnt
     
-    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     cultivate_btn = None
     sow_btn = None
     PH_btn = None
@@ -399,6 +413,7 @@ if __name__ == "__main__":
     P_btn = None
     K_btn = None
     crop_growth_btn = None
+    harvest_btn = None
     
     time_cnt = 0
     
@@ -476,7 +491,7 @@ if __name__ == "__main__":
     tractor = Tractor(x, y, zones[0], pygame)
     
     
-    lst = [[(300, 15 + tractor.width * i), (15, 15 + tractor.width * (i+1))] for i in range(0, 21, 2)]
+    lst = [[(300, 15 + tractor.width * i), (15, 15 + tractor.width * (i+1))] for i in range(0, 20, 2)]
     waypoints = [item for sublist in lst for item in sublist]
     #waypoints = [(300, 15 + tractor_width), (15, 15 + 2*tractor_width), (300, 15 + 3*tractor_width)]
     
@@ -545,47 +560,22 @@ if __name__ == "__main__":
         #Update the explored Zones
         Draw_Unexplored_Zones()
         Draw_Explored_Zones()
-    
-        
-        
-        
-        #"""
         
         # draw the unexplored zone rectangles
         #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
-        
-    
-        
-        
-        
-        
-        
-        
-        
-        # draw the tractor and move the tractor
-        #tractor = pygame.draw.rect(display_surface, (0, 255, 0), tractor)
-        #tractor_img = pygame.transform.flip(tractor_img, True, False)
-        
-        #tr_rect = tractor.img.get_rect()
-        #tr_rect = tr_rect.move((tractor.x, tractor.y))
-        
-        #print(tr_rect)
-        #display_surface.blit(tractor.img, tr_rect)#(x, y))#, (15, 15))
-        #display_surface.blit()
-        
-        
-        
-        
+        Display_Roads()
+             
+        # draw the tractor and move the tractor  
         # Tractor Action
         #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
-        data = tractor.act(data, waypoints, display_surface)
+        d = tractor.act(data, waypoints, display_surface, plant)
+        if d is not None:
+            data = d
 
         # Display Overlay
         Display_Overlay()
         
         Draw_Action_Buttons()
-      
-        #"""
       
         
       
@@ -609,6 +599,10 @@ if __name__ == "__main__":
                     tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
                 elif sow_btn.collidepoint(pygame.mouse.get_pos()):
                     tractor.action = TRACTOR_ACTIONS.types['SOW']
+                elif water_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['WATER']
+                elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['HARVEST']
                 elif PH_btn.collidepoint(pygame.mouse.get_pos()):
                     if selected_overlay == OVERLAY.types['PH']:
                         selected_overlay = None

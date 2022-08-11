@@ -12,7 +12,7 @@ class Plant:
         self.hum_rng = (0, 255)
         self.PH_rng = (0, 255)
         self.color = (0, 255)
-        self.c = (0, 0, 0)
+        self.c = (255, 255, 255)
         
     def calc_color(self):
         if (self.heat_rng is not None) and (self.hum_rng is not None) and (self.PH_rng is not None):

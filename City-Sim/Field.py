@@ -10,7 +10,7 @@ import random
 from Const import FIELD, DISPLAY
 
 class Field:
-    def __init__(self, rect):
+    def __init__(self, rect, isPasture=None):
         self.state = FIELD.types['BARREN']
         self.has_init = False
         
@@ -64,12 +64,24 @@ class Field:
         self.K[:, :, 1] = g
         self.K[:, :, 2] = empty
         
-        self.crop_growth = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
-        r = [[random.randint(70, 83) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
-        g = [[random.randint(45, 50) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
 
-        self.crop_growth[:, :, 0] = r
-        self.crop_growth[:, :, 1] = g
-        self.crop_growth[:, :, 2] = empty
+
+
+        self.crop_growth = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.int32 )
         
-        self.is_planted = np.zeros( (DISPLAY.field_w, DISPLAY.field_h), dtype=np.uint8 )
+        if isPasture is not None:
+            self.is_planted = np.ones( (DISPLAY.field_w, DISPLAY.field_h), dtype=np.uint8 )
+            
+            g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+
+            self.crop_growth[:, :, 0] = empty
+            self.crop_growth[:, :, 1] = g
+        else:
+            self.is_planted = np.zeros( (DISPLAY.field_w, DISPLAY.field_h), dtype=np.uint8 )
+            r = [[random.randint(70, 83) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+            g = [[random.randint(45, 50) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+
+            self.crop_growth[:, :, 0] = r
+            self.crop_growth[:, :, 1] = g
+       
+        self.crop_growth[:, :, 2] = empty
