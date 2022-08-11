@@ -16,6 +16,7 @@ import time
 import sys
 
 import cProfile as profile
+from threading import Thread
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY
 
@@ -346,8 +347,8 @@ def Main_Menu():
     #sys.exit()
 """"""""""""""""""""""""""""""""""""""        
 
-def Crop_Growth(data):
-    global zones, time_cnt
+def Crop_Growth():
+    global zones, time_cnt, data, pygame
     
     time_cnt = time_cnt + 1
     
@@ -363,8 +364,9 @@ def Crop_Growth(data):
                 
                 #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
         time_cnt = 0
-        
-    return data
+    
+    pygame.surfarray.blit_array(display_surface, data)
+    #return data
 
 def Display_Overlay():
     global display_surface, selected_overlay
@@ -405,8 +407,17 @@ def Display_Overlay():
 def main():
     global data, selected_overlay
     
+    #crops_thread = Thread(target=Crop_Growth, kwargs=data)
+    #roads_thread = Thread(target=Display_Roads)
+    #buttons_thread = Thread(target=Draw_Action_Buttons)
+
+
+    
     # infinite loop
     while True :
+      
+        #roads_thread = Thread(target=Display_Roads)
+        #roads_thread.start()
       
         # clear the screen
         display_surface.fill(black)
@@ -415,20 +426,21 @@ def main():
       
         
       
-        #move_river()  
+        move_river()  
         
-        data = Crop_Growth(data)
-      
-        # copying the image surface object
-        # to the display surface object at
-        # (0, 0) coordinate.
-        #display_surface.blit_array(data, (0, 0))
-        
+        #data = Crop_Growth(data)
+        Crop_Growth()
+        #crops_thread = Thread(target=Crop_Growth)
+        #crops_thread.start()
         #Update the initial zone and the river
         pygame.surfarray.blit_array(display_surface, data)
+        
         #Update the explored Zones
         Draw_Unexplored_Zones()
         Draw_Explored_Zones()
+        
+        
+  
         
         # draw the unexplored zone rectangles
         #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
@@ -443,10 +455,16 @@ def main():
 
         # Display Overlay
         Display_Overlay()
-        
+
         Draw_Action_Buttons()
+        #buttons_thread = Thread(target=Draw_Action_Buttons)
+        #buttons_thread.start()
       
         #Snow.draw(display_surface)
+      
+        #roads_thread.join()
+        #buttons_thread.join()  
+        #crops_thread.join()
       
         # Event loop
         # iterate over the list of Event objects
@@ -662,4 +680,5 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
+    #main()
     profile.run('main()')
