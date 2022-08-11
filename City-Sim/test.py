@@ -21,6 +21,7 @@ from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY
 from Zone import Zone
 from Tractor import Tractor
 from Plant import Plant
+from effects.Snow import Snow
 
 
 def move_river():
@@ -309,7 +310,7 @@ def Main_Menu():
     menu.add.selector('Difficulty: ', [('Easy', 1), ('Medium', 2), ('Hard', 3)])
     #pg = {'pg':pg}
     
-    menu.add.button('My Plants', plant_menu)
+    menu.add.button('Embark', plant_menu)
     #menu.add.button('Quit', pygame_menu.events.EXIT) #restarts kernel
     menu.enable()
     on_resize()  # Set initial size
@@ -533,7 +534,8 @@ if __name__ == "__main__":
         unexplored_zones[2] = Zone(2, rect2, pygame)
     
 
-    
+    #Weather effects
+    Snow = Snow(pygame)
     
     selected_overlay = None
     # infinite loop
@@ -577,7 +579,7 @@ if __name__ == "__main__":
         
         Draw_Action_Buttons()
       
-        
+        Snow.draw(display_surface)
       
         # Event loop
         # iterate over the list of Event objects
