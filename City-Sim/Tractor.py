@@ -38,61 +38,59 @@ class Tractor:
     def move(self, waypoints, display_surface):
         
         if len(waypoints) > 0:
-            if waypoints[0][0] - self.rect.x < 0:
-                x_dir = -1
-            elif waypoints[0][0] - self.rect.x > 0:
-                x_dir = 1
-            else:
-                x_dir = 0
-                
-            if x_dir == 0:
-                if waypoints[0][1] - self.rect.y < 0:
-                    y_dir = -1
-                elif waypoints[0][1] - self.rect.y > 0:
-                    y_dir = 1
-                else:
-                    y_dir = 0
+            
+            if waypoints[0][1] - self.rect.y < 0:
+                y_dir = -1
+            elif waypoints[0][1] - self.rect.y > 0:
+                y_dir = 1
             else:
                 y_dir = 0
+                
+            if y_dir == 0:
+                if waypoints[0][0] - self.rect.x < 0:
+                    x_dir = -1
+                elif waypoints[0][0] - self.rect.x > 0:
+                    x_dir = 1
+                else:
+                    x_dir = 0
+            else:
+                x_dir = 0
             
             self.rect = self.rect.move(x_dir, y_dir)
             display_surface.blit(self.img, self.rect)
             
             if (x_dir == 0) & (y_dir == 0):
                 del waypoints[0]
+                if len(waypoints) == 0:
+                    self.action = TRACTOR_ACTIONS.types['IDLE']
         
-    def act(self, data, waypoints, display_surface):
+    def act(self, data, waypoints, display_surface, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
-            #print("tractor idling")
-            pl = 1 # remove - placeholder
+            display_surface.blit(self.img, self.rect)
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
             data = self.cultivate(data)
             self.move(waypoints, display_surface)
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
-            data = self.sow(data)
-            self.move(waypoints,)
+            data = self.sow(data, plant)
+            self.move(waypoints, display_surface)
+        elif self.action == TRACTOR_ACTIONS.types['WATER']:
+            data = self.water(data)
+            self.move(waypoints, display_surface)
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
             data = self.fertilize_N(data)
-            self.move(waypoints)
+            self.move(waypoints, display_surface)
+        elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
+            data = self.harvest(data)
+            self.move(waypoints, display_surface)
         
-        return data
+        return data        
 
-    def fertilize_N(self, zone):
-        #update the zone's <N> level
-        #data[self.x:self.x+self.width, self.y:self.y+self.width] = (0, 0, 255)
-        zone.field.N[self.x:self.x+self.width, self.y:self.y+self.width] = (0, 255, 0)
-        
-        #return data
-
-    def cultivate(self, data):
-        #reset <ground> color to <soil> color
-        w = len(self.zone.field.crop_growth[0])
-        h = len(self.zone.field.crop_growth[1])
-        
+    def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
         #because tractor x,y is different from zone x,y
         # - 15 => road width
-        x_off = self.rect.x #- 15 
-        y_off = self.rect.y #- 15
+        # if tractor starts at (15,15) => top left corner of field
+        x_off = self.rect.x - 15 
+        y_off = self.rect.y - 15
         
         #print((x_off, w), (y_off, h))
         if w - x_off < self.width:
@@ -112,66 +110,105 @@ class Tractor:
         y_high = y_off + self.width
         if y_high > h:
             y_high = h
-        #print((x_low, x_high), '-', (y_low, y_high))
+        print((x_low, x_high), '-', (y_low, y_high))
+
         # pick random <ground> color
-        r = [[random.randint(70, 83) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-        g = [[random.randint(45, 50) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+        r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+        g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+        b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
         
         #update crop state
-        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 0] = r
-        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 1] = g
-        self.zone.field.crop_growth[x_low:(x_high), y_low:y_high, 2] = 0
+        target[x_low:(x_high), y_low:y_high, 0] = r
+        target[x_low:(x_high), y_low:y_high, 1] = g
+        target[x_low:(x_high), y_low:y_high, 2] = b
 
-        #update displayed field state
-        data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
-        data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
-        data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = 0
-        
+        if data is not None:
+            #update displayed field state
+            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
+            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
+            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+            
+        if isSowing == True:
+            self.zone.field.is_planted[x_low:(x_high), y_low:y_high] = 1
+            
         return data
 
-    def sow(self, data):
+    def fertilize_N(self, data):
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.fertilize_N[0])
+        h = len(self.zone.field.fertilize_N[1])
         
-        #r = [[random.randint(70, 83) for i in range(y, y+tractor_width)] for j in range(y, y+tractor_width)]
-        g = [[random.randint(85, 150) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
-        #r = random.randint(70, 83)
-        #g = random.randint(45, 50)
-        #data[x:x+tractor_width, y:y+tractor_width, 0] = r#(r, g, 0)
+        r = (0, 0)
+        g = (255, 255)
+        b = (0, 0)
         
-        w = range(self.x, self.x + self.width)
-        h = range(self.y, self.y + self.width)
-        
-        x_high = self.x + self.width
-        x_low = self.x
-        if x_high - x_low < 15:
-            x_low = len(self.zone.field.crop_growth[0]) - 15
-        else:
-            x_low = self.x
-        
-        y_high = self.y + self.width
-        y_low = self.y
-        if y_high - y_low < 15:
-            y_low = len(self.zone.field.crop_growth[0]) - 15
-        else:
-            y_low = self.y
-        
-        data[x_low:x_high, y_low:y_high, 1] = g
-        self.zone.field.crop_growth[x_low:x_high, y_low:y_high, 1] = g
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_N)
     
-        return data
+    def fertilize_P(self, data):
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.fertilize_P[0])
+        h = len(self.zone.field.fertilize_P[1])
+        
+        r = (0, 0)
+        g = (255, 255)
+        b = (0, 0)
+        
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_P)
+
+    def fertilize_K(self, data):
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.fertilize_K[0])
+        h = len(self.zone.field.fertilize_K[1])
+        
+        r = (0, 0)
+        g = (255, 255)
+        b = (0, 0)
+        
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_K)
+
+    def cultivate(self, data):
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.crop_growth[0])
+        h = len(self.zone.field.crop_growth[1])
+        
+        r = (70, 83)
+        g = (45, 50)
+        b = (0, 0)
+        
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+
+    def sow(self, data, plant):
+        
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.crop_growth[0])
+        h = len(self.zone.field.crop_growth[1])
+        
+        r = (0, plant.c[0])
+        g = (0, plant.c[1])
+        b = (0, plant.c[2])
+        
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, True)  
     
-    
+    #data is unused here
+    def water(self, data):
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.hum[0])
+        h = len(self.zone.field.hum[1])
+        
+        r = (0, 0)
+        g = (0, 0)
+        b = (255, 255)
+        
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.hum) 
     
     def harvest(self, data):
-        r = [[random.randint(70, 83) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
-        g = [[random.randint(45, 50) for i in range(self.y, self.y+self.width)] for j in range(self.x, self.x+self.width)]
-
-        data[self.x:self.x+self.width, self.y:self.y+self.width, 0] = r
-        data[self.x:self.x+self.width, self.y:self.y+self.width, 1] = g
-        data[self.x:self.x+self.width, self.y:self.y+self.width, 2] = 0
+       
+        #reset <ground> color to <soil> color
+        w = len(self.zone.field.crop_growth[0])
+        h = len(self.zone.field.crop_growth[1])
         
+        r = (70, 83)
+        g = (45, 50)
+        b = (0, 0)
         
-        self.zone.field.crop_growth[self.x:self.x+self.width, self.y:self.y+self.width, 0] = r
-        self.zone.field.crop_growth[self.x:self.x+self.width, self.y:self.y+self.width, 1] = g
-        self.zone.field.crop_growth[self.x:self.x+self.width, self.y:self.y+self.width, 2] = 0
-        
-        return data
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
