@@ -10,14 +10,13 @@ import random
 from Const import DISPLAY
 
 class Snowflake:
-    def __init__(self, pygame):
-        self.pos = type('', (), {})()
-        self.pos.x = random.randint(-100, DISPLAY.X)
-        self.pos.y = random.randint(-100, DISPLAY.Y)
-        
+    def __init__(self, pygame):        
         self.img = pygame.image.load('snowflake.svg')
         self.img = pygame.transform.scale(self.img, (10, 10))
-        self.rect = self.img.get_rect()
+        pos = type('', (), {})()
+        pos.x = random.randint(-DISPLAY.X, 0)
+        pos.y = random.randint(-DISPLAY.Y, 0)
+        self.rect = self.img.get_rect().move(pos.x, pos.y)
         
 class Snow:
     def __init__(self, pygame):
@@ -27,5 +26,13 @@ class Snow:
     
     def draw(self, display_surface):
         for i in range(0, len(self.snowflakes)):
-            self.snowflakes[i].rect = self.snowflakes[i].rect.move(5, 5)
+            new_x = random.randint(1, 10)
+            new_y = random.randint(1, 10)
+            self.snowflakes[i].rect = self.snowflakes[i].rect.move(new_x, new_y)
+            if self.snowflakes[i].rect.x > DISPLAY.X:
+                self.snowflakes[i].rect.x = random.randint(-DISPLAY.X, 0)
+                
+            if self.snowflakes[i].rect.y > DISPLAY.Y:
+                self.snowflakes[i].rect.y = random.randint(-DISPLAY.Y, 0)
+                
             display_surface.blit(self.snowflakes[i].img, self.snowflakes[i].rect)

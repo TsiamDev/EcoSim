@@ -110,7 +110,7 @@ class Tractor:
         y_high = y_off + self.width
         if y_high > h:
             y_high = h
-        print((x_low, x_high), '-', (y_low, y_high))
+        #print((x_low, x_high), '-', (y_low, y_high))
 
         # pick random <ground> color
         r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]

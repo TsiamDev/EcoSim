@@ -15,6 +15,7 @@ import pygame_menu
 import time
 import sys
 
+import cProfile as profile
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY
 
@@ -401,6 +402,128 @@ def Display_Overlay():
                     
                 pygame.surfarray.blit_array(display_surface, data_temp)
 
+def main():
+    global data, selected_overlay
+    
+    # infinite loop
+    while True :
+      
+        # clear the screen
+        display_surface.fill(black)
+      
+        
+      
+        
+      
+        #move_river()  
+        
+        data = Crop_Growth(data)
+      
+        # copying the image surface object
+        # to the display surface object at
+        # (0, 0) coordinate.
+        #display_surface.blit_array(data, (0, 0))
+        
+        #Update the initial zone and the river
+        pygame.surfarray.blit_array(display_surface, data)
+        #Update the explored Zones
+        Draw_Unexplored_Zones()
+        Draw_Explored_Zones()
+        
+        # draw the unexplored zone rectangles
+        #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
+        Display_Roads()
+             
+        # draw the tractor and move the tractor  
+        # Tractor Action
+        #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
+        d = tractor.act(data, waypoints, display_surface, plant)
+        if d is not None:
+            data = d
+
+        # Display Overlay
+        Display_Overlay()
+        
+        Draw_Action_Buttons()
+      
+        #Snow.draw(display_surface)
+      
+        # Event loop
+        # iterate over the list of Event objects
+        # that was returned by pygame.event.get() method.
+        for event in pygame.event.get() :
+      
+            # if event object type is QUIT
+            # then quitting the pygame
+            # and program both.
+            if event.type == pygame.QUIT :
+                pygame.display.quit()
+                sys.exit()
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
+                
+                #Player Actions
+                if cultivate_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
+                elif sow_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['SOW']
+                elif water_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['WATER']
+                elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['HARVEST']
+                elif PH_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['PH']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['PH']
+                elif hum_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['HUM']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['HUM']
+                elif temp_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['TEMP']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['TEMP']
+                elif N_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['N']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['N']
+                elif P_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['P']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['P']
+                elif K_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['K']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['K']
+                elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
+                    if selected_overlay == OVERLAY.types['CROP_GROWTH']:
+                        selected_overlay = None
+                    elif selected_overlay == None:
+                        selected_overlay = OVERLAY.types['CROP_GROWTH']
+                        
+                # Explore clicked zone
+                for key, ez in unexplored_zones.items():
+                    if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
+                        print("Expanded to zone " + str(key))
+                        unexplored_zones[key].explore()
+                        zones.append(unexplored_zones[key])
+                
+                        if key in unexplored_zones.keys():
+                            del unexplored_zones[key]
+                        break
+      
+        #Draw the surface object to the screen.  
+        pygame.display.update() 
+            
+        #time.sleep(1./120)
+
 if __name__ == "__main__":
     global time_cnt
     
@@ -535,124 +658,8 @@ if __name__ == "__main__":
     
 
     #Weather effects
-    Snow = Snow(pygame)
+    #Snow = Snow(pygame)
     
     selected_overlay = None
-    # infinite loop
-    while True :
-      
-        # clear the screen
-        display_surface.fill(black)
-      
-        
-      
-        
-      
-        move_river()  
-        
-        data = Crop_Growth(data)
-      
-        # copying the image surface object
-        # to the display surface object at
-        # (0, 0) coordinate.
-        #display_surface.blit_array(data, (0, 0))
-        
-        #Update the initial zone and the river
-        pygame.surfarray.blit_array(display_surface, data)
-        #Update the explored Zones
-        Draw_Unexplored_Zones()
-        Draw_Explored_Zones()
-        
-        # draw the unexplored zone rectangles
-        #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
-        Display_Roads()
-             
-        # draw the tractor and move the tractor  
-        # Tractor Action
-        #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
-        d = tractor.act(data, waypoints, display_surface, plant)
-        if d is not None:
-            data = d
-
-        # Display Overlay
-        Display_Overlay()
-        
-        Draw_Action_Buttons()
-      
-        Snow.draw(display_surface)
-      
-        # Event loop
-        # iterate over the list of Event objects
-        # that was returned by pygame.event.get() method.
-        for event in pygame.event.get() :
-      
-            # if event object type is QUIT
-            # then quitting the pygame
-            # and program both.
-            if event.type == pygame.QUIT :
-                pygame.display.quit()
-                sys.exit()
-                
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
-                
-                #Player Actions
-                if cultivate_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
-                elif sow_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['SOW']
-                elif water_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['WATER']
-                elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['HARVEST']
-                elif PH_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['PH']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['PH']
-                elif hum_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['HUM']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['HUM']
-                elif temp_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['TEMP']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['TEMP']
-                elif N_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['N']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['N']
-                elif P_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['P']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['P']
-                elif K_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['K']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['K']
-                elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['CROP_GROWTH']:
-                        selected_overlay = None
-                    elif selected_overlay == None:
-                        selected_overlay = OVERLAY.types['CROP_GROWTH']
-                        
-                # Explore clicked zone
-                for key, ez in unexplored_zones.items():
-                    if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
-                        print("Expanded to zone " + str(key))
-                        unexplored_zones[key].explore()
-                        zones.append(unexplored_zones[key])
-                
-                        if key in unexplored_zones.keys():
-                            del unexplored_zones[key]
-                        break
-      
-        #Draw the surface object to the screen.  
-        pygame.display.update() 
-            
-        #time.sleep(1./120)
+    
+    profile.run('main()')

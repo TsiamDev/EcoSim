@@ -57,9 +57,9 @@ class Animal:
         x_off = random.randint(x_low_bound, x_high_bound)
         y_off = random.randint(y_low_bound, y_high_bound)
         
-        print(x_low_bound, x_high_bound, y_low_bound, y_high_bound)
-        print(x_off, y_off)
-        print(self.pos.x, self.pos.y)
+        #print(x_low_bound, x_high_bound, y_low_bound, y_high_bound)
+        #print(x_off, y_off)
+        #print(self.pos.x, self.pos.y)
         
         self.pos.x = self.pos.x + x_off
         self.pos.y = self.pos.y + y_off
