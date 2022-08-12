@@ -71,12 +71,15 @@ class Animal:
         display_surface.blit(self.img, self.img_rect)
 
     def produce(self, green, red):
-        food = sum((sum(green) + sum(red))) / 2
+        #food = sum((sum(green) + sum(red))) / 2
+        food = sum(sum(green))
         self.stomach = self.stomach + food
         
         if self.stomach >= 255:
-            self.product = self.product + 255 / 10
+            self.product = self.product + 255 / 100
             self.stomach = self.stomach - 255
+            print("Produced ", 255/100, "L of milk")
+            print(self.product)
         
     def eat(self, zone, data):
         field = zone.field
@@ -108,10 +111,14 @@ class Animal:
         green = field.crop_growth[x_low:x_high, y_low:y_high, 1]
         red = field.crop_growth[x_low:x_high, y_low:y_high, 0]
 
-        self.produce(green, red)
+        #print(any(green[green > 50]))
+        #print(red)
+        if any(green[green > 50]):
+            self.produce(green, red)
         
             
-        if green.any() > 0:
+        #if green.any() > 0:
+        if any(green[green > 50]):
             #print("eating...")
             r = [[random.randint(70, 83) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
             g = [[random.randint(45, 50) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
