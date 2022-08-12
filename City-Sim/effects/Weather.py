@@ -12,14 +12,20 @@ from Const import DISPLAY, WEATHER
 class WeatherParticle:
     def __init__(self, pygame, _type):        
         
-        pos = type('', (), {})()
-        pos.x = random.randint(-DISPLAY.X, 0)
-        pos.y = random.randint(-DISPLAY.Y, 0)
+
         
         if _type == WEATHER.types['SNOW']:
+            pos = type('', (), {})()
+            pos.x = random.randint(-DISPLAY.X, 0)
+            pos.y = random.randint(-DISPLAY.Y, 0)
+            
             self.img = pygame.image.load('snowflake.svg')
             self.img = pygame.transform.scale(self.img, (10, 10))
         elif _type == WEATHER.types['RAIN']:
+            pos = type('', (), {})()
+            pos.x = random.randint(0, DISPLAY.X)
+            pos.y = random.randint(-DISPLAY.Y, 0)
+            
             self.img = pygame.image.load('effects/drop.png')
             self.img = pygame.transform.scale(self.img, (1, 5))
             
@@ -32,7 +38,7 @@ class WeatherEffect:
         
         self.particles = []
         for i in range(0, 100):
-            self.particles.append(WeatherParticle(pygame, self._type))
+            self.particles.append(WeatherParticle(pygame, self.type))
             
         
     
@@ -53,9 +59,10 @@ class WeatherEffect:
     def draw_rain(self, display_surface):
         #while running == True:
         for i in range(0, len(self.particles)):
-            new_x = random.randint(1, 10)
+            #new_x = random.randint(1, 10)
             new_y = random.randint(1, 10)
-            self.particles[i].rect = self.particles[i].rect.move(new_x, new_y)
+            self.particles[i].rect = self.particles[i].rect.move(0, new_y)
+            print(self.particles[i].rect)
             if self.particles[i].rect.x > DISPLAY.X:
                 self.particles[i].rect.x = random.randint(-DISPLAY.X, 0)
                 
@@ -65,8 +72,8 @@ class WeatherEffect:
             display_surface.blit(self.particles[i].img, self.particles[i].rect)
     
     def draw(self, display_surface):#, running):
-        if self._type == WEATHER.types['SNOW']:
+        if self.type == WEATHER.types['SNOW']:
             self.draw_snow(display_surface)
-        elif self._type == WEATHER.types['RAIN']:
+        elif self.type == WEATHER.types['RAIN']:
             self.draw_rain(display_surface)
         

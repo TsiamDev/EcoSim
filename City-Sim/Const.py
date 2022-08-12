@@ -61,6 +61,12 @@ class TIME(object):
     def __init__(self):
         self.types = {}
         self.types['CROP'] = 100
+        
+class WEATHER(object):
+    def __init__(self):
+        self.types = {}
+        self.types['SNOW'] = 1
+        self.types['RAIN'] = 2
     
 
 # instantiate Constants
@@ -78,3 +84,5 @@ DISPLAY = DISPLAY()
 OVERLAY = OVERLAY()
 
 TIME = TIME()
+
+WEATHER = WEATHER()

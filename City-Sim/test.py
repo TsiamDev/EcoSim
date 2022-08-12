@@ -18,12 +18,12 @@ import sys
 import cProfile as profile
 from threading import Thread
 
-from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY
+from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER
 
 from Zone import Zone
 from Tractor import Tractor
 from Plant import Plant
-from effects.Snow import Snow
+from effects.Weather import WeatherEffect
 
 
 def move_river():
@@ -411,10 +411,18 @@ def main():
     #roads_thread = Thread(target=Display_Roads)
     #buttons_thread = Thread(target=Draw_Action_Buttons)
 
+    running = True
 
+    #kw = {}
+    #kw['display_surface'] = display_surface
+    #kw['running'] = running
+    #snow_thread = Thread(target=Snow.draw, kwargs=kw)
+    #snow_thread.start()
+    
+    #Snow.draw(display_surface)
     
     # infinite loop
-    while True :
+    while running :
       
         #roads_thread = Thread(target=Display_Roads)
         #roads_thread.start()
@@ -460,7 +468,7 @@ def main():
         #buttons_thread = Thread(target=Draw_Action_Buttons)
         #buttons_thread.start()
       
-        #Snow.draw(display_surface)
+        weather_effect.draw(display_surface)
       
         #roads_thread.join()
         #buttons_thread.join()  
@@ -475,6 +483,9 @@ def main():
             # then quitting the pygame
             # and program both.
             if event.type == pygame.QUIT :
+                #running = False
+                #snow_thread.join()
+                
                 pygame.display.quit()
                 sys.exit()
                 
@@ -540,7 +551,9 @@ def main():
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
-        #time.sleep(1./120)
+        time.sleep(1./120)
+    
+    
 
 if __name__ == "__main__":
     global time_cnt
@@ -676,9 +689,9 @@ if __name__ == "__main__":
     
 
     #Weather effects
-    #Snow = Snow(pygame)
+    weather_effect = WeatherEffect(pygame, WEATHER.types['SNOW'])
     
     selected_overlay = None
     
-    #main()
-    profile.run('main()')
+    main()
+    #profile.run('main()')
