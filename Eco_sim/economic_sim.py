@@ -173,7 +173,8 @@ def Main():
     plt.show()
     plt.plot(xs, loans)
     plt.show()    
-"""
+#"""
+#"""
 def Main():
     global max_it, cities, ln_cities, m, food_m, bank, pop, goods
     global raids, goods_lost, merchant_reserve, city_reserve, loans
@@ -283,7 +284,7 @@ def Main():
     plt.show()
     plt.plot(xs, loans)
     plt.show()    
-
+#"""
 def NextTurn():
     print("Next Turn...")
     Main()
