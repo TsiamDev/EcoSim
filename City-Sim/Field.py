@@ -35,7 +35,7 @@ class Field:
         self.temp[:, :, 1] = g
         self.temp[:, :, 2] = b
         
-        self.hum = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.uint8 )
+        self.hum = np.zeros( (DISPLAY.field_w, DISPLAY.field_h, 3), dtype=np.int32 )
         #r = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
         #g = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
         b = [[random.randint(0, 255) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]

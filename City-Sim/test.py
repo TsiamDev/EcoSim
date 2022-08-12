@@ -404,6 +404,17 @@ def Display_Overlay():
                     
                 pygame.surfarray.blit_array(display_surface, data_temp)
 
+def Weather_Effect_To_Ground():
+    global weather_effect, zones, rain_b_inc
+    
+    if weather_effect.type == WEATHER.types['RAIN']:
+        
+        for z in zones:
+            #print(rain_b_inc)
+            #print(z.field.hum[:, :, 2])
+            z.field.hum[:, :, 2] += rain_b_inc
+            z.field.hum[z.field.hum > 255] = 255
+
 def main():
     global data, selected_overlay
     
@@ -432,7 +443,7 @@ def main():
       
         
       
-        
+        Weather_Effect_To_Ground()
       
         move_river()  
         
@@ -556,7 +567,7 @@ def main():
     
 
 if __name__ == "__main__":
-    global time_cnt
+    global time_cnt, rain_b_inc
     
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     cultivate_btn = None
@@ -569,6 +580,8 @@ if __name__ == "__main__":
     K_btn = None
     crop_growth_btn = None
     harvest_btn = None
+    
+    rain_b_inc = [[random.randint(1, 3) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
     
     time_cnt = 0
     
@@ -689,7 +702,7 @@ if __name__ == "__main__":
     
 
     #Weather effects
-    weather_effect = WeatherEffect(pygame, WEATHER.types['SNOW'])
+    weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
     
     selected_overlay = None
     
