@@ -12,7 +12,8 @@ from Const import DISPLAY, WEATHER
 class WeatherParticle:
     def __init__(self, pygame, _type):        
         
-
+        self.x_speed = random.randint(5, 10)
+        self.y_speed = random.randint(5, 10)
         
         if _type == WEATHER.types['SNOW']:
             pos = type('', (), {})()
@@ -47,7 +48,7 @@ class WeatherEffect:
         for i in range(0, len(self.particles)):
             new_x = random.randint(1, 10)
             new_y = random.randint(1, 10)
-            self.particles[i].rect = self.particles[i].rect.move(new_x, new_y)
+            self.particles[i].rect = self.particles[i].rect.move(self.particles[i].x_speed, self.particles[i].y_speed)
             if self.particles[i].rect.x > DISPLAY.X:
                 self.particles[i].rect.x = random.randint(-DISPLAY.X, 0)
                 
@@ -59,10 +60,9 @@ class WeatherEffect:
     def draw_rain(self, display_surface):
         #while running == True:
         for i in range(0, len(self.particles)):
-            #new_x = random.randint(1, 10)
-            new_y = random.randint(1, 10)
-            self.particles[i].rect = self.particles[i].rect.move(0, new_y)
-            print(self.particles[i].rect)
+
+            self.particles[i].rect = self.particles[i].rect.move(0, self.particles[i].y_speed)
+            #print(self.particles[i].rect)
             if self.particles[i].rect.x > DISPLAY.X:
                 self.particles[i].rect.x = random.randint(-DISPLAY.X, 0)
                 
