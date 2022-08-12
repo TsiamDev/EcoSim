@@ -17,6 +17,7 @@ import sys
 
 import cProfile as profile
 from threading import Thread
+import threading
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER
 
@@ -410,10 +411,14 @@ def Weather_Effect_To_Ground():
     if weather_effect.type == WEATHER.types['RAIN']:
         
         for z in zones:
-            #print(rain_b_inc)
-            #print(z.field.hum[:, :, 2])
-            z.field.hum[:, :, 2] += rain_b_inc
-            z.field.hum[z.field.hum > 255] = 255
+            print(len(rain_b_inc))
+            print(len(rain_b_inc[0]))
+            print((rain_b_inc[0][0]))
+            #print(z.field.hum)
+            z.field.hum[:, :, 2] = z.field.hum[:, :, 2] + rain_b_inc
+            #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
+            #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
+            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
 
 def main():
     global data, selected_overlay
@@ -421,6 +426,7 @@ def main():
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
     #roads_thread = Thread(target=Display_Roads)
     #buttons_thread = Thread(target=Draw_Action_Buttons)
+
 
     running = True
 
@@ -589,7 +595,7 @@ if __name__ == "__main__":
     plant = Plant()
     Main_Menu()
     
-    print(repr(plant))
+    #print(repr(plant))
     plant.calc_color()
     
     # Zone lists
@@ -702,9 +708,9 @@ if __name__ == "__main__":
     
 
     #Weather effects
-    weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
+    weather_effect = WeatherEffect(pygame, WEATHER.types['SNOW'])
     
     selected_overlay = None
     
-    main()
-    #profile.run('main()')
+    #main()
+    profile.run('main()')
