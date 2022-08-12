@@ -10,7 +10,8 @@ from time import *
 
 import matplotlib.pyplot as plt
 
-from Enums.enums import *
+#from Enums.enums import *
+from enums import *
 
 from City import City
 from Merchant import Merchant

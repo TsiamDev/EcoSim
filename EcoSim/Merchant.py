@@ -5,7 +5,8 @@ Created on Mon Mar 28 11:47:25 2022
 @author: TsiamDev
 """
 import random
-from Enums.enums import *
+#from Enums.enums import *
+from enums import *
 from City import City
 
 class Merchant:

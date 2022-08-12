@@ -9,7 +9,8 @@ Created on Wed Jun  8 23:27:13 2022
 import pygame
 import random
 
-from Enums.enums import *
+#from Enums.enums import *
+from enums import *
 
 from City import City
 from Scout import Scout

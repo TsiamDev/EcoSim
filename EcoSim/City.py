@@ -5,7 +5,8 @@ Created on Mon Mar 28 11:47:03 2022
 @author: TsiamDev
 """
 
-from Enums.enums import *
+#from Enums.enums import *
+from enums import *
 
 class City:
     def __init__(self, _id, prices, cons_policy, reserve, pos, center):
