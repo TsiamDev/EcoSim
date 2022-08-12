@@ -15,7 +15,8 @@ class Animal:
         self.type = _type
         self.size = ANIMAL_SIZE.types['COW']
         
-        
+        self.stomach = 0
+        self.product = 0
         
         if self.type == ANIMAL.types['COW']:
             self.img = pygame.image.load('cow.png')
@@ -68,6 +69,14 @@ class Animal:
         self.img_rect = self.img_rect.move((x_off, y_off))
         #print(self.img_rect)
         display_surface.blit(self.img, self.img_rect)
+
+    def produce(self, green, red):
+        food = sum((sum(green) + sum(red))) / 2
+        self.stomach = self.stomach + food
+        
+        if self.stomach >= 255:
+            self.product = self.product + 255 / 10
+            self.stomach = self.stomach - 255
         
     def eat(self, zone, data):
         field = zone.field
@@ -96,8 +105,13 @@ class Animal:
         
         #print(x_low, x_high, y_low, y_high)
         #print(field.crop_growth)
-        temp = field.crop_growth[x_low:x_high, y_low:y_high, 1]
-        if temp.any() > 0:
+        green = field.crop_growth[x_low:x_high, y_low:y_high, 1]
+        red = field.crop_growth[x_low:x_high, y_low:y_high, 0]
+
+        self.produce(green, red)
+        
+            
+        if green.any() > 0:
             #print("eating...")
             r = [[random.randint(70, 83) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
             g = [[random.randint(45, 50) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
