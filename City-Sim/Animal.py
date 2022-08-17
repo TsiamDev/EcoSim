@@ -134,8 +134,12 @@ class Animal:
             
             #excrete
             print("Produced ", 150 ,"L of manure")
-            excrement = np.random.uniform( -5, 5, size=(self.size, self.size)).astype(int)
-            zone.field.PH[self.pos.x:self.pos.x+self.size, self.pos.y:self.pos.y+self.size, 1] += excrement
+            excrement = np.random.uniform( -50, -10, size=(self.size, self.size)).astype(int)
+            print(self.pos.x, self.pos.x+self.size, self.pos.y, self.pos.y+self.size)
+            x_off = self.pos.x - zone.rect.topleft[0]
+            y_off = self.pos.y - zone.rect.topleft[1]
+            print(x_off, x_off+self.size, y_off, y_off+self.size)
+            zone.field.PH[x_off:x_off+self.size, y_off:y_off+self.size, 1] += excrement
             
             #TODO offload
             if self.w is None:
