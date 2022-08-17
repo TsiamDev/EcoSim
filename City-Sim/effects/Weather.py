@@ -20,7 +20,7 @@ class WeatherParticle:
             pos.x = random.randint(-DISPLAY.X, 0)
             pos.y = random.randint(-DISPLAY.Y, 0)
             
-            self.img = pygame.image.load('snowflake.svg')
+            self.img = pygame.image.load('effects/snowflake.svg')
             self.img = pygame.transform.scale(self.img, (10, 10))
         elif _type == WEATHER.types['RAIN']:
             pos = type('', (), {})()
