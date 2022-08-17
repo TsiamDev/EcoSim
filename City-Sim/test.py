@@ -508,7 +508,7 @@ def main():
         Display_Roads()
              
         # draw the tractor and move the tractor  
-        # Tractor Action
+        # TODO: Select Next Tractor Action
         #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
         d = tractor.act(data, waypoints, display_surface, plant)
         if d is not None:

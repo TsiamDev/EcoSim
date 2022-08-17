@@ -220,3 +220,6 @@ class Tractor:
 
     def init_Q(self, lst):
         self.tractor_Q = lst
+        self.tractor_Q_ind = 0
+        
+        self.action = self.tractor_Q[0]
