@@ -24,6 +24,11 @@ class Pasture:
             pos.y = rect.center[1]#random.randint(rect.topright[1], rect.bottomright[1])
             
             self.animals.append(Animal(pos, self.animal_type, pygame))
+            
+        self.shelter_img = pygame.image.load('cowbarn.svg')
+        self.shelter_img = pygame.transform.scale(self.shelter_img, (60, 60))
+        self.shelter_rect = self.shelter_img.get_rect()
+        self.shelter_rect = self.shelter_rect.move(rect.topleft)
         
     def animals_act(self, pygame, display_surface, zone, data):
         th_list = []
@@ -33,10 +38,11 @@ class Pasture:
         kws['zone'] = zone
         kws['data'] = data
         for i in range (0, self.animals_num):
-            #self.animals[i].act(pygame, display_surface, zone, data)
-            
+            self.animals[i].act(pygame, display_surface, zone, data)
+        """   
             th_list.append(Thread(target=self.animals[i].act, kwargs=kws))
             th_list[-1].start()
             
         for i in range (0, len(th_list)):
             th_list[i].join()
+        """

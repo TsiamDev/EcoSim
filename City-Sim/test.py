@@ -114,6 +114,9 @@ def Draw_Explored_Zones():
             
             #draw - move the animals
             zone.pasture.animals_act(pygame, display_surface, zone, data)
+            
+            #draw the shelter
+            display_surface.blit(zone.pasture.shelter_img, zone.pasture.shelter_rect)
 
 def Draw_Unexplored_Zones():
     global unexplored_zones, display_surface, gray, label
@@ -356,14 +359,22 @@ def Crop_Growth():
     if time_cnt > TIME.types['CROP']:
         for z in zones:
             if z.field is not None:
-                #crops grow - if <pixel> is planted
-                z.field.crop_growth[z.field.is_planted[:, :] == 1] += (5, 0, 0)
-                #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
-                #print(z.field.crop_growth[:, :, 0])
-                z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
-                z.field.crop_growth[z.field.crop_growth < 0] = 0
-                
-                #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
+                if z.field.has_init == True:
+                    """
+                    #crops grow - if <pixel> is planted
+                    #growth_denominator = np.ones((z.rect.width, z.rect.height))
+                    #t = np.where(np.logical_and(z.field.PH>=110, z.field.PH<=140))
+                    #print(t[0])
+                    #growth_denominator = z.field.PH[t]
+                    #print(growth_denominator)
+                    new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
+                    z.field.crop_growth[z.field.is_planted > 0] += new_growth.astype(int)#(5, 0, 0)
+                    #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
+                    #print(z.field.crop_growth[:, :, 0])
+                    z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
+                    z.field.crop_growth[z.field.crop_growth < 0] = 0
+                    """
+                    #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
         time_cnt = 0
     
     pygame.surfarray.blit_array(display_surface, data)
@@ -411,9 +422,9 @@ def Weather_Effect_To_Ground():
     if weather_effect.type == WEATHER.types['RAIN']:
         
         for z in zones:
-            print(len(rain_b_inc))
-            print(len(rain_b_inc[0]))
-            print((rain_b_inc[0][0]))
+            #print(len(rain_b_inc))
+            #print(len(rain_b_inc[0]))
+            #print((rain_b_inc[0][0]))
             #print(z.field.hum)
             z.field.hum[:, :, 2] = z.field.hum[:, :, 2] + rain_b_inc
             #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
@@ -712,5 +723,5 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
-    #main()
-    profile.run('main()')
+    main()
+    #profile.run('main()')

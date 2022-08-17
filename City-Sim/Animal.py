@@ -6,6 +6,7 @@ Created on Tue Aug  9 13:59:44 2022
 """
 
 import random
+import numpy as np
 
 from Const import ANIMAL, ANIMAL_SIZE, DISPLAY
 
@@ -26,9 +27,17 @@ class Animal:
             self.img_rect = self.img_rect.move(self.pos.x, self.pos.y)    
             print(self.img_rect)
     
+        self.w = None
+        
     def act(self, pygame, display_surface, zone, data):
-        self.eat(zone, data)
-        self.draw(pygame, display_surface, zone)
+        if self.w is None:
+            self.eat(zone, data, display_surface)
+            self.draw(pygame, display_surface, zone)
+        else:
+            #just produced - phone home
+            #print(self.w)
+            self.move(self.w, display_surface, zone)
+            
         
     
     def draw(self, pygame, display_surface, zone):
@@ -70,18 +79,71 @@ class Animal:
         #print(self.img_rect)
         display_surface.blit(self.img, self.img_rect)
 
-    def produce(self, green, red):
-        #food = sum((sum(green) + sum(red))) / 2
-        food = sum(sum(green))
-        self.stomach = self.stomach + food
+    def move(self, waypoints, display_surface, zone):
         
+
+        
+        if len(waypoints) > 0:
+            
+            
+            if waypoints[0][1] - self.img_rect.y < 0:
+                y_dir = -1
+            elif waypoints[0][1] - self.img_rect.y > 0:
+                y_dir = 1
+            else:
+                y_dir = 0
+                
+            if y_dir == 0:
+                if waypoints[0][0] - self.img_rect.x < 0:
+                    x_dir = -1
+                elif waypoints[0][0] - self.img_rect.x > 0:
+                    x_dir = 1
+                else:
+                    x_dir = 0
+            else:
+                x_dir = 0
+            
+            self.pos.x = self.pos.x + x_dir
+            self.pos.y = self.pos.y + y_dir
+            
+            self.img_rect = self.img_rect.move(x_dir, y_dir)
+            display_surface.blit(self.img, self.img_rect)
+            
+            if (x_dir == 0) & (y_dir == 0):
+                del waypoints[0]
+                if len(waypoints) == 0:
+                    self.w = None 
+
+    def produce(self, green, red, display_surface, zone):
+        #food = sum((sum(green) + sum(red))) / 2
+        food = sum(sum(green)) / 1000
+        self.stomach = self.stomach + food
+        print("Stomach: ", self.stomach)                  
+            
         if self.stomach >= 255:
+            #go to shelter to produce
+            #if self.homing_changed == False:
+            #    self.homing = True
+            #    self.homing_changed = True
+            
             self.product = self.product + 255 / 100
             self.stomach = self.stomach - 255
+            
             print("Produced ", 255/100, "L of milk")
             print(self.product)
-        
-    def eat(self, zone, data):
+            
+            #excrete
+            print("Produced ", 150 ,"L of manure")
+            excrement = np.random.uniform( -5, 5, size=(self.size, self.size)).astype(int)
+            zone.field.PH[self.pos.x:self.pos.x+self.size, self.pos.y:self.pos.y+self.size, 1] += excrement
+            
+            #TODO offload
+            if self.w is None:
+                self.w = []
+                self.w.append(zone.pasture.shelter_rect.center)
+                self.w.append(zone.rect.center)
+
+    def eat(self, zone, data, display_surface):
         field = zone.field
         
         w = len(field.crop_growth[0])
@@ -114,7 +176,7 @@ class Animal:
         #print(any(green[green > 50]))
         #print(red)
         if any(green[green > 50]):
-            self.produce(green, red)
+            self.produce(green, red, display_surface, zone)
         
             
         #if green.any() > 0:
