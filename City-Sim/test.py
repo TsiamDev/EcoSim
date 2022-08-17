@@ -411,9 +411,9 @@ def Weather_Effect_To_Ground():
     if weather_effect.type == WEATHER.types['RAIN']:
         
         for z in zones:
-            print(len(rain_b_inc))
-            print(len(rain_b_inc[0]))
-            print((rain_b_inc[0][0]))
+            #print(len(rain_b_inc))
+            #print(len(rain_b_inc[0]))
+            #print((rain_b_inc[0][0]))
             #print(z.field.hum)
             z.field.hum[:, :, 2] = z.field.hum[:, :, 2] + rain_b_inc
             #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
@@ -424,8 +424,7 @@ def main():
     global data, selected_overlay
     
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
-    #roads_thread = Thread(target=Display_Roads)
-    #buttons_thread = Thread(target=Draw_Action_Buttons)
+    
 
 
     running = True
@@ -446,11 +445,16 @@ def main():
       
         # clear the screen
         display_surface.fill(black)
-      
-        
-      
+        """
+        river_thread = Thread(target=move_river)
+        roads_thread = Thread(target=Display_Roads)
+        buttons_thread = Thread(target=Draw_Action_Buttons)
+        weather_effect_thread = Thread(target=Weather_Effect_To_Ground)
+        weather_effect_thread.start()
+        """
         Weather_Effect_To_Ground()
       
+        #river_thread.start()
         move_river()  
         
         #data = Crop_Growth(data)
@@ -469,6 +473,7 @@ def main():
         
         # draw the unexplored zone rectangles
         #left_expz, bot_expz, right_expz, top_expz = Display_Roads()
+        #roads_thread.start()
         Display_Roads()
              
         # draw the tractor and move the tractor  
@@ -481,9 +486,8 @@ def main():
         # Display Overlay
         Display_Overlay()
 
-        Draw_Action_Buttons()
-        #buttons_thread = Thread(target=Draw_Action_Buttons)
         #buttons_thread.start()
+        Draw_Action_Buttons()
       
         weather_effect.draw(display_surface)
       
@@ -565,6 +569,12 @@ def main():
                             del unexplored_zones[key]
                         break
       
+        """  
+        river_thread.join()
+        roads_thread.join()
+        buttons_thread.join()
+        weather_effect_thread.join()
+        """
         #Draw the surface object to the screen.  
         pygame.display.update() 
             
@@ -708,7 +718,7 @@ if __name__ == "__main__":
     
 
     #Weather effects
-    weather_effect = WeatherEffect(pygame, WEATHER.types['SNOW'])
+    weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
     
     selected_overlay = None
     
