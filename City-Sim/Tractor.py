@@ -35,6 +35,9 @@ class Tractor:
         
         self.action = TRACTOR_ACTIONS.types['IDLE']
         
+        self.tractor_Q = []
+        self.tractor_Q_ind = -1
+        
     def move(self, waypoints, display_surface):
         
         if len(waypoints) > 0:
@@ -78,6 +81,8 @@ class Tractor:
             self.move(waypoints, display_surface)
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
             data = self.fertilize_N(data)
+            data = self.fertilize_P(data)
+            data = self.fertilize_K(data)
             self.move(waypoints, display_surface)
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
             data = self.harvest(data)
@@ -135,36 +140,36 @@ class Tractor:
 
     def fertilize_N(self, data):
         #reset <ground> color to <soil> color
-        w = len(self.zone.field.fertilize_N[0])
-        h = len(self.zone.field.fertilize_N[1])
+        w = len(self.zone.field.N[0])
+        h = len(self.zone.field.N[1])
         
         r = (0, 0)
         g = (255, 255)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_N)
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.N)
     
     def fertilize_P(self, data):
         #reset <ground> color to <soil> color
-        w = len(self.zone.field.fertilize_P[0])
-        h = len(self.zone.field.fertilize_P[1])
+        w = len(self.zone.field.P[0])
+        h = len(self.zone.field.P[1])
         
         r = (0, 0)
         g = (255, 255)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_P)
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.P)
 
     def fertilize_K(self, data):
         #reset <ground> color to <soil> color
-        w = len(self.zone.field.fertilize_K[0])
-        h = len(self.zone.field.fertilize_K[1])
+        w = len(self.zone.field.K[0])
+        h = len(self.zone.field.K[1])
         
         r = (0, 0)
         g = (255, 255)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.fertilize_K)
+        return self.render_soil(w, h, r, g, b, None, self.zone.field.K)
 
     def cultivate(self, data):
         #reset <ground> color to <soil> color
@@ -212,3 +217,6 @@ class Tractor:
         b = (0, 0)
         
         return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+
+    def init_Q(self, lst):
+        self.tractor_Q = lst

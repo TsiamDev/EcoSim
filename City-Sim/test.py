@@ -132,7 +132,8 @@ def Draw_Action_Buttons():
     global display_surface
     
     #buttons
-    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
+    global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     
     btn_h = 15
     btn_w = 70
@@ -193,6 +194,11 @@ def Draw_Action_Buttons():
     water_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 10*btn_h + 10*btn_padding, btn_w, btn_h))
     label = font.render("Water", 1, blue)
     label_rect = label.get_rect(center=(water_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    fertilize_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 11*btn_h + 11*btn_padding, btn_w, btn_h))
+    label = font.render("Fertilize N-P-K", 1, blue)
+    label_rect = label.get_rect(center=(fertilize_btn.center))
     display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
@@ -431,12 +437,26 @@ def Weather_Effect_To_Ground():
             #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
             z.field.hum[z.field.hum[:, :, 2] > 255] = 255
 
+def Populate_Tractor_Q(tractor, lst):
+    tractor.init_Q(lst)
+    
+def Define_Policies(tractor):
+    #TODO prompt users to decide which actions the tractors will perform,
+    #and in what order
+    lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
+    
+    Populate_Tractor_Q(tractor, lst)
+    
+
 def main():
-    global data, selected_overlay
+    global data, selected_overlay, tractor
+    
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
+    global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
     
-
+    Define_Policies(tractor)
 
     running = True
 
@@ -533,6 +553,8 @@ def main():
                     tractor.action = TRACTOR_ACTIONS.types['WATER']
                 elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
                     tractor.action = TRACTOR_ACTIONS.types['HARVEST']
+                elif fertilize_btn.collidepoint(pygame.mouse.get_pos()):
+                    tractor.action = TRACTOR_ACTIONS.types['FERTILIZE']
                 elif PH_btn.collidepoint(pygame.mouse.get_pos()):
                     if selected_overlay == OVERLAY.types['PH']:
                         selected_overlay = None
@@ -594,9 +616,10 @@ def main():
     
 
 if __name__ == "__main__":
-    global time_cnt, rain_b_inc
+    global time_cnt, rain_b_inc, tractor
     
-    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
+    global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn 
+    global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     cultivate_btn = None
     sow_btn = None
     PH_btn = None
@@ -733,5 +756,5 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
-    main()
-    #profile.run('main()')
+    #main()
+    profile.run('main()')
