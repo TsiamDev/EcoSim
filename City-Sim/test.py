@@ -712,5 +712,5 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
-    #main()
-    profile.run('main()')
+    main()
+    #profile.run('main()')
