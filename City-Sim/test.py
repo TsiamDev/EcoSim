@@ -26,6 +26,7 @@ from Tractor import Tractor
 from Plant import Plant
 from effects.Weather import WeatherEffect
 
+from networking.Networking import Get_Tractor_Q
 
 def move_river():
     global data, river_W
@@ -439,13 +440,26 @@ def Weather_Effect_To_Ground():
 
 def Populate_Tractor_Q(tractor, lst):
     tractor.init_Q(lst)
-    
+
+def waitForResourceAvailable(response, timeout, timewait):
+    timer = 0
+    while response.status_code == 204:
+        time.sleep(timewait)
+        timer += timewait
+        if timer > timeout:
+            break
+        if response.status_code == 200:
+            break
+
+
 def Define_Policies(tractor):
     #TODO prompt users to decide which actions the tractors will perform,
     #and in what order
-    lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], 
-           TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
     
+    lst = Get_Tractor_Q(TRACTOR_ACTIONS.types)
+    #lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], 
+    #       TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
+    print(lst)
     Populate_Tractor_Q(tractor, lst)
     
 

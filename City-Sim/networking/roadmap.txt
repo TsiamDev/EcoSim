@@ -1,0 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 18 23:27:01 2022
+
+@author: TsiamDev
+"""
+
+1. serve front end with apropriate GUI
+2. wait for responses
+3. timeout
+
