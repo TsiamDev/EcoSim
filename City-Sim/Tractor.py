@@ -11,11 +11,12 @@ from Const import TRACTOR_ACTIONS
 
 class Tractor:
     static_id = 0
+    waypoints = []
     
     def __init__(self, _x, _y, _zone, pygame):
         
         self._id = Tractor.static_id
-        Tractor.static_id = Tractor.static_id + 1
+        Tractor.static_id += 1
         
         self.width = 15
         #tractor = pygame.Rect(x, y, tractor_width, tractor_width)
@@ -38,55 +39,68 @@ class Tractor:
         self.tractor_Q = []
         self.tractor_Q_ind = -1
         
-    def move(self, waypoints, display_surface):
+        lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+        Tractor.waypoints = [item for sublist in lst for item in sublist]
         
-        if len(waypoints) > 0:
+    def move(self, display_surface):
+        
+        if len(self.waypoints) > 0:
             
-            if waypoints[0][1] - self.rect.y < 0:
+            if self.waypoints[0][1] - self.rect.y < 0:
                 y_dir = -1
-            elif waypoints[0][1] - self.rect.y > 0:
+            elif self.waypoints[0][1] - self.rect.y > 0:
                 y_dir = 1
             else:
                 y_dir = 0
                 
             if y_dir == 0:
-                if waypoints[0][0] - self.rect.x < 0:
+                if self.waypoints[0][0] - self.rect.x < 0:
                     x_dir = -1
-                elif waypoints[0][0] - self.rect.x > 0:
+                elif self.waypoints[0][0] - self.rect.x > 0:
                     x_dir = 1
                 else:
                     x_dir = 0
             else:
                 x_dir = 0
             
-            self.rect = self.rect.move(x_dir, y_dir)
+            self.rect = self.rect.move(x_dir*15, y_dir*15)
             display_surface.blit(self.img, self.rect)
             
             if (x_dir == 0) & (y_dir == 0):
-                del waypoints[0]
-                if len(waypoints) == 0:
-                    self.action = TRACTOR_ACTIONS.types['IDLE']
+                del self.waypoints[0]
+                if len(self.waypoints) == 0:
+                    #self.action = TRACTOR_ACTIONS.types['IDLE']
+                    lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+                    self.waypoints  = [item for sublist in lst for item in sublist]
+                    print(self.waypoints)
+                    print(Tractor.waypoints)
+                    self.tractor_Q_ind += 1
+                    if self.tractor_Q_ind >= len(self.tractor_Q):
+                        self.tractor_Q_ind = 0
+                    self.action = self.tractor_Q[self.tractor_Q_ind]
+                    print(self.action)
         
-    def act(self, data, waypoints, display_surface, plant):
+    def act(self, data, display_surface, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
             display_surface.blit(self.img, self.rect)
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
             data = self.cultivate(data)
-            self.move(waypoints, display_surface)
+            self.move(display_surface)
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
             data = self.sow(data, plant)
-            self.move(waypoints, display_surface)
+            print(self.waypoints)
+            self.move(display_surface)
         elif self.action == TRACTOR_ACTIONS.types['WATER']:
             data = self.water(data)
-            self.move(waypoints, display_surface)
+            self.move(display_surface)
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
             data = self.fertilize_N(data)
             data = self.fertilize_P(data)
             data = self.fertilize_K(data)
-            self.move(waypoints, display_surface)
+            self.move(display_surface)
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
             data = self.harvest(data)
-            self.move(waypoints, display_surface)
+            self.move(display_surface)
         
         return data        
 
@@ -94,10 +108,10 @@ class Tractor:
         #because tractor x,y is different from zone x,y
         # - 15 => road width
         # if tractor starts at (15,15) => top left corner of field
-        x_off = self.rect.x - 15 
-        y_off = self.rect.y - 15
+        x_off = self.rect.x #- 15 
+        y_off = self.rect.y #- 15
         
-        #print((x_off, w), (y_off, h))
+        print((x_off, w), (y_off, h))
         if w - x_off < self.width:
             x_low = w - self.width
         else:

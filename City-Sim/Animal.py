@@ -34,7 +34,7 @@ class Animal:
             self.eat(zone, data, display_surface)
             self.draw(pygame, display_surface, zone)
         else:
-            #just produced - phone home
+            #just produced - go home
             #print(self.w)
             self.move(self.w, display_surface, zone)
             

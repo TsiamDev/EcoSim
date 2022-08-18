@@ -510,7 +510,7 @@ def main():
         # draw the tractor and move the tractor  
         # TODO: Select Next Tractor Action
         #data = tractor.act(data, waypoints, display_surface, right_expz, left_expz)
-        d = tractor.act(data, waypoints, display_surface, plant)
+        d = tractor.act(data, display_surface, plant)
         if d is not None:
             data = d
 
@@ -756,5 +756,5 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
-    #main()
-    profile.run('main()')
+    main()
+    #profile.run('main()')
