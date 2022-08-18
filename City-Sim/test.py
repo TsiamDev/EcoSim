@@ -443,7 +443,8 @@ def Populate_Tractor_Q(tractor, lst):
 def Define_Policies(tractor):
     #TODO prompt users to decide which actions the tractors will perform,
     #and in what order
-    lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
+    lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], 
+           TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
     
     Populate_Tractor_Q(tractor, lst)
     
