@@ -16,9 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from EcoSimApp.views import index
+from EcoSimApp.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('index/', index, name='index')
+    path('index/', index, name='index'),
+    path('set_tractor_actions/', set_tractor_actions, name='set_tractor_actions'),
+    path('index/success', success, name='success'),
 ]

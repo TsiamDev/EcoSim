@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-print(TEMPLATES)
+#print(TEMPLATES)
 
 WSGI_APPLICATION = 'EcoSimSite.wsgi.application'
 
