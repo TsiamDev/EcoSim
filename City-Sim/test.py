@@ -26,7 +26,7 @@ from Tractor import Tractor
 from Plant import Plant
 from effects.Weather import WeatherEffect
 
-from networking.Networking import Get_Tractor_Q
+from networking.Networking import *
 
 def move_river():
     global data, river_W
@@ -433,7 +433,14 @@ def Weather_Effect_To_Ground():
             #print(len(rain_b_inc[0]))
             #print((rain_b_inc[0][0]))
             #print(z.field.hum)
-            z.field.hum[:, :, 2] = z.field.hum[:, :, 2] + rain_b_inc
+            #z.field.hum[:, :, 2] += rain_b_inc if any(z.field.hum[:, :, 2] < 255) else 255
+            z.field.hum[:, :, 2] +=  rain_b_inc
+            #z.field.hum += rain_b_inc if z.field.hum[:,:,2] < 255 else 255
+            #i = z.field.hum[:,:,2] + rain_b_inc
+            #i = z.field.hum[:][:][2] < 255
+            #i = z.field.hum[:,:,2] < 255
+            #np.where(i, z.field.hum[i] + rain_b_inc , 255)
+            
             #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
             #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
             z.field.hum[z.field.hum[:, :, 2] > 255] = 255
@@ -441,26 +448,18 @@ def Weather_Effect_To_Ground():
 def Populate_Tractor_Q(tractor, lst):
     tractor.init_Q(lst)
 
-def waitForResourceAvailable(response, timeout, timewait):
-    timer = 0
-    while response.status_code == 204:
-        time.sleep(timewait)
-        timer += timewait
-        if timer > timeout:
-            break
-        if response.status_code == 200:
-            break
-
-
 def Define_Policies(tractor):
     #TODO prompt users to decide which actions the tractors will perform,
     #and in what order
     
-    lst = Get_Tractor_Q(TRACTOR_ACTIONS.types)
+    Set_Tractor_Actions(TRACTOR_ACTIONS.types)
     #lst = [TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'], 
     #       TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['HARVEST']]
-    print(lst)
-    Populate_Tractor_Q(tractor, lst)
+    #print(lst)
+    
+    #lst = Get_Tractor_Actions()
+    
+    #Populate_Tractor_Q(tractor, lst)
     
 
 def main():
@@ -646,7 +645,8 @@ if __name__ == "__main__":
     crop_growth_btn = None
     harvest_btn = None
     
-    rain_b_inc = [[random.randint(1, 3) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
+    rain_b_inc = np.zeros( (DISPLAY.field_w, DISPLAY.field_h), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.field_w)] for j in range(DISPLAY.field_h)]
     
     time_cnt = 0
     
@@ -771,5 +771,8 @@ if __name__ == "__main__":
     
     selected_overlay = None
     
-    main()
-    #profile.run('main()')
+    #Networking
+    Set_Globals()
+    
+    #main()
+    profile.run('main()')
