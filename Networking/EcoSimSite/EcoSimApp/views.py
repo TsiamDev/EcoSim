@@ -35,7 +35,7 @@ def set_tractor_actions(request):
 	#TODO generate HTML and return it
 	response = HttpResponse()
 	response.write(data)
-	return render(request, 'success.html')
+	return render(request, 'index/success.html')
 
 def success(request):
 	return render(request, 'index/success.html')
