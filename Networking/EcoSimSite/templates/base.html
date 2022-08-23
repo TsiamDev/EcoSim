@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>EcoSim Site</title>
+    </head>
+
+    <body>
+    {% csrf_token %}
+    <form type="submit" action = "success" method = "post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" name="b1">1</button>
+        <button type="submit" class="btn btn-primary" name="b2">2</button>
+        <button type="submit" class="btn btn-primary" name="b3">3</button>
+        <button type="submit" class="btn btn-primary" name="b4">4</button>       
+        <button type="submit" class="btn btn-primary" name="b5">5</button>  
+    </form>    
+    {% block content %}{% endblock content %}
+    </body>
+</html>
