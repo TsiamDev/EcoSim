@@ -44,6 +44,9 @@ class City:
         self._in = [0 for i in GOODS.types.items()]
         self._out = [0 for i in GOODS.types.items()]
         
+        
+        
+        
         #Simulation stuff
         self.zones = _zones
         self.unexplored_zones = _unexplored_zones
