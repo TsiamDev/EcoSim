@@ -7,21 +7,23 @@ Created on Mon Aug  8 03:58:15 2022
 
 import random
 
-from Const import TRACTOR_ACTIONS
+from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS
+from networking.Networking import Set_Globals, Set_Tractor_Actions
 
 class Tractor:
     static_id = 0
     waypoints = []
     
-    def __init__(self, _x, _y, _zone, pygame):
+    def __init__(self, _x, _y, _zone, _tractor_scaled_img):
         
         self._id = Tractor.static_id
         Tractor.static_id += 1
         
         self.width = 15
         #tractor = pygame.Rect(x, y, tractor_width, tractor_width)
-        self.img = pygame.image.load('tractor.jpg')
-        self.img = pygame.transform.scale(self.img, (self.width, self.width))
+        #self.img = pygame.image.load('tractor.jpg')
+        #self.img = pygame.transform.scale(self.img, (self.width, self.width))
+        self.img = _tractor_scaled_img
         
         self.rect = self.img.get_rect()
         self.rect = self.rect.move(_x, _y)
@@ -41,6 +43,8 @@ class Tractor:
         
         lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
         Tractor.waypoints = [item for sublist in lst for item in sublist]
+        
+        self.Define_Policies()
         
     def move(self, display_surface):
         
@@ -64,7 +68,7 @@ class Tractor:
                 x_dir = 0
             
             self.rect = self.rect.move(x_dir*15, y_dir*15)
-            display_surface.blit(self.img, self.rect)
+            
             
             if (x_dir == 0) & (y_dir == 0):
                 del self.waypoints[0]
@@ -72,6 +76,7 @@ class Tractor:
                     #self.action = TRACTOR_ACTIONS.types['IDLE']
                     lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
                     self.waypoints  = [item for sublist in lst for item in sublist]
+                    self.tractor_Q = self.waypoints
                     print(self.waypoints)
                     print(Tractor.waypoints)
                     self.tractor_Q_ind += 1
@@ -80,29 +85,29 @@ class Tractor:
                     self.action = self.tractor_Q[self.tractor_Q_ind]
                     print(self.action)
         
-    def act(self, data, display_surface, plant):
+    def act(self, data, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
-            display_surface.blit(self.img, self.rect)
+            data = None
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
             data = self.cultivate(data)
-            self.move(display_surface)
+            self.move()
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
             data = self.sow(data, plant)
             print(self.waypoints)
-            self.move(display_surface)
+            self.move()
         elif self.action == TRACTOR_ACTIONS.types['WATER']:
             data = self.water(data)
-            self.move(display_surface)
+            self.move()
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
             data = self.fertilize_N(data)
             data = self.fertilize_P(data)
             data = self.fertilize_K(data)
-            self.move(display_surface)
+            self.move()
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
             data = self.harvest(data)
-            self.move(display_surface)
+            self.move()
         
-        return data        
+        return data, self.img, self.rect             
 
     def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
         #because tractor x,y is different from zone x,y
@@ -231,6 +236,12 @@ class Tractor:
         b = (0, 0)
         
         return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+
+    def Define_Policies(self):
+        #TODO prompt users to decide which actions the tractors will perform,
+        #and in what order
+        Set_Globals()
+        Set_Tractor_Actions(TRACTOR_ACTIONS.types)
 
     def init_Q(self, lst):
         self.tractor_Q = lst
