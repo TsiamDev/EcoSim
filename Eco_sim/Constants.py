@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun 19 13:14:17 2022
+
+@author: HomeTheater
+"""
+
+# CITIES
+CITY_COLOR = (255,0,0)
+CITY_NUM = 3
+CITY_W = 20
+
+# ROUTES
+LINE_COLOR = (0,0,0)
+
+# ENVIRONMENT
+FOREST_COLOR = (0,255,0)
+LAKE_COLOR = (0,0,255)
+LAKES_NUM = 4
+FORESTS_NUM = 5
+
+
+# WINDOW
+BACK_COLOR = (255,255,255)
+WINDOW_W = 600
+WINDOW_H = 600
+FPS = 30
+
+# SCOUTS
+SUPPLY = 80
+SCOUT_COLOR = (50,50,50)
+SCOUT_W = 50
