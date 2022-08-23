@@ -13,7 +13,7 @@ import random
 from threading import Thread
 
 class Pasture:
-    def __init__(self, rect, pygame):
+    def __init__(self, rect):
         self.animal_type = ANIMAL.types['COW']
         self.animals_num = random.randint(1, 10)
         self.animals = []
@@ -23,12 +23,15 @@ class Pasture:
             pos.x = rect.center[0]#random.randint(rect.topleft[0], rect.topright[0])
             pos.y = rect.center[1]#random.randint(rect.topright[1], rect.bottomright[1])
             
-            self.animals.append(Animal(pos, self.animal_type, pygame))
+            self.animals.append(Animal(pos, self.animal_type))
             
-        self.shelter_img = pygame.image.load('cowbarn.svg')
-        self.shelter_img = pygame.transform.scale(self.shelter_img, (60, 60))
-        self.shelter_rect = self.shelter_img.get_rect()
-        self.shelter_rect = self.shelter_rect.move(rect.topleft)
+        self.shelter_img = None
+        self.shelter_rect = None
+        self.shelter_img_key = 'shelter_scaled_img'
+        #self.rect.x = rect.x
+        #self.rect.y = rect.y
+        #self.shelter_rect = self.shelter_img.get_rect()
+        #self.shelter_rect = self.shelter_rect.move(rect.topleft)
         
     def animals_act(self, pygame, display_surface, zone, data):
         th_list = []

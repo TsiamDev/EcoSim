@@ -14,7 +14,7 @@ class Tractor:
     static_id = 0
     waypoints = []
     
-    def __init__(self, _x, _y, _zone, _tractor_scaled_img):
+    def __init__(self, _x, _y, _zone, ):
         
         self._id = Tractor.static_id
         Tractor.static_id += 1
@@ -23,10 +23,14 @@ class Tractor:
         #tractor = pygame.Rect(x, y, tractor_width, tractor_width)
         #self.img = pygame.image.load('tractor.jpg')
         #self.img = pygame.transform.scale(self.img, (self.width, self.width))
-        self.img = _tractor_scaled_img
+        self.img_key = 'tractor_scaled_img'
         
-        self.rect = self.img.get_rect()
-        self.rect = self.rect.move(_x, _y)
+        self.rect = type('', (), {})()
+        self.rect.x = _x#self.img.get_rect().x
+        self.rect.y = _y#self.img.get_rect().y
+        #self.rect.topleft = self.img.get_rect().topleft
+        #self.rect
+        #self.rect = self.rect.move(_x, _y)
         
         
         #self.x = _x
@@ -107,7 +111,7 @@ class Tractor:
             data = self.harvest(data)
             self.move()
         
-        return data, self.img, self.rect             
+        return data, self.img_key, self.rect             
 
     def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
         #because tractor x,y is different from zone x,y

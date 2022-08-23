@@ -25,7 +25,7 @@ import cProfile as profile
 #from multiprocessing.pool import Pool
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
-from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW
+from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE
 
 from Zone import Zone
 #from Tractor import Tractor
@@ -65,14 +65,14 @@ def Display_Roads():
     return left_expz, bot_expz, right_expz, top_expz
 
     
-def Draw_Explored_Zones():
-    global data, display_surface, zones, N, ROAD_WIDTH, pygame
+def Draw_Explored_Zones(data, zones):
+    global display_surface, pygame
     
     for zone in zones:
     
         if zone.type == CONST.types['FIELD']:
             if zone.field.has_init == False:
-                rect = zone.rect
+                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
                 # update the field
                 #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
                 g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
@@ -108,7 +108,7 @@ def Draw_Explored_Zones():
                 #temporary
                 g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
                 
-                rect = zone.rect
+                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
                 data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
                 data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
                 data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
@@ -127,11 +127,11 @@ def Draw_Explored_Zones():
             #draw the shelter
             display_surface.blit(zone.pasture.shelter_img, zone.pasture.shelter_rect)
 
-def Draw_Unexplored_Zones():
-    global unexplored_zones, display_surface, gray, label
+def Draw_Unexplored_Zones(unexplored_zones):
+    global display_surface, gray, label, pygame
     
     for key, uz in unexplored_zones.items():
-        pygame.draw.rect(display_surface, gray, uz.rect)
+        pygame.draw.rect(display_surface, gray, pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         label_rect = label.get_rect(center=(uz.rect.center))
         display_surface.blit(label, label_rect)
 
@@ -401,7 +401,7 @@ def Crop_Growth():
     pygame.surfarray.blit_array(display_surface, data)
     #return data
 
-def Display_Overlay():
+def Display_Overlay(zones):
     global selected_overlay
     
     
@@ -434,6 +434,7 @@ def Display_Overlay():
                 elif selected_overlay is OVERLAY.types['K']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
+                    #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
                     
                 #pygame.surfarray.blit_array(display_surface, data_temp)
@@ -474,9 +475,7 @@ def Weather_Effect_To_Ground_Proc():
         
         time.sleep(1./120)
 
-def Weather_Effect_To_Ground():
-    global weather_effect, zones, rain_b_inc
-    
+def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
     if weather_effect.type == WEATHER.types['RAIN']:
         
         for z in zones:
@@ -529,7 +528,7 @@ def main():
     global switch_scene_btn
     
     global scouts, forests, lakes, cities
-    global rain_b_inc
+    global rain_b_inc, images
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
     
     #Define_Policies(tractor)
@@ -556,30 +555,37 @@ def main():
     #Snow.draw(display_surface)
     """
     active_city = cities[0]
+    city_rects = []
+   
+    FPS = 60 # frames per second setting
+    fpsClock = pygame.time.Clock()
     
     # infinite loop
     while running :
         
-        if selected_view == VIEW.types['MAP_VIEW']:
-            Draw(display_surface, scouts, lakes, forests, cities)    
-        elif selected_view == VIEW.types['CITY_VIEW']:
+        for c in cities:
+            Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
         
-            Weather_Effect_To_Ground()
-            d = Display_Overlay()
+        if selected_view == VIEW.types['MAP_VIEW']:
+            city_rects = Draw(display_surface, scouts, lakes, forests, cities)    
+        elif selected_view == VIEW.types['CITY_VIEW']:
+    
+            
+            d = Display_Overlay(active_city.zones)
             if d is not None:
-                data = d
+                active_city.data = d
                 
-            data = move_river(data) 
-            tractor_img, tractor_rect = active_city.Draw()
+            active_city.data = move_river(active_city.data) 
+            tractor_img_key, tractor_rect = active_city.Draw()
             
             #Crop_Growth()
             
             display_surface.fill(black)
-            pygame.surfarray.blit_array(display_surface, data)
-            display_surface.blit(tractor_img, tractor_rect)
+            pygame.surfarray.blit_array(display_surface, active_city.data)
+            display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
     
-            Draw_Unexplored_Zones()
-            Draw_Explored_Zones()
+            Draw_Unexplored_Zones(active_city.unexplored_zones)
+            Draw_Explored_Zones(active_city.data, active_city.zones)
             
         Draw_Action_Buttons()
 
@@ -658,22 +664,31 @@ def main():
                         selected_view = VIEW.types['MAP_VIEW']
                     else:#if selected_view == OVERLAY.types['MAP_VIEW']:
                         selected_view = VIEW.types['CITY_VIEW']
-                        
-                # Explore clicked zone
-                for key, ez in unexplored_zones.items():
-                    if ez.rect.collidepoint(pygame.mouse.get_pos()):                    
-                        print("Expanded to zone " + str(key))
-                        unexplored_zones[key].explore()
-                        zones.append(unexplored_zones[key])
                 
-                        if key in unexplored_zones.keys():
-                            del unexplored_zones[key]
+                if selected_view == VIEW.types['CITY_VIEW']:
+                    # Explore clicked zone
+                    for key, uz in active_city.unexplored_zones.items():
+                        if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
+                            print("Expanded to zone " + str(key))
+                            active_city.unexplored_zones[key].explore()
+                            active_city.zones.append(active_city.unexplored_zones[key])
+                    
+                            if key in active_city.unexplored_zones.keys():
+                                del active_city.unexplored_zones[key]
+                            break
+                    
+                #Click on a city
+                for i in range(0, len(city_rects)):
+                    if city_rects[i].collidepoint(pygame.mouse.get_pos()):
+                        print("clicked on city")
+                        selected_view = VIEW.types['CITY_VIEW']
+                        active_city = cities[i]
                         break
                     
         #Draw the surface object to the screen.  
         pygame.display.update() 
-            
-        time.sleep(1./120)
+        fpsClock.tick(FPS)
+        #time.sleep(1./120)
     
     #weather_effects_proc.join()
 
@@ -681,7 +696,13 @@ def Load_Images(pygame):
     images = {}
     img = pygame.image.load('tractor.jpg')
     images['tractor_scaled_img'] = pygame.transform.scale(img, (TRACTOR_PARAMETERS.W, TRACTOR_PARAMETERS.H))
-
+    
+    img = pygame.image.load('cowbarn.svg')
+    images['shelter_scaled_img'] = pygame.transform.scale(img, (60, 60))
+    
+    img = pygame.image.load('cow.png')
+    images['cow_scaled_img'] = pygame.transform.scale(img, (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW']))
+    
     return images
 
 def Initialize():
@@ -713,12 +734,26 @@ def Initialize():
         
     return coords, centers, lakes, forests
 
+def Init_Rects():
+    global images, cities
+    
+    for c in cities:
+        for key, uz in c.unexplored_zones.items():
+            uz.pasture.shelter_img = images[uz.pasture.shelter_img_key]
+            uz.pasture.shelter_rect = uz.pasture.shelter_img.get_rect()
+            uz.pasture.shelter_rect = uz.pasture.shelter_rect.move(uz.rect.x, uz.rect.y)
+            for a in uz.pasture.animals:
+                a.img = images[a.img_key]
+                a.img_rect = a.img.get_rect()
+                a.img_rect = a.img_rect.move(a.pos.x, a.pos.y)
+
 if __name__ == "__main__":
     global time_cnt, rain_b_inc, tractor
     
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn 
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     global scouts, forests, lakes, cities
+    global images, cities
     
     cultivate_btn = None
     sow_btn = None
@@ -784,9 +819,12 @@ if __name__ == "__main__":
     data[15:N+15,15:N+15,1] = g
     #data[15:N+15,15:N+15,2] = b
     """
-    rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
+    images = Load_Images(pygame)
+    
+    #rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
+    rect = pygame.Rect((DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH), (DISPLAY.N, DISPLAY.N))
     #unexplored_zones.append(Zone(0, rect))
-    zones.append(Zone(3, rect, pygame, CONST.types['FIELD']))
+    zones.append(Zone(3, rect, CONST.types['FIELD']))
     zones[0].field.has_init = True
       
     # set the pygame window name
@@ -799,16 +837,53 @@ if __name__ == "__main__":
     exp_z_len = len(unexplored_zones)
     rng = range(0, exp_z_len)
     
+    
+    
     if len(unexplored_zones) == 0:
+        """
         rect0 = pygame.draw.rect(display_surface, gray, (330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15, DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect1 = pygame.draw.rect(display_surface, gray, (15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect2 = pygame.draw.rect(display_surface, gray, (330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, DISPLAY.ZONE_W, DISPLAY.ZONE_H))
     
-        unexplored_zones[0] = Zone(0, rect0, pygame)
-        unexplored_zones[1] = Zone(1, rect1, pygame)
-        unexplored_zones[2] = Zone(2, rect2, pygame)
+        unexplored_zones[0] = Zone(0, rect0, images)
+        unexplored_zones[1] = Zone(1, rect1, images)
+        unexplored_zones[2] = Zone(2, rect2, images)
+        """
+        rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
+        rect = type('', (), {})()
+        rect.center = rect0.center
+        rect.topleft = rect0.topleft
+        rect.topright = rect0.topright
+        rect.bottomright = rect0.bottomright
+        rect.x = rect0.x
+        rect.y = rect0.y
+        unexplored_zones[0] = Zone(0, copy.deepcopy(rect))
+        
+        rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
+        rect = type('', (), {})()
+        rect.center = rect1.center
+        rect.topleft = rect1.topleft
+        rect.topright = rect1.topright
+        rect.bottomright = rect1.bottomright
+        rect.x = rect1.x
+        rect.y = rect1.y
+        unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
+        
+        rect2 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
+        rect = type('', (), {})()
+        rect.center = rect2.center
+        rect.topleft = rect2.topleft
+        rect.topright = rect2.topright
+        rect.bottomright = rect2.bottomright
+        rect.x = rect2.x
+        rect.y = rect2.y
+        unexplored_zones[2] = Zone(2, copy.deepcopy(rect))
+        #print(type(images['shelter_scaled_img']))
+        
+        
+        
+        
     
-    imgs = Load_Images(pygame)
     
     #Init Cities:
     #cities = []
@@ -821,9 +896,9 @@ if __name__ == "__main__":
     centered_centers = copy.deepcopy(centers)
     
     cities = []
-    cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[0], centers[0], unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
-    cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[1], centers[1], unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
-    cities.append(City(2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[2], centers[2], unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
+    cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[0], centers[0], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
+    cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[1], centers[1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
+    cities.append(City(2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[2], centers[2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
 
     scouts = []
     scouts.append(Scout(centered_centers[0], pygame.Rect(coords[0][0] + DISPLAY.CITY_W/2 - DISPLAY.SCOUT_W/2, coords[0][1] + DISPLAY.CITY_H/2 - DISPLAY.SCOUT_H/2, DISPLAY.SCOUT_W, DISPLAY.SCOUT_H)))
@@ -834,6 +909,8 @@ if __name__ == "__main__":
     selected_overlay = None
     
     running = True
-     
+    
+    Init_Rects()
+    
     main()
     #profile.run('main()')

@@ -22,7 +22,7 @@ class Zone:
         self.constructs = []
     
     # _ez_idx: explored zone index
-    def __init__(self, _ez_idx, _rect, pygame, _type=None):
+    def __init__(self, _ez_idx, _rect, _type=None):
 
         self.is_explored = True
         self.ez_idx = _ez_idx
@@ -40,7 +40,7 @@ class Zone:
             # field's state
             self.field = Field(self.rect)
         elif self._is(CONST.types['PASTURE']):
-            self.pasture = Pasture(self.rect, pygame)
+            self.pasture = Pasture(self.rect)
             self.field = Field(self.rect, True)
         elif self._is(CONST.types['BARN_SILO']):
             # constructs list

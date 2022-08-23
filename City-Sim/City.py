@@ -13,7 +13,7 @@ import numpy as np
 import random
 
 class City:
-    def __init__(self, j, prices, cons_policy, reserve, _coords, _center, _unexplored_zones, _zones, _plant, tractor_img):
+    def __init__(self, j, prices, cons_policy, reserve, _coords, _center, _unexplored_zones, _zones, _plant):
         self.id = j
         
         self.pos = _coords
@@ -63,7 +63,7 @@ class City:
         self.plant = _plant
         
             #tractor stuff
-        self.tractor = Tractor(15, 15, self.zones[0], tractor_img)
+        self.tractor = Tractor(15, 15, self.zones[0])
                 
         
     def Produce(self):        
@@ -188,9 +188,9 @@ class City:
         
         #self.Draw_Unexplored_Zones()
         
-        d, tractor_img, tractor_rect = self.tractor.act(self.data, self.plant)
+        d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
         if d is not None:
             self.data = d
             
-        return tractor_img, tractor_rect
+        return tractor_img_key, tractor_rect
         

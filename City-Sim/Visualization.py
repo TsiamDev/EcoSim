@@ -33,8 +33,11 @@ def Draw_Env(surface, lakes, forests):
 
 def Draw_Cities(surface, cities):
     # Draw Cities
+    city_rects = []
     for i in range(0, len(cities)):
-        pygame.draw.rect(surface, CITY_COLOR, pygame.Rect(cities[i].pos[0], cities[i].pos[1], CITY_W, CITY_W))
+        city_rects.append( pygame.draw.rect(surface, CITY_COLOR, pygame.Rect(cities[i].pos[0], cities[i].pos[1], CITY_W, CITY_W)))
+        
+    return city_rects
 
 def Draw_Routes(surface, cities):
     # Draw Routes
@@ -55,10 +58,10 @@ def Draw(surface, scouts, lakes, forests, cities):
     
     Draw_Env(surface, lakes, forests)
     
-    Draw_Cities(surface, cities)
+    city_rects = Draw_Cities(surface, cities)
     Draw_Routes(surface, cities)  
     
-    
+    return city_rects
     
     #pygame.display.flip()
 
