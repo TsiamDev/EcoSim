@@ -13,6 +13,7 @@ from Const import CONST
 from Construct import Construct
 from Field import Field
 from Pasture import Pasture
+from MyRect import MyRect
 
 class Zone:
     # ctors
@@ -28,7 +29,7 @@ class Zone:
         self.ez_idx = _ez_idx
                 
         #encompasing rectangle
-        self.rect = _rect
+        self.rect = MyRect(_rect)
         print(self.rect)
         
         if _type is None:

@@ -16,6 +16,8 @@ import time
 import sys
 import copy
 import os
+import pprint
+import math
 
 import cProfile as profile
 #from threading import Thread
@@ -37,6 +39,7 @@ from Scout import Scout
 from effects.Weather import WeatherEffect
 from Visualization import Draw
 from MyRect import MyRect
+#from  MyMultiprocessing import Weather_Effect_To_Ground_Proc3
 
 from networking.Networking import Set_Globals, Set_Tractor_Actions
 
@@ -453,42 +456,6 @@ def Display_Overlay(zones):
         return data_temp
     return None
 
-def Weather_Effect_To_Ground_Proc(mp_queue):#, _weather_effect_type):
-    #global weather_effect_type
-    #weather_effect_type = _weather_effect_type
-    #Weather effects
-    #weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
-    print(1)
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print(2)
-    print (os.getpid() , "working")
-    while True:
-        zones = mp_queue.get(True)
-        print (os.getpid(), "got", zones)
-        #time.sleep(1) # simulate a "long" operation
-    
-        #if weather_effect_type == WEATHER.types['RAIN']:
-            
-        for z in zones:
-            #print(len(rain_b_inc))
-            #print(len(rain_b_inc[0]))
-            #print((rain_b_inc[0][0]))
-            #print(z.field.hum)
-            #z.field.hum[:, :, 2] += rain_b_inc if any(z.field.hum[:, :, 2] < 255) else 255
-            z.field.hum[:, :, 2] +=  rain_b_inc
-            #z.field.hum += rain_b_inc if z.field.hum[:,:,2] < 255 else 255
-            #i = z.field.hum[:,:,2] + rain_b_inc
-            #i = z.field.hum[:][:][2] < 255
-            #i = z.field.hum[:,:,2] < 255
-            #np.where(i, z.field.hum[i] + rain_b_inc , 255)
-            
-            #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
-            #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
-            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-        
-        #time.sleep(1./120)
-
 def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
     if weather_effect.type == WEATHER.types['RAIN']:
         print(zones)
@@ -543,6 +510,134 @@ def Render_Current_FPS(text):
     label_rect = label.get_rect(center=(fps_rect.center))
     display_surface.blit(label, label_rect)
 
+def Q_Consumer6(q_in, q_out):
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    print("consumer ", os.getpid(), " started")
+    while True:
+        zones = q_in.get(True)
+        if zones is not None:
+            for z in zones:
+                z.field.hum[:, :, 2] +=  rain_b_inc
+                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                #print("Hum changed")
+            q_out.put(zones)
+        else: 
+            break
+        #sys.stdout.flush()
+    print("consumer ", os.getpid(), " finished", flush=True) 
+
+def Q_Consumer5(city, q):
+    #global cities
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    #print("consumer ", os.getpid(), " started")
+    while True:
+        if not q.empty():
+            for z in city.zones:
+                z.field.hum[:, :, 2] +=  rain_b_inc
+                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                #print("Hum changed", flush=True)
+    #print("consumer ", os.getpid(), " finished", flush=True) 
+    
+    return city
+
+def Q_Consumer4(city):
+    #global cities
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    #print("consumer ", os.getpid(), " started")
+    #while True:
+    if city is not None:
+        for z in city.zones:
+            z.field.hum[:, :, 2] +=  rain_b_inc
+            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+            #print("Hum changed", flush=True)
+    #print("consumer ", os.getpid(), " finished", flush=True) 
+    
+    return city
+
+def Q_Consumer3(args):
+    #global cities
+    cities = args
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    print("consumer ", os.getpid(), " started")
+    #while True:
+    if cities is not None:
+        cs = []
+        for c in cities:
+            for z in c.zones:
+                z.field.hum[:, :, 2] +=  rain_b_inc
+                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                #print("Hum changed", flush=True)
+            cs.append(c)
+    print("consumer ", os.getpid(), " finished", flush=True) 
+    
+    return cs
+
+def Q_Consumer2(args):
+    global cities
+    cities = args[1]
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    print("consumer ", os.getpid(), " started")
+    while True:
+        if cities[args[0]] is not None:
+            for z in cities[args[0]].zones:
+                z.field.hum[:, :, 2] +=  rain_b_inc
+                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                #print("Hum changed", flush=True)
+        else: 
+            break
+    print("consumer ", os.getpid(), " finished", flush=True) 
+
+def Q_Consumer(q):
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    print("consumer ", os.getpid(), " started")
+    while True:
+        zones = q.get(True)
+        if zones is not None:
+            for z in zones:
+                z.field.hum[:, :, 2] +=  rain_b_inc
+                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                #print("Hum changed")
+        else: 
+            break
+        #sys.stdout.flush()
+    print("consumer ", os.getpid(), " finished", flush=True) 
+
+def Weather_Effect_To_Ground_Proc3(cities, num_consumers):
+    consumers = []
+    print("Starting consumers...")
+    chunk = math.ceil(len(cities) / num_consumers)
+    print(chunk)
+    for i in range(0, num_consumers):
+        
+        consumer = Process(target=City_Consumer, args=(cities[i:i+chunk],))
+        #consumer.daemon = True
+        
+        consumer.start()  # Launch consumer() as another proc
+        consumers.append(consumer)
+        
+    print("Returning consumers...")
+    return consumers
+
+def City_Consumer(cities):
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+    print("consumer ", os.getpid(), " started")
+    while True:
+        for c in cities:
+            if c.zones is not None:
+                for z in c.zones:
+                    z.field.hum[:, :, 2] +=  rain_b_inc
+                    z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+                    #print("Hum changed")
+        #sys.stdout.flush()
+    print("consumer ", os.getpid(), " finished", flush=True) 
+
 """
 def Init_Event_Proc():
     
@@ -559,7 +654,7 @@ def main():
     global switch_scene_btn
     
     global scouts, forests, lakes, cities
-    global rain_b_inc, images
+    global rain_b_inc, images, multiproc_Q
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
     
     #Define_Policies(tractor)
@@ -593,23 +688,45 @@ def main():
     FPS = 120 # frames per second setting
     fpsClock = pygame.time.Clock()
     
-    multiproc_Q = mp.Queue()
-    multiproc_pool = mp.Pool(mp.cpu_count(), Weather_Effect_To_Ground_Proc, (multiproc_Q,))# weather_effect.type))
+    #direction: from the main process to the subprocesses
+    q = mp.Queue()
+    #direction: from the subprocesses to the main process
+    wb_q = mp.Queue()
+    print("CPUs", mp.cpu_count())
     
+    num_consumers = 2#mp.cpu_count()-1
+    #consumers = Weather_Effect_To_Ground_Proc3(cities, num_consumers)
+    #print(q_consumers)
+    #l = mp.Lock()
+    #multiproc_pool = mp.Pool(mp.cpu_count())#, Weather_Effect_To_Ground_Proc, (multiproc_Q, l,))
+    #multiproc_pool.start()# weather_effect.type))
+    #with mp.Pool(num_consumers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
+        
+    #pool.map_async(Q_Consumer6, (q, wb_q))
     # infinite loop
     while running :
         
-        for c in cities:
-            #Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
-            #print(type(c.zones))
-            multiproc_Q.put(c.zones)
-            #time.sleep(1/5)
             
+        #print(cities)
+        #print([c.zones for c in cities])
+        
+        #multiproc_pool.map(Weather_Effect_To_Ground_Proc2, [c.zones for c in cities])
+        for c in cities:
+            Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
+            #if not wb_q.empty():
+             #   c.zones = wb_q.get(True)
+           #     q.put(c.zones)
+        #print(type(c.zones))
+        #multiproc_Q.put(c.zones)
+        #time.sleep(1/5)
+        
+        #print(multiproc_Q.qsize())
         if selected_view == VIEW.types['MAP_VIEW']:
-            city_rects = Draw(display_surface, scouts, lakes, forests, cities)    
+            city_rects = Draw(display_surface, scouts, lakes, forests, cities)
+            #time.sleep(1./5)
         elif selected_view == VIEW.types['CITY_VIEW']:
     
-            
+            #cities.wait()
             d = Display_Overlay(active_city.zones)
             if d is not None:
                 active_city.data = d
@@ -731,7 +848,17 @@ def main():
         #time.sleep(1./120)
     
     #weather_effects_proc.join()
+    #multiproc_pool.close()
+    #multiproc_pool.join()
+    """
+    for i in range(0, num_consumers):
+        multiproc_Q.put(None)
+    for idx, a_reader_proc in enumerate(q_consumers):
+            print("    Waiting for reader_p.join() index %s" % idx)
+            a_reader_proc.join()  # Wait for a_reader_proc() to finish
 
+            print("        reader_p() idx:%s is done" % idx)
+    """
 def Load_Images(pygame):
     images = {}
     img = pygame.image.load('tractor.jpg')
@@ -805,7 +932,7 @@ if __name__ == "__main__":
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn 
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     global scouts, forests, lakes, cities
-    global images, cities, weather_effect
+    global images, weather_effect
     
     
     cultivate_btn = None
@@ -926,6 +1053,8 @@ if __name__ == "__main__":
     #print(coords)
     centered_centers = copy.deepcopy(centers)
     
+    #manager = mp.Manager()
+    #cities = manager.list()
     cities = []
     cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[0], centers[0], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
     cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[1], centers[1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))

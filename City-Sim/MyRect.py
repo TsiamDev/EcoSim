@@ -14,6 +14,7 @@ class MyRect:
         self.topleft = _rect.topleft
         self.topright = _rect.topright
         self.bottomright = _rect.bottomright
+        self.bottomleft = _rect.bottomleft
         
     def move(self, _x, _y):
         self.x = _x

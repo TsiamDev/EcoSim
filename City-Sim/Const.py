@@ -25,7 +25,7 @@ class DISPLAY(object):
 class CONSTANTS(object):
     def __init__(self):
         self.types = {}
-        self.types['CITY_NUM'] = 4
+        self.types['CITY_NUM'] = 3
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         

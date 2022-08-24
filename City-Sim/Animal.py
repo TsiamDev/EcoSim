@@ -51,7 +51,7 @@ class Animal:
     
     def draw(self, pygame, display_surface, zone):
         #print("draw animal")      
-        zone.rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
+        #zone.rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
         if self.x <= zone.rect.topleft[0]:# & (self.pos.x < zone.rect.top_right[0]):
             x_low_bound = 0
         else:
@@ -127,7 +127,7 @@ class Animal:
         #food = sum((sum(green) + sum(red))) / 2
         food = sum(sum(green)) / 1000
         self.stomach = self.stomach + food
-        print("Stomach: ", self.stomach)                  
+        #print("Stomach: ", self.stomach)                  
             
         if self.stomach >= 255:
             #go to shelter to produce
@@ -138,16 +138,16 @@ class Animal:
             self.product = self.product + 255 / 100
             self.stomach = self.stomach - 255
             
-            print("Produced ", 255/100, "L of milk")
-            print(self.product)
+            #print("Produced ", 255/100, "L of milk")
+            #print(self.product)
             
             #excrete
-            print("Produced ", 150 ,"L of manure")
+            #print("Produced ", 150 ,"L of manure")
             excrement = np.random.uniform( -50, -10, size=(self.size, self.size)).astype(int)
-            print(self.x, self.x+self.size, self.y, self.y+self.size)
+            #print(self.x, self.x+self.size, self.y, self.y+self.size)
             x_off = self.x - zone.rect.topleft[0]
             y_off = self.y - zone.rect.topleft[1]
-            print(x_off, x_off+self.size, y_off, y_off+self.size)
+            #print(x_off, x_off+self.size, y_off, y_off+self.size)
             zone.field.PH[x_off:x_off+self.size, y_off:y_off+self.size, 1] += excrement
             
             #TODO offload
