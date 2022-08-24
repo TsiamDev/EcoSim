@@ -71,31 +71,76 @@ def Display_Roads():
     return left_expz, bot_expz, right_expz, top_expz
 
     
-def Draw_Explored_Zones(data, zones):
+def Init_Explored_Zones(data, zone):
+    global display_surface, pygame, images
+    
+    #for zone in zones:
+    
+    if zone.type == CONST.types['FIELD']:
+        if zone.field.has_init == False:
+            rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
+            # update the field
+            #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+
+            #data[15:N+15,15:N+15,0] = r
+            #data[15:N+15,15:N+15,1] = g
+            #data[15:N+15,15:N+15,2] = b
+            print(rect.topleft)
+            print(rect.bottomleft)
+            print(rect.topright)
+            print(rect.bottomright)
+            #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
+            data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
+            
+            zone.field.has_init = True
+        """
+        elif zone.type == CONST.types['BARN_SILO']:
+            #draw the building
+            building_img = pygame.image.load('barn_silo.png')
+            building_img = pygame.transform.scale(building_img, (N, N))
+            bi_rect = building_img.get_rect()
+            bi_rect = bi_rect.move((zone.rect.topleft))
+            display_surface.blit(building_img, bi_rect)
+        """   
+    elif zone.type == CONST.types['PASTURE']:
+        if zone.field.has_init == False:
+            #plant the field
+            #plant a specific plant based on user input
+            #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+            #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+            #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+            
+            #temporary
+            g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            
+            rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
+            
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 0] = 0
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 1] = g
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 2] = 0
+            #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
+            #unexplored_zones.append(Zone(0, rect))
+            #zones.append(Zone(3, rect, 1))
+            zone.field.has_init = True
+        
+        #draw - move the animals
+        #zone.pasture.animals_act(pygame, display_surface, zone, data, images)
+        
+        #draw the shelter
+        #rect = zone.pasture.shelter_rect
+        #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+        #display_surface.blit(images[zone.pasture.shelter_img_key], rect)
+
+def Draw_Explored_Zones(zones):
     global display_surface, pygame, images
     
     for zone in zones:
-    
-        if zone.type == CONST.types['FIELD']:
-            if zone.field.has_init == False:
-                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
-                # update the field
-                #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-    
-                #data[15:N+15,15:N+15,0] = r
-                #data[15:N+15,15:N+15,1] = g
-                #data[15:N+15,15:N+15,2] = b
-                print(rect.topleft)
-                print(rect.bottomleft)
-                print(rect.topright)
-                print(rect.bottomright)
-                #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
-                data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
-                
-                zone.field.has_init = True
-        elif zone.type == CONST.types['BARN_SILO']:
+        if zone.type == CONST.types['BARN_SILO']:
             #draw the building
             building_img = pygame.image.load('barn_silo.png')
             building_img = pygame.transform.scale(building_img, (N, N))
@@ -104,28 +149,6 @@ def Draw_Explored_Zones(data, zones):
             display_surface.blit(building_img, bi_rect)
             
         elif zone.type == CONST.types['PASTURE']:
-            if zone.field.has_init == False:
-                #plant the field
-                #plant a specific plant based on user input
-                #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
-                #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
-                #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
-                
-                #temporary
-                g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                
-                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
-                
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 0] = 0
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 1] = g
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 2] = 0
-                #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
-                #unexplored_zones.append(Zone(0, rect))
-                #zones.append(Zone(3, rect, 1))
-                zone.field.has_init = True
             
             #draw - move the animals
             zone.pasture.animals_act(pygame, display_surface, zone, data, images)
@@ -701,7 +724,6 @@ def main():
     #multiproc_pool = mp.Pool(mp.cpu_count())#, Weather_Effect_To_Ground_Proc, (multiproc_Q, l,))
     #multiproc_pool.start()# weather_effect.type))
     #with mp.Pool(num_consumers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
-        
     #pool.map_async(Q_Consumer6, (q, wb_q))
     # infinite loop
     while running :
@@ -709,7 +731,6 @@ def main():
             
         #print(cities)
         #print([c.zones for c in cities])
-        
         #multiproc_pool.map(Weather_Effect_To_Ground_Proc2, [c.zones for c in cities])
         for c in cities:
             Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
@@ -741,8 +762,8 @@ def main():
             display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
     
             Draw_Unexplored_Zones(active_city.unexplored_zones)
-            Draw_Explored_Zones(active_city.data, active_city.zones)
-            
+            Draw_Explored_Zones(active_city.zones)
+
         Draw_Action_Buttons()
 
       
@@ -828,9 +849,11 @@ def main():
                             print("Expanded to zone " + str(key))
                             active_city.unexplored_zones[key].explore()
                             active_city.zones.append(active_city.unexplored_zones[key])
-                    
+                            Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            
                             if key in active_city.unexplored_zones.keys():
                                 del active_city.unexplored_zones[key]
+                                
                             break
                     
                 #Click on a city
