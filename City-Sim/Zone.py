@@ -55,7 +55,7 @@ class Zone:
     def explore(self):
         self.is_explored = True
         #self.constructs.append(Construct())
-        self.construct = Construct()
+        #self.construct = Construct()
         #self.type = random.randint(1, len(CONST.types))
         #self.type = CONST.types['PROD_BUILDING']
         

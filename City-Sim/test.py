@@ -20,11 +20,11 @@ import pprint
 import math
 
 import cProfile as profile
-#from threading import Thread
-#import threading
+from threading import Thread
+import threading
 
-
-from multiprocessing import Process
+from multiprocessing.managers import SharedMemoryManager
+from multiprocessing import Process, shared_memory, current_process
 import multiprocessing as mp
 #from multiprocessing.pool import Pool
 
@@ -169,7 +169,7 @@ def Draw_Unexplored_Zones(unexplored_zones):
 
 # Player Action Buttons - Crude GUI
 def Draw_Action_Buttons():
-    global display_surface
+    global display_surface, font
     
     #buttons
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
@@ -180,7 +180,7 @@ def Draw_Action_Buttons():
     btn_w = 70
     btn_padding = 2
     
-    font = pygame.font.SysFont("monospace", 10)
+    #font = pygame.font.SysFont("monospace", 10)
     
     cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 0, btn_w, btn_h))
     label = font.render("Cultivate", 1, blue)
@@ -313,7 +313,7 @@ def get_PH_val(rng):
     pb.set_background_color(plant.c)
 
 def Main_Menu():
-    global display_surface, menu, plant_menu, running, pygame, plant, pb
+    global display_surface, menu, plant_menu, running, pygame, plant, pb, font
     
     WINDOW_SIZE = []
     WINDOW_SIZE.append(700)
@@ -356,9 +356,8 @@ def Main_Menu():
     pb = plant_menu.add.progress_bar('Preview average color of plant', box_background_color=(255, 0, 0),
                                 progress_text_enabled=False,)
     plant_menu.add.button('Start', lambda: start_sim() )
-    #TODO:
-        #save changes
-        #add selectable image
+    #TODO save changes
+    #add selectable image
     
     
     
@@ -398,7 +397,7 @@ def Main_Menu():
             
             menu.update(events)
             #Draw the current FPS on the screen
-            Render_Current_FPS(str(int(fpsClock.get_fps())))
+            Render_Current_FPS(str(int(fpsClock.get_fps())), font)
             menu.draw(display_surface)
     
             pygame.display.flip()
@@ -481,14 +480,18 @@ def Display_Overlay(zones):
 
 def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
     if weather_effect.type == WEATHER.types['RAIN']:
-        print(zones)
+        #print(zones)
         for z in zones:
             #print(len(rain_b_inc))
             #print(len(rain_b_inc[0]))
             #print((rain_b_inc[0][0]))
             #print(z.field.hum)
             #z.field.hum[:, :, 2] += rain_b_inc if any(z.field.hum[:, :, 2] < 255) else 255
+            
+            #zones[zi].field.hum[zones[zi].field.hum[:, :, 2] + rain_b_inc - 255 >= 0] += rain_b_inc
+            #zones[zi].field.hum[:, :, 2] +=  rain_b_inc
             z.field.hum[:, :, 2] +=  rain_b_inc
+            
             #z.field.hum += rain_b_inc if z.field.hum[:,:,2] < 255 else 255
             #i = z.field.hum[:,:,2] + rain_b_inc
             #i = z.field.hum[:][:][2] < 255
@@ -497,7 +500,11 @@ def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):
             
             #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
             #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
-            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
+            
+            #zones[zi].field.hum[zones[zi].field.hum[:, :, 2] > 240] = 240
+            z.field.hum[z.field.hum[:, :, 2] > 240] = 240
+            
+            #print(zones[zi].field.hum)
             
     #time.sleep(1./120)
     
@@ -516,150 +523,104 @@ def Define_Policies(tractor):
     #lst = Get_Tractor_Actions()
     
     #Populate_Tractor_Q(tractor, lst)
-    
-def init_worker(_running, _zones, _weather_effect):
-    global running, zones, weather_effect
 
-    running = _running
-    zones = zones
-    weather_effect = weather_effect
-
-def Render_Current_FPS(text):
+def Render_Current_FPS(text, font):
     global display_surface, blue
 
     fps_rect = pygame.draw.rect(display_surface, (255, 255, 150) ,(0, 0, 25, 25))
-    font = pygame.font.SysFont("monospace", 15)
+    #font = pygame.font.SysFont("monospace", 15)
     label = font.render(text, 1, (0, 0, 255))
     label_rect = label.get_rect(center=(fps_rect.center))
     display_surface.blit(label, label_rect)
 
-def Q_Consumer6(q_in, q_out):
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print("consumer ", os.getpid(), " started")
-    while True:
-        zones = q_in.get(True)
-        if zones is not None:
-            for z in zones:
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                #print("Hum changed")
-            q_out.put(zones)
-        else: 
-            break
-        #sys.stdout.flush()
-    print("consumer ", os.getpid(), " finished", flush=True) 
-
-def Q_Consumer5(city, q):
-    #global cities
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    #print("consumer ", os.getpid(), " started")
-    while True:
-        if not q.empty():
-            for z in city.zones:
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                #print("Hum changed", flush=True)
-    #print("consumer ", os.getpid(), " finished", flush=True) 
-    
-    return city
-
-def Q_Consumer4(city):
-    #global cities
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    #print("consumer ", os.getpid(), " started")
-    #while True:
-    if city is not None:
-        for z in city.zones:
-            z.field.hum[:, :, 2] +=  rain_b_inc
-            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-            #print("Hum changed", flush=True)
-    #print("consumer ", os.getpid(), " finished", flush=True) 
-    
-    return city
-
-def Q_Consumer3(args):
-    #global cities
-    cities = args
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print("consumer ", os.getpid(), " started")
-    #while True:
-    if cities is not None:
-        cs = []
-        for c in cities:
-            for z in c.zones:
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                #print("Hum changed", flush=True)
-            cs.append(c)
-    print("consumer ", os.getpid(), " finished", flush=True) 
-    
-    return cs
-
-def Q_Consumer2(args):
+def Deal_Chunks(num_consumers, wb_q, stop_q):
     global cities
-    cities = args[1]
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print("consumer ", os.getpid(), " started")
-    while True:
-        if cities[args[0]] is not None:
-            for z in cities[args[0]].zones:
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                #print("Hum changed", flush=True)
-        else: 
-            break
-    print("consumer ", os.getpid(), " finished", flush=True) 
-
-def Q_Consumer(q):
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print("consumer ", os.getpid(), " started")
-    while True:
-        zones = q.get(True)
-        if zones is not None:
-            for z in zones:
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                #print("Hum changed")
-        else: 
-            break
-        #sys.stdout.flush()
-    print("consumer ", os.getpid(), " finished", flush=True) 
-
-def Weather_Effect_To_Ground_Proc3(cities, num_consumers):
     consumers = []
     print("Starting consumers...")
-    chunk = math.ceil(len(cities) / num_consumers)
+    chunk = math.floor(len(cities) / num_consumers)
     print(chunk)
-    for i in range(0, num_consumers):
-        
-        consumer = Process(target=City_Consumer, args=(cities[i:i+chunk],))
-        #consumer.daemon = True
-        
-        consumer.start()  # Launch consumer() as another proc
-        consumers.append(consumer)
-        
+    if len(cities) < num_consumers:
+        for i in range(0, len(cities)):
+            #cs = []
+            #for j in range(i, i+1):
+            #    cs.append()
+            consumer = Process(target=Consumer, args=((i, i+1), list(cities[i:(i+1)]), rain_b_inc, wb_q, stop_q))
+            #consumer.daemon = True
+            
+            consumer.start()  # Launch consumer() as another proc
+            consumers.append(consumer)
+    else:
+        #TODO CHECK VALIDITY
+        for i in range(0, num_consumers*chunk):
+            
+            consumer = Process(target=Consumer, args=((i*chunk, (i+1)*chunk), list(cities[i*chunk:(i+1)*chunk]), rain_b_inc, wb_q, stop_q))
+            #consumer.daemon = True
+            
+            consumer.start()  # Launch consumer() as another proc
+            consumers.append(consumer)
+            
     print("Returning consumers...")
     return consumers
 
-def City_Consumer(cities):
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    print("consumer ", os.getpid(), " started")
+def Consumer(ind, cities, rain_b_inc, wb_q, stop_q):
+    #timer_cnt = 0
     while True:
+        #timer_cnt += 1
+        #try:
+        #    cities = update_q.get(False)
+            
+        #except:
+        #print(cities, flush=True)
         for c in cities:
-            if c.zones is not None:
-                for z in c.zones:
-                    z.field.hum[:, :, 2] +=  rain_b_inc
-                    z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-                    #print("Hum changed")
-        #sys.stdout.flush()
-    print("consumer ", os.getpid(), " finished", flush=True) 
+            Weather_Effect_To_Ground(c.weather_effect, c.zones, rain_b_inc)
+        
+        #if timer_cnt >= 20:
+        #    timer_cnt = 0
+        wb_q.put((ind, cities))
+        #print(timer_cnt, flush=True)
+        if not stop_q.empty():
+            print("OK", flush=True)
+            msg = stop_q.get(True)
+            print(os.getpid(), " exited with msg ", msg, flush=True)
+            return
+        #time.sleep(1./40)
+        #pass
+
+def Wb_Q_Thread(wb_q, stop_q, lock):
+    global cities
+    #time.sleep(3)
+    #_ind, _cities = wb_q.get(True)
+    while True:
+        #if not wb_q.empty():
+        _ind, _cities = wb_q.get(True)
+        if _ind is not None:
+            lock.acquire()
+            
+            #ind = 0
+            thread_city = 0
+            for i in range(_ind[0], _ind[1]):
+                #print("i: ", i, " out of ",  range(_ind[0], _ind[1]))
+                #print(_cities, " ", len(_cities[thread_city].zones))
+                for zi in range(0, len(_cities[thread_city].zones)):
+                #for z in cities[i].zones:
+                    #print("thread_city: ", thread_city, " out of ",  range(0, len(_cities[thread_city].zones)))
+                    #cities[i].zones[zi].field.hum = _cities[i].zones[thread_city].field.hum
+                    #cities[i].zones[zi].field.hum = _cities[thread_city].zones[zi].field.hum
+                    cities[i].zones[zi].field.hum = _cities[thread_city].zones[zi].field.hum
+                    #print(zi)
+                    #print(cities[i].zones[zi].field.hum)
+                thread_city += 1
+                #ind += 1
+            lock.release()
+            #print("Hum updated")
+            
+            #current_process().cities = cities
+        
+        if not stop_q.empty():
+            print("OK", flush=True)
+            msg = stop_q.get(True)
+            print("WB thread exited with msg ", msg, flush=True)
+            return
 
 """
 def Init_Event_Proc():
@@ -715,9 +676,13 @@ def main():
     q = mp.Queue()
     #direction: from the subprocesses to the main process
     wb_q = mp.Queue()
+    stop_q = mp.Queue()
+    #update_q = mp.Queue()
     print("CPUs", mp.cpu_count())
     
-    num_consumers = 2#mp.cpu_count()-1
+    lock = mp.Lock()
+    
+    num_consumers = mp.cpu_count()-1
     #consumers = Weather_Effect_To_Ground_Proc3(cities, num_consumers)
     #print(q_consumers)
     #l = mp.Lock()
@@ -725,50 +690,52 @@ def main():
     #multiproc_pool.start()# weather_effect.type))
     #with mp.Pool(num_consumers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
     #pool.map_async(Q_Consumer6, (q, wb_q))
+    wb_q_thread = Thread(target=Wb_Q_Thread, args=(wb_q, stop_q, lock))
+    wb_q_thread.start()
+    consumers = Deal_Chunks(num_consumers, wb_q, stop_q)
+    timer_cnt = 0
     # infinite loop
     while running :
+        #clear screen
+        display_surface.fill(black)
         
-            
-        #print(cities)
-        #print([c.zones for c in cities])
-        #multiproc_pool.map(Weather_Effect_To_Ground_Proc2, [c.zones for c in cities])
-        for c in cities:
-            Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
-            #if not wb_q.empty():
-             #   c.zones = wb_q.get(True)
-           #     q.put(c.zones)
-        #print(type(c.zones))
-        #multiproc_Q.put(c.zones)
-        #time.sleep(1/5)
+        """
+        if timer_cnt == 120:
+            #if not update_q.empty():
+            cities = update_q.get(False)
+            timer_cnt = 0
+        else:
+            timer_cnt += 1
+        """
         
-        #print(multiproc_Q.qsize())
+        #draw map view
         if selected_view == VIEW.types['MAP_VIEW']:
             city_rects = Draw(display_surface, scouts, lakes, forests, cities)
-            #time.sleep(1./5)
+        #draw active city view
         elif selected_view == VIEW.types['CITY_VIEW']:
-    
-            #cities.wait()
+            #print(cities)
+            lock.acquire()
             d = Display_Overlay(active_city.zones)
+            lock.release()
             if d is not None:
                 active_city.data = d
-                
-            active_city.data = move_river(active_city.data) 
+            
             tractor_img_key, tractor_rect = active_city.Draw()
-            
-            #Crop_Growth()
-            
-            display_surface.fill(black)
             pygame.surfarray.blit_array(display_surface, active_city.data)
             display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
-    
-            Draw_Unexplored_Zones(active_city.unexplored_zones)
+            
+            if len(active_city.unexplored_zones) > 0:
+                Draw_Unexplored_Zones(active_city.unexplored_zones)
+                
             Draw_Explored_Zones(active_city.zones)
 
+        #draw GUI
         Draw_Action_Buttons()
 
-      
-        weather_effect.draw(display_surface, pygame, images)
-      
+        #draw weather effects on screen
+        active_city.weather_effect.draw(display_surface, pygame, images)
+        
+        #lock.acquire()
         # Event loop
         # iterate over the list of Event objects
         # that was returned by pygame.event.get() method.
@@ -780,7 +747,22 @@ def main():
             if event.type == pygame.QUIT :
                 #running = False
                 #snow_thread.join()
+                #weather_effects_proc.join()
+                #multiproc_pool.close()
+                #multiproc_pool.join()
                 
+                for i in range(0, len(consumers)+2):
+                    stop_q.put("BREAK")
+                #"""
+                for idx, consumer in enumerate(consumers):
+                        print("    Waiting for consumer.join() index %s" % idx)
+                        if not consumer.is_alive():
+                            consumer.join()  # Wait for consumer() to finish
+                        print("        consumer() idx:%s is done" % idx)
+                #stop_q.put("BREAK")
+                if not wb_q_thread.is_alive():
+                    wb_q_thread.join()
+                #"""
                 pygame.display.quit()
                 sys.exit()
                 
@@ -847,9 +829,11 @@ def main():
                     for key, uz in active_city.unexplored_zones.items():
                         if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
                             print("Expanded to zone " + str(key))
-                            active_city.unexplored_zones[key].explore()
-                            active_city.zones.append(active_city.unexplored_zones[key])
-                            Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            active_city.zones[key].explore()
+                            #active_city.unexplored_zones[key].explore()
+                            #active_city.zones.append(active_city.unexplored_zones[key])
+                            #Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            Init_Explored_Zones(active_city.data, active_city.zones[key])
                             
                             if key in active_city.unexplored_zones.keys():
                                 del active_city.unexplored_zones[key]
@@ -863,25 +847,16 @@ def main():
                         selected_view = VIEW.types['CITY_VIEW']
                         active_city = cities[i]
                         break
+        #lock.release()
         #Draw the current FPS on the screen
-        Render_Current_FPS(str(int(fpsClock.get_fps())))
+        Render_Current_FPS(str(int(fpsClock.get_fps())), font)
         #Draw the surface object to the screen.  
         pygame.display.update() 
         fpsClock.tick(FPS)
         #time.sleep(1./120)
     
-    #weather_effects_proc.join()
-    #multiproc_pool.close()
-    #multiproc_pool.join()
-    """
-    for i in range(0, num_consumers):
-        multiproc_Q.put(None)
-    for idx, a_reader_proc in enumerate(q_consumers):
-            print("    Waiting for reader_p.join() index %s" % idx)
-            a_reader_proc.join()  # Wait for a_reader_proc() to finish
 
-            print("        reader_p() idx:%s is done" % idx)
-    """
+    
 def Load_Images(pygame):
     images = {}
     img = pygame.image.load('tractor.jpg')
@@ -955,7 +930,7 @@ if __name__ == "__main__":
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn 
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     global scouts, forests, lakes, cities
-    global images, weather_effect
+    global images, weather_effect, font
     
     
     cultivate_btn = None
@@ -976,6 +951,7 @@ if __name__ == "__main__":
     
     pygame.init()
     plant = Plant()
+    font = pygame.font.SysFont("monospace", 15)
     Main_Menu()
     
     #print(repr(plant))
@@ -1023,23 +999,22 @@ if __name__ == "__main__":
     #data[15:N+15,15:N+15,2] = b
     """
     images = Load_Images(pygame)
+      
+    # set the pygame window name
+    pygame.display.set_caption('City-Sim')
+      
+    #expansion zones
+    #font = pygame.font.SysFont("monospace", 15)
+    label = font.render("Expansion zone", 1, blue)
+    
+    exp_z_len = len(unexplored_zones)
+    rng = range(0, exp_z_len)
     
     #rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
     rect = pygame.Rect((DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH), (DISPLAY.N, DISPLAY.N))
     #unexplored_zones.append(Zone(0, rect))
     zones.append(Zone(3, rect, CONST.types['FIELD']))
     zones[0].field.has_init = True
-      
-    # set the pygame window name
-    pygame.display.set_caption('City-Sim')
-      
-    #expansion zones
-    font = pygame.font.SysFont("monospace", 15)
-    label = font.render("Expansion zone", 1, blue)
-    
-    exp_z_len = len(unexplored_zones)
-    rng = range(0, exp_z_len)
-    
     
     
     if len(unexplored_zones) == 0:
@@ -1070,19 +1045,28 @@ if __name__ == "__main__":
         #unexplored_zones[2] = Zone(2, rect2.center, rect2.topleft, rect2.topright, rect2.bottomright, rect2.x, rect2.y)
         #print(type(images['shelter_scaled_img']))
         unexplored_zones[2] = Zone(2, copy.deepcopy(rect))
+    for key, uz in unexplored_zones.items():
+        zones.append(uz)
         
     #Init Cities:
     coords, centers, lakes, forests = Initialize()
     #print(coords)
     centered_centers = copy.deepcopy(centers)
     
+    smm = SharedMemoryManager()
+    smm.start()
+    
+    
+    
     #manager = mp.Manager()
-    #cities = manager.list()
-    cities = []
+    #cities = []#manager.list()
+    cities = list()#mp.Array('Synchronized', range(3))
     cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[0], centers[0], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
     cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[1], centers[1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
     cities.append(City(2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[2], centers[2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
 
+    #shm = shared_memory.ShareableList(cities, name=c)
+    
     scouts = []
     scouts.append(Scout(centered_centers[0], pygame.Rect(coords[0][0] + DISPLAY.CITY_W/2 - DISPLAY.SCOUT_W/2, coords[0][1] + DISPLAY.CITY_H/2 - DISPLAY.SCOUT_H/2, DISPLAY.SCOUT_W, DISPLAY.SCOUT_H)))
     

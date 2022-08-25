@@ -6,8 +6,9 @@ Created on Mon Mar 28 11:47:03 2022
 """
 
 from Tractor import Tractor
+from effects.Weather import WeatherEffect
 
-from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION
+from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER
 
 import numpy as np
 import random
@@ -67,7 +68,8 @@ class City:
         
             #tractor stuff
         self.tractor = Tractor(15, 15, self.zones[0])
-                
+        
+        self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
         
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):

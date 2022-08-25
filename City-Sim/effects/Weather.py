@@ -18,22 +18,21 @@ class WeatherParticle:
         self.y_speed = random.randint(5, 10)
         
         if _type == WEATHER.types['SNOW']:
-            self.pos = type('', (), {})()
-            self.pos.x = random.randint(-DISPLAY.X, 0)
-            self.pos.y = random.randint(-DISPLAY.Y, 0)
+            x = random.randint(-DISPLAY.X, 0)
+            y = random.randint(-DISPLAY.Y, 0)
             
             self.img_key = 'snowflake'
             #self.img = pygame.image.load('effects/snowflake.svg')
             #self.img = pygame.transform.scale(self.img, (10, 10))
         elif _type == WEATHER.types['RAIN']:
-            self.pos = type('', (), {})()
-            self.pos.x = random.randint(0, DISPLAY.X)
-            self.pos.y = random.randint(-DISPLAY.Y, 0)
+            x = random.randint(0, DISPLAY.X)
+            y = random.randint(-DISPLAY.Y, 0)
             
             #self.img = pygame.image.load('effects/drop.png')
             #self.img = pygame.transform.scale(self.img, (1, 5))
             self.img_key = 'drop'
-        
+            
+        #self.rect = MyRect(x, y)
         self.img = None
         self.point = MyPoint(_x, _y)#self.img.get_rect().move(pos.x, pos.y)
 
