@@ -25,7 +25,8 @@ class DISPLAY(object):
 class CONSTANTS(object):
     def __init__(self):
         self.types = {}
-        self.types['CITY_NUM'] = 4
+        #CITY_NUM should be divisible by 3
+        self.types['CITY_NUM'] = 3#30
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         
@@ -53,6 +54,11 @@ class ANIMAL_SIZE(object):
     def __init__(self):
         self.types = {}
         self.types['COW'] = 15
+        
+class CONSTRUCT_SIZE(object):
+    def __init__(self):
+        self.types = {}
+        self.types['SHELTER'] = 15
 
 class TRACTOR_ACTIONS(object):
     def __init__(self):
@@ -90,6 +96,7 @@ class TIME(object):
     def __init__(self):
         self.types = {}
         self.types['CROP'] = 100
+        self.types['ANIMAL_ACT'] = 70
         
 class WEATHER(object):
     def __init__(self):
@@ -143,3 +150,5 @@ GOODS = GOODS()
 CONSUMPTION = CONSUMPTION()
 
 CONSTANTS = CONSTANTS()
+
+CONSTRUCT_SIZE = CONSTRUCT_SIZE()

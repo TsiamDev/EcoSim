@@ -7,8 +7,8 @@ def Set_Globals():
 
 def Set_Tractor_Actions(tractor_actions):
     global client 
-    get_url = 'http://192.168.1.11:80/index/'
-    post_url = 'http://192.168.1.11:80/set_tractor_actions/'
+    get_url = 'http://192.168.1.5:80/index/'
+    post_url = 'http://192.168.1.5:80/set_tractor_actions/'
     
     #GET
     # Retrieve the CSRF token first

@@ -7,6 +7,8 @@ Created on Mon Aug  8 03:58:15 2022
 
 import random
 
+from MyPoint import MyPoint
+
 from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS
 from networking.Networking import Set_Globals, Set_Tractor_Actions
 
@@ -25,9 +27,10 @@ class Tractor:
         #self.img = pygame.transform.scale(self.img, (self.width, self.width))
         self.img_key = 'tractor_scaled_img'
         
-        self.rect = type('', (), {})()
-        self.rect.x = _x#self.img.get_rect().x
-        self.rect.y = _y#self.img.get_rect().y
+        self.rect = MyPoint(_x, _y)
+        #self.rect = type('', (), {})()
+        #self.rect.x = _x#self.img.get_rect().x
+        #self.rect.y = _y#self.img.get_rect().y
         #self.rect.topleft = self.img.get_rect().topleft
         #self.rect
         #self.rect = self.rect.move(_x, _y)

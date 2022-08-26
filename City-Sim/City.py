@@ -6,8 +6,9 @@ Created on Mon Mar 28 11:47:03 2022
 """
 
 from Tractor import Tractor
+from effects.Weather import WeatherEffect
 
-from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION
+from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER
 
 import numpy as np
 import random
@@ -38,17 +39,21 @@ class City:
         
         # Production
         self.production = [0 for i in GOODS.types.items()]
-        self.production[j] = 51
+        self.production[j%3] = 51
         
         # temporary storage for traded resources
         self._in = [0 for i in GOODS.types.items()]
         self._out = [0 for i in GOODS.types.items()]
+        
+        
+        
         
         #Simulation stuff
         self.zones = _zones
         self.unexplored_zones = _unexplored_zones
         self.time_cnt = 0
         self.data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
+        self.is_active = False
         
             #river stuff
         r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
@@ -64,7 +69,8 @@ class City:
         
             #tractor stuff
         self.tractor = Tractor(15, 15, self.zones[0])
-                
+        
+        self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
         
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
