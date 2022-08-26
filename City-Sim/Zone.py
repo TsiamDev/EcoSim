@@ -29,7 +29,7 @@ class Zone:
         self.ez_idx = _ez_idx
                 
         #encompasing rectangle
-        self.rect = MyRect(_rect)
+        self.rect = MyRect(_rect=_rect)
         print(self.rect)
         
         if _type is None:

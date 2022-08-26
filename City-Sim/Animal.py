@@ -16,7 +16,7 @@ class Animal:
     def __init__(self, _rect, _type):
         self.x = _rect.center[0]
         self.y = _rect.center[1]
-        self.rect = MyRect(_rect)
+        self.rect = MyRect(_rect=_rect)
         self.type = _type
         self.size = ANIMAL_SIZE.types['COW']
         
@@ -27,7 +27,7 @@ class Animal:
             self.img_key = 'cow_scaled_img'
             
             self.img = None
-            self.img_rect = MyRect(_rect)
+            self.img_rect = MyRect(_rect=_rect)
             #self.img_rect = self.img.get_rect()    
             #self.img_rect = self.img_rect.move(self.pos.x, self.pos.y)    
             #print(self.img_rect)
@@ -40,7 +40,7 @@ class Animal:
             x_dir, y_dir = self.draw(pygame, display_surface, zone)
         else:
             #just produced - go home
-            #print(self.w)
+            print(self.w)
             x_dir, y_dir = self.move(self.w, display_surface, zone)
         
         self.img_rect.move(x_dir, y_dir)

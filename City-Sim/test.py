@@ -31,7 +31,7 @@ import multiprocessing as mp
 #from multiprocessing.pool import Pool
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
-from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE
+from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE
 
 from Zone import Zone
 #from Tractor import Tractor
@@ -166,7 +166,8 @@ def Draw_Explored_Zones(zones):
             
             #draw the shelter
             rect = zone.pasture.shelter_rect
-            rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+            #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+            rect = pygame.Rect(rect.x, rect.y, CONSTRUCT_SIZE.types['SHELTER'], CONSTRUCT_SIZE.types['SHELTER'])
             display_surface.blit(images[zone.pasture.shelter_img_key], rect)
                 
 def Draw_Unexplored_Zones(unexplored_zones):
@@ -364,8 +365,7 @@ def Main_Menu():
     #plant_menu.draw(sur, clear_surface=False)
     #bi = pygame_menu.baseimage.BaseImage('placeholder.png', drawing_mode=pygame_menu.baseimage.IMAGE_MODE_SIMPLE, load_from_file=True)
     #plant_menu.draw(bi.get_surface(), clear_surface=True)
-    pb = plant_menu.add.progress_bar('Preview average color of plant', box_background_color=(255, 0, 0),
-                                progress_text_enabled=False,)
+    pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
     plant_menu.add.button('Start', lambda: start_sim() )
     #TODO save changes
     #add selectable image
@@ -547,7 +547,7 @@ def Define_Policies(tractor):
 def Render_Current_FPS(text, font):
     global display_surface, blue
 
-    fps_rect = pygame.draw.rect(display_surface, (255, 255, 150) ,(0, 0, 25, 25))
+    fps_rect = pygame.draw.rect(display_surface, (255, 255, 150), (0, 0, 25, 25))
     #font = pygame.font.SysFont("monospace", 15)
     label = font.render(text, 1, (0, 0, 255))
     label_rect = label.get_rect(center=(fps_rect.center))
@@ -665,7 +665,7 @@ def Consumer(ind, _cities, rain_b_inc, wb_q, stop_q):
         #UNCOMMENT!
         #wb_q.put((ind, cities))
         
-        print(stop_q.qsize(), flush=True)
+        #print(stop_q.qsize(), flush=True)
         if not stop_q.empty():
             print("OK", flush=True)
             msg = stop_q.get(True)
@@ -816,6 +816,7 @@ def main():
     consumers = Deal_Chunks(num_consumers, wb_q, stop_q)
     
     #wbthreads = []
+    #DO NOT DO THIS
     #for i in range(0, 1):
     wb_q_thread = Thread(target=Wb_Q_Thread, args=(wb_q, stop_q, lock))
     wb_q_thread.start()
@@ -1185,7 +1186,7 @@ if __name__ == "__main__":
         unexplored_zones[2] = Zone(2, rect2, images)
         """
         rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = MyRect(rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
+        rect = MyRect(_rect=rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
 
         #unexplored_zones[0] = Zone(0, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright, rect0.x, rect0.y)
         unexplored_zones[0] = Zone(0, copy.deepcopy(rect))
@@ -1193,12 +1194,12 @@ if __name__ == "__main__":
         
         
         rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = MyRect(rect1)
+        rect = MyRect(_rect=rect1)
         #unexplored_zones[1] = Zone(1, rect1.center, rect1.topleft, rect1.topright, rect1.bottomright, rect1.x, rect1.y)
         unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
         
         rect2 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = MyRect(rect2)
+        rect = MyRect(_rect=rect2)
         #unexplored_zones[2] = Zone(2, rect2.center, rect2.topleft, rect2.topright, rect2.bottomright, rect2.x, rect2.y)
         #print(type(images['shelter_scaled_img']))
         unexplored_zones[2] = Zone(2, copy.deepcopy(rect))

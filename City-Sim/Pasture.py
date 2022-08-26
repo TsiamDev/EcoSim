@@ -6,7 +6,7 @@ Created on Tue Aug  9 13:44:19 2022
 """
 
 from Field import Field
-from Const import ANIMAL
+from Const import ANIMAL, CONSTRUCT_SIZE
 from Animal import Animal
 from MyRect import MyRect
 
@@ -18,7 +18,7 @@ class Pasture:
         self.animal_type = ANIMAL.types['COW']
         self.animals_num = random.randint(1, 10)
         self.animals = []
-        _rect = MyRect(_rect)
+        _rect = MyRect(_rect=_rect)
         for i in range(0, self.animals_num):
             #create empty object
             #pos = type('pos', (), {})()
@@ -28,7 +28,7 @@ class Pasture:
             self.animals.append(Animal(_rect, self.animal_type))
             
         self.shelter_img = None
-        self.shelter_rect = MyRect(_rect)
+        self.shelter_rect = MyRect(_x=_rect.topleft[0], _y=_rect.topleft[1], _center=(_rect.topleft[0]+CONSTRUCT_SIZE.types['SHELTER'] ,_rect.topleft[1]+CONSTRUCT_SIZE.types['SHELTER'] ), _topleft=_rect.topleft)
         self.shelter_img_key = 'shelter_scaled_img'
         #self.rect = MyRect(_rect)
         #self.rect.x = rect.x
