@@ -16,9 +16,10 @@ from threading import Thread
 class Pasture:
     def __init__(self, _rect):
         self.animal_type = ANIMAL.types['COW']
-        self.animals_num = random.randint(1, 10)
+        self.animals_num = 10#random.randint(1, 10)
         self.animals = []
-        _rect = MyRect(_rect=_rect)
+        self._rect = MyRect(_rect=_rect)
+        """
         for i in range(0, self.animals_num):
             #create empty object
             #pos = type('pos', (), {})()
@@ -26,7 +27,7 @@ class Pasture:
             #pos.y = rect.center[1]#random.randint(rect.topright[1], rect.bottomright[1])
             
             self.animals.append(Animal(_rect, self.animal_type))
-            
+        """ 
         self.shelter_img = None
         self.shelter_rect = MyRect(_x=_rect.topleft[0], _y=_rect.topleft[1], _center=(_rect.topleft[0]+CONSTRUCT_SIZE.types['SHELTER'] ,_rect.topleft[1]+CONSTRUCT_SIZE.types['SHELTER'] ), _topleft=_rect.topleft)
         self.shelter_img_key = 'shelter_scaled_img'
@@ -43,7 +44,7 @@ class Pasture:
         kws['display_surface'] = display_surface
         kws['zone'] = zone
         kws['data'] = data
-        for i in range (0, self.animals_num):
+        for i in range (0, len(self.animals)):
             self.animals[i].act(pygame, display_surface, zone, data, images)
         """   
             th_list.append(Thread(target=self.animals[i].act, kwargs=kws))

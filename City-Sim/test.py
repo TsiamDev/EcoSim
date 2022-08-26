@@ -41,6 +41,7 @@ from Scout import Scout
 from effects.Weather import WeatherEffect
 from Visualization import Draw
 from MyRect import MyRect
+from Animal import Animal
 #from  MyMultiprocessing import Weather_Effect_To_Ground_Proc3
 
 from networking.Networking import Set_Globals, Set_Tractor_Actions
@@ -129,6 +130,14 @@ def Init_Explored_Zones(data, zone):
             #unexplored_zones.append(Zone(0, rect))
             #zones.append(Zone(3, rect, 1))
             zone.field.has_init = True
+            
+            for i in range(0, zone.pasture.animals_num):
+                #create empty object
+                #pos = type('pos', (), {})()
+                #pos.x = rect.center[0]#random.randint(rect.topleft[0], rect.topright[0])
+                #pos.y = rect.center[1]#random.randint(rect.topright[1], rect.bottomright[1])
+                
+                zone.pasture.animals.append(Animal(zone.pasture._rect, zone.pasture.animal_type))
         
         #draw - move the animals
         #zone.pasture.animals_act(pygame, display_surface, zone, data, images)
@@ -137,6 +146,29 @@ def Init_Explored_Zones(data, zone):
         #rect = zone.pasture.shelter_rect
         #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
         #display_surface.blit(images[zone.pasture.shelter_img_key], rect)
+
+def Update_Explored_Zones():
+    global cities
+    for c in cities:
+        for zone in c.zones:
+            if zone.is_explored == True:
+                if zone.type == CONST.types['BARN_SILO']:
+                    #draw the building
+                    building_img = pygame.image.load('barn_silo.png')
+                    building_img = pygame.transform.scale(building_img, (N, N))
+                    bi_rect = building_img.get_rect()
+                    bi_rect = bi_rect.move((zone.rect.topleft))
+                    display_surface.blit(building_img, bi_rect)
+                    
+                elif zone.type == CONST.types['PASTURE']:
+                    
+                    #if animal_act_timer > TIME.types['ANIMAL_ACT']:
+                        
+                    #move the animals
+                    zone.pasture.animals_act(pygame, display_surface, zone, data, images)                
+                    #animal_act_timer = 0
+                    #else:
+                    #animal_act_timer += 1
 
 def Draw_Explored_Zones(zones):
     global display_surface, pygame, images, animal_act_timer
@@ -150,16 +182,7 @@ def Draw_Explored_Zones(zones):
             bi_rect = bi_rect.move((zone.rect.topleft))
             display_surface.blit(building_img, bi_rect)
             
-        elif zone.type == CONST.types['PASTURE']:
-            
-            #if animal_act_timer > TIME.types['ANIMAL_ACT']:
-                
-            #move the animals
-            zone.pasture.animals_act(pygame, display_surface, zone, data, images)                
-            #animal_act_timer = 0
-            #else:
-            #animal_act_timer += 1
-            
+        elif zone.type == CONST.types['PASTURE']:            
             #draw the animals
             for an in zone.pasture.animals:
                 an.draw_animal(display_surface, images, pygame)
@@ -874,7 +897,8 @@ def main():
             #lock.acquire()
             Draw_Explored_Zones(active_city.zones)
             #lock.release()
-            
+        
+        Update_Explored_Zones()
         #draw GUI
         Draw_Action_Buttons()
 
@@ -1171,7 +1195,7 @@ if __name__ == "__main__":
     #rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
     rect = pygame.Rect((DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH), (DISPLAY.N, DISPLAY.N))
     #unexplored_zones.append(Zone(0, rect))
-    zones.append(Zone(3, rect, CONST.types['FIELD']))
+    zones.append(Zone(0, rect, CONST.types['FIELD']))
     zones[0].field.has_init = True
     
     
@@ -1189,20 +1213,20 @@ if __name__ == "__main__":
         rect = MyRect(_rect=rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
 
         #unexplored_zones[0] = Zone(0, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright, rect0.x, rect0.y)
-        unexplored_zones[0] = Zone(0, copy.deepcopy(rect))
+        unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
         
         
         
         rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect = MyRect(_rect=rect1)
         #unexplored_zones[1] = Zone(1, rect1.center, rect1.topleft, rect1.topright, rect1.bottomright, rect1.x, rect1.y)
-        unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
+        unexplored_zones[2] = Zone(2, copy.deepcopy(rect))
         
         rect2 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect = MyRect(_rect=rect2)
         #unexplored_zones[2] = Zone(2, rect2.center, rect2.topleft, rect2.topright, rect2.bottomright, rect2.x, rect2.y)
         #print(type(images['shelter_scaled_img']))
-        unexplored_zones[2] = Zone(2, copy.deepcopy(rect))
+        unexplored_zones[3] = Zone(3, copy.deepcopy(rect))
     for key, uz in unexplored_zones.items():
         zones.append(uz)
         
@@ -1211,8 +1235,8 @@ if __name__ == "__main__":
     #print(coords)
     centered_centers = copy.deepcopy(centers)
     
-    smm = SharedMemoryManager()
-    smm.start()
+    #smm = SharedMemoryManager()
+    #smm.start()
     
     
     
