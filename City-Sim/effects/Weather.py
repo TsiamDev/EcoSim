@@ -34,7 +34,7 @@ class WeatherParticle:
             
         #self.rect = MyRect(x, y)
         self.img = None
-        self.point = MyPoint(_x, _y)#self.img.get_rect().move(pos.x, pos.y)
+        self.point = MyPoint(x, y)#self.img.get_rect().move(pos.x, pos.y)
 
 class WeatherEffect:
     def __init__(self, _type):

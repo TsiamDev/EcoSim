@@ -25,7 +25,8 @@ class DISPLAY(object):
 class CONSTANTS(object):
     def __init__(self):
         self.types = {}
-        self.types['CITY_NUM'] = 3
+        #CITY_NUM should be divisible by 3
+        self.types['CITY_NUM'] = 6
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         
@@ -90,6 +91,7 @@ class TIME(object):
     def __init__(self):
         self.types = {}
         self.types['CROP'] = 100
+        self.types['ANIMAL_ACT'] = 70
         
 class WEATHER(object):
     def __init__(self):

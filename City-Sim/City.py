@@ -39,7 +39,7 @@ class City:
         
         # Production
         self.production = [0 for i in GOODS.types.items()]
-        self.production[j] = 51
+        self.production[j%3] = 51
         
         # temporary storage for traded resources
         self._in = [0 for i in GOODS.types.items()]
@@ -53,6 +53,7 @@ class City:
         self.unexplored_zones = _unexplored_zones
         self.time_cnt = 0
         self.data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
+        self.is_active = False
         
             #river stuff
         r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]

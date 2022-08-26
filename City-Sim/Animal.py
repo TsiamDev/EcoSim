@@ -44,10 +44,14 @@ class Animal:
             x_dir, y_dir = self.move(self.w, display_surface, zone)
         
         self.img_rect.move(x_dir, y_dir)
+        #rect = self.img_rect
+        #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.bottomright[1]-rect.topright[1])
+        #display_surface.blit(images[self.img_key], rect)   
+    
+    def draw_animal(self, display_surface, images, pygame):
         rect = self.img_rect
         rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.bottomright[1]-rect.topright[1])
-        display_surface.blit(images[self.img_key], rect)   
-        
+        display_surface.blit(images[self.img_key], rect)  
     
     def draw(self, pygame, display_surface, zone):
         #print("draw animal")      
