@@ -29,7 +29,7 @@ class Pasture:
             self.animals.append(Animal(_rect, self.animal_type))
         """ 
         self.shelter_img = None
-        self.shelter_rect = MyRect(_x=_rect.topleft[0], _y=_rect.topleft[1], _center=(_rect.topleft[0]+CONSTRUCT_SIZE.types['SHELTER'] ,_rect.topleft[1]+CONSTRUCT_SIZE.types['SHELTER'] ), _topleft=_rect.topleft)
+        self.shelter_rect = MyRect(_x=_rect.topleft[0], _y=_rect.topleft[1], _center=(_rect.topleft[0]+CONSTRUCT_SIZE.types['SHELTER'] ,_rect.topleft[1]+CONSTRUCT_SIZE.types['SHELTER'] ))#, _topleft=_rect.topleft)
         self.shelter_img_key = 'shelter_scaled_img'
         #self.rect = MyRect(_rect)
         #self.rect.x = rect.x
@@ -37,15 +37,18 @@ class Pasture:
         #self.shelter_rect = self.shelter_img.get_rect()
         #self.shelter_rect = self.shelter_rect.move(rect.topleft)
         
-    def animals_act(self, pygame, display_surface, zone, data, images):
-        th_list = []
+    def animals_act(self, zone, data):
+        #th_list = []
+        """
         kws = {}
         kws['pygame'] = pygame
         kws['display_surface'] = display_surface
         kws['zone'] = zone
         kws['data'] = data
+        """
+        #print(len(self.animals), flush=True)
         for i in range (0, len(self.animals)):
-            self.animals[i].act(pygame, display_surface, zone, data, images)
+            self.animals[i].act(zone, data)
         """   
             th_list.append(Thread(target=self.animals[i].act, kwargs=kws))
             th_list[-1].start()

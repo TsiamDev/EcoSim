@@ -16,11 +16,7 @@ from Pasture import Pasture
 from MyRect import MyRect
 
 class Zone:
-    # ctors
-    def __init__(self):
-        self.is_explored = False
-        self.ez_idx = None
-        self.constructs = []
+
     
     # _ez_idx: explored zone index
     def __init__(self, _ez_idx, _rect, _type=None):

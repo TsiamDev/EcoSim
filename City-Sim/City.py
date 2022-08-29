@@ -8,14 +8,20 @@ Created on Mon Mar 28 11:47:03 2022
 from Tractor import Tractor
 from effects.Weather import WeatherEffect
 
-from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER
+from Zone import Zone
+from MyRect import MyRect
+from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER, CONST
 
 import numpy as np
 import random
+import copy
 
 class City:
-    def __init__(self, j, prices, cons_policy, reserve, _coords, _center, _unexplored_zones, _zones, _plant):
-        self.id = j
+    def __init__(self, j=None, prices=None, cons_policy=None, reserve=None, _coords=None, _center=None, _unexplored_zones=None, _zones=None, _plant=None, _has_tractor=None, _has_river=None):
+        if j is not None:
+            self.id = j
+        else:
+            self.id = 10
         
         self.pos = _coords
         self.center = _center
@@ -39,7 +45,8 @@ class City:
         
         # Production
         self.production = [0 for i in GOODS.types.items()]
-        self.production[j%3] = 51
+        #?
+        #self.production[j%3] = 51
         
         # temporary storage for traded resources
         self._in = [0 for i in GOODS.types.items()]
@@ -49,26 +56,42 @@ class City:
         
         
         #Simulation stuff
-        self.zones = _zones
+        if _zones is None:
+            self.zones = []
+            rect = MyRect(_x=DISPLAY.ROAD_WIDTH, _y=DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.N/2), int(DISPLAY.N/2)))#, _topleft=(DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH))
+            self.zones.append(Zone(0, copy.deepcopy(rect), CONST.types['FIELD']))
+            self.zones[0].field.has_init = True
+            rect0 = MyRect(_x=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _y=15, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(1, copy.deepcopy(rect0)))
+            rect1 = MyRect(_x=15, _y=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(2, copy.deepcopy(rect1)))
+            rect2 = MyRect(_x=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _y=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(3, copy.deepcopy(rect2)))
+        else:
+            self.zones = _zones
+            self.zones[0].is_explored = True
         self.unexplored_zones = _unexplored_zones
         self.time_cnt = 0
         self.data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
         self.is_active = False
         
             #river stuff
-        r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        g = [[random.randint(0, 50) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 0] = r
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 1] = g
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = b
+        if _has_river is not None:
+            
+            r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            g = [[random.randint(0, 50) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 0] = r
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 1] = g
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = b
         
             #plant stuff
         self.plant = _plant
         
             #tractor stuff
-        self.tractor = Tractor(15, 15, self.zones[0])
+        if _has_tractor is not None:
+            self.tractor = Tractor(15, 15, self.zones[0])
         
         self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
         
