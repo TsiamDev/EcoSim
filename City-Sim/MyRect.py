@@ -13,9 +13,9 @@ class MyRect:
             self.y = _rect.y
             self.center = _rect.center
             self.topleft = (_rect.x, _rect.y)
-            self.topright = (_rect.x + (_rect.center[0] * 2), _rect.y)
-            self.bottomright = (_rect.x + (_rect.center[0] * 2), _rect.y + (_rect.center[1] * 2))
-            self.bottomleft = (_rect.x , _rect.y + (_rect.center[1] * 2))
+            self.topright = ((_rect.center[0] * 2) - _rect.x, _rect.y)
+            self.bottomright = ((_rect.center[0] * 2) - _rect.x, (_rect.center[1] * 2) - _rect.y)
+            self.bottomleft = (_rect.x , (_rect.center[1] * 2) - _rect.y)
         else:
             self.x = _x
             self.y = _y

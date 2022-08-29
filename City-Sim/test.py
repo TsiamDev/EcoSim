@@ -520,7 +520,7 @@ def Display_Overlay(zones):
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
-                    print(zone.rect.topleft[0],zone.rect.topright[0], zone.rect.topright[1],zone.rect.bottomright[1])
+                    print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
                     
                 #pygame.surfarray.blit_array(display_surface, data_temp)
@@ -1281,6 +1281,7 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, rect1, images)
         unexplored_zones[2] = Zone(2, rect2, images)
         """
+        #rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect = MyRect(_rect=rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
 
