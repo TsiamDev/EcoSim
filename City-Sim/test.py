@@ -520,7 +520,7 @@ def Display_Overlay(zones):
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
-                    print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
+                    #print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
                     
                 #pygame.surfarray.blit_array(display_surface, data_temp)
@@ -811,19 +811,6 @@ def main():
     second_to_last_i = -1
     origin = -1
     
-    update_cnt = 0
-    c_ind = 1
-    
-    _updated_cities_q = Queue()
-    q_ind = 0
-    buf = []
-    _c_it = 0
-    it = 0
-    
-    ind = -1
-    
-    cnt = 0
-    
     active_city_changed = False
     
     #time.sleep(20) #loading time
@@ -901,60 +888,7 @@ def main():
             
             #draw the active city
             Draw_Explored_Zones(active_city.zones)    
-            
-            """
-            #lock.acquire()
-            #Draw_Explored_Zones(active_city.zones)
-            #start_time = pygame.time.get_ticks()
-            #if update_cnt == 15:
-            #print("Main Proc:", wb_q.qsize())
-            #read from wb_q and store in buffer
-            #print(len(buf))
-            #print(wb_q.qsize())
-            #if (len(buf) == 0) and (wb_q.qsize() > 0):
-            if wb_q.qsize() > 0:
-                print("Main Proc:", wb_q.qsize())
-                #while _updated_cities_q.qsize() < 10:
-                #_ind, _cities = wb_q.get(True)
-                lst = wb_q.get(True)
-                _updated_cities_q.put(lst)
-                #it = 0
-                #_buf_ind = 0
-                #_ucq_ind = 0
-                #c = buf[0][1][_ucq_ind]
 
-                #print(_updated_cities_q.queue)
-                if ind == -1:
-                    buf = _updated_cities_q.get()
-                    #**************
-    
-                    #if cnt >= 15:
-                    print(buf) 
-                    ind = 0
-            #print(it)
-            #print(buf[it])
-            #print(buf[it][0])        
-            #c = buf[it][0]
-            if ind >= 0:
-                #get the city argument
-                c = buf[1][ind]
-                #print(c)
-                #_ind = buf[0][0]
-                #print(_ind)
-                #update active city
-                c.is_active = cities[last_i].is_active
-                if c.is_active:
-                    cities[last_i].data = c.data
-                    for zi in range(0, len(cities[last_i].zones)):
-                        c.zones[zi].is_explored = cities[last_i].zones[zi].is_explored
-                    cities[last_i].zones = c.zones
-                    #break
-
-                Draw_Explored_Zones(cities[last_i].zones)
-                ind += 1
-                if ind >= len(buf[1]):
-                    ind = -1
-            """
         #Update_Explored_Zones(active_city)
         #draw GUI
         Draw_Action_Buttons()
