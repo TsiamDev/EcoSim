@@ -16,7 +16,7 @@ import time
 import sys
 import copy
 import os
-import pprint
+from pprint import pprint
 import math
 import tracemalloc
 import linecache
@@ -26,9 +26,10 @@ from threading import Thread
 import threading
 
 from multiprocessing.managers import SharedMemoryManager
-from multiprocessing import Process, shared_memory, current_process
+from multiprocessing import Process, shared_memory, current_process, Pool
 import multiprocessing as mp
-#from multiprocessing.pool import Pool
+
+from queue import Queue
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
 from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE
@@ -90,10 +91,10 @@ def Init_Explored_Zones(data, zone):
             #data[15:N+15,15:N+15,0] = r
             #data[15:N+15,15:N+15,1] = g
             #data[15:N+15,15:N+15,2] = b
-            print(rect.topleft)
-            print(rect.bottomleft)
-            print(rect.topright)
-            print(rect.bottomright)
+            #print(rect.topleft)
+            #print(rect.bottomleft)
+            #print(rect.topright)
+            #print(rect.bottomright)
             #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
             data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
             
@@ -147,32 +148,36 @@ def Init_Explored_Zones(data, zone):
         #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
         #display_surface.blit(images[zone.pasture.shelter_img_key], rect)
 
-def Update_Explored_Zones():
-    global cities
-    for c in cities:
-        for zone in c.zones:
-            if zone.is_explored == True:
-                if zone.type == CONST.types['BARN_SILO']:
-                    #draw the building
-                    building_img = pygame.image.load('barn_silo.png')
-                    building_img = pygame.transform.scale(building_img, (N, N))
-                    bi_rect = building_img.get_rect()
-                    bi_rect = bi_rect.move((zone.rect.topleft))
-                    display_surface.blit(building_img, bi_rect)
-                    
-                elif zone.type == CONST.types['PASTURE']:
-                    
-                    #if animal_act_timer > TIME.types['ANIMAL_ACT']:
-                        
-                    #move the animals
-                    zone.pasture.animals_act(pygame, display_surface, zone, data, images)                
-                    #animal_act_timer = 0
-                    #else:
-                    #animal_act_timer += 1
+def Update_Explored_Zones(city):
+    for zone in city.zones:
+        #print(zone.type, flush=True)
+        #if zone.is_explored == True:
+        #print("A", flush=True)
+        if zone.type == CONST.types['BARN_SILO']:
+            #draw the building
+            building_img = pygame.image.load('barn_silo.png')
+            building_img = pygame.transform.scale(building_img, (N, N))
+            bi_rect = building_img.get_rect()
+            bi_rect = bi_rect.move((zone.rect.topleft))
+            display_surface.blit(building_img, bi_rect)
+            
+        elif zone.type == CONST.types['PASTURE']:
+            
+            #if animal_act_timer > TIME.types['ANIMAL_ACT']:
+            #print("HERE", flush=True)
+            #move the animals
+            #zone.pasture.animals_act(zone, city.data)                
+            for i in range (0, len(zone.pasture.animals)):
+                zone.pasture.animals[i].act(zone, city.data)
+                #print((zone.pasture.animals[i].rect.x,zone.pasture.animals[i].rect.y))
+            #animal_act_timer = 0
+            #else:
+            #animal_act_timer += 1
+    #return city
 
 def Draw_Explored_Zones(zones):
-    global display_surface, pygame, images, animal_act_timer
-    
+    global display_surface, pygame, images
+    #print("EDW")
     for zone in zones:
         if zone.type == CONST.types['BARN_SILO']:
             #draw the building
@@ -182,16 +187,26 @@ def Draw_Explored_Zones(zones):
             bi_rect = bi_rect.move((zone.rect.topleft))
             display_surface.blit(building_img, bi_rect)
             
-        elif zone.type == CONST.types['PASTURE']:            
-            #draw the animals
-            for an in zone.pasture.animals:
-                an.draw_animal(display_surface, images, pygame)
-            
-            #draw the shelter
-            rect = zone.pasture.shelter_rect
-            #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
-            rect = pygame.Rect(rect.x, rect.y, CONSTRUCT_SIZE.types['SHELTER'], CONSTRUCT_SIZE.types['SHELTER'])
-            display_surface.blit(images[zone.pasture.shelter_img_key], rect)
+        elif zone.type == CONST.types['PASTURE']:
+            if zone.is_explored == True:             
+                #draw the animals
+                #print("MESA")
+                for an in zone.pasture.animals:
+                    
+                    #an.draw_animal(display_surface, images, pygame)
+                    
+                    #rect = an.img_rect                    
+                    #print("MESA AN ", (rect.x, rect.y))
+                    #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+                    
+                    #rect = pygame.Rect((an.img_rect.x, an.img_rect.y), (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW']))
+                    display_surface.blit(images[an.img_key], pygame.Rect((an.img_rect.x, an.img_rect.y), (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW'])))
+                    #pprint(an.img_rect)
+                #draw the shelter
+                rect = zone.pasture.shelter_rect
+                #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+                rect = pygame.Rect((rect.x, rect.y), (CONSTRUCT_SIZE.types['SHELTER'], CONSTRUCT_SIZE.types['SHELTER']))
+                display_surface.blit(images[zone.pasture.shelter_img_key], rect)
                 
 def Draw_Unexplored_Zones(unexplored_zones):
     global display_surface, gray, label, pygame
@@ -309,7 +324,7 @@ def get_heat_val(rng):
     global plant, pb
     
     plant.heat_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -323,7 +338,7 @@ def get_hum_val(rng):
     global plant, pb
     
     plant.hum_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -337,7 +352,7 @@ def get_PH_val(rng):
     global plant, pb
     
     plant.PH_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -406,7 +421,7 @@ def Main_Menu():
     menu.enable()
     on_resize()  # Set initial size
     
-    FPS = 120 # frames per second setting
+    FPS = 60 # frames per second setting
     fpsClock = pygame.time.Clock()
     
     #if __name__ == '__main__':
@@ -505,6 +520,7 @@ def Display_Overlay(zones):
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
+                    #print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
                     
                 #pygame.surfarray.blit_array(display_surface, data_temp)
@@ -512,7 +528,7 @@ def Display_Overlay(zones):
         return data_temp
     return None
 
-def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc, lock):    
+def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
     if weather_effect.type == WEATHER.types['RAIN']:
         #print(zones)
         #for zi in range(0, len(zones)):
@@ -576,166 +592,89 @@ def Render_Current_FPS(text, font):
     label_rect = label.get_rect(center=(fps_rect.center))
     display_surface.blit(label, label_rect)
 
-def Deal_Chunks(num_consumers, wb_q, stop_q):
+def Deal_Chunks(num_consumers, wb_q, stop_q, rain_b_inc):
     global cities
-    consumers = []
+    producers = []
+    indices = []
+    lst = []
     print("Starting consumers...")
     chunk = int(math.floor(len(cities) / num_consumers))
-    #print(chunk)
-    if len(cities) < num_consumers:
+    print("chunk:", chunk, flush=True)
+    req_upd_qs = []
+    if chunk == 0:
+        print("Num_Consumers < len(cities)")
+        #assign one city to one process
         for i in range(0, len(cities)):
-            #cs = []
-            #for j in range(i, i+1):
-            #    cs.append()
-            consumer = Process(target=Consumer, args=((i, i+1), list(cities[i:(i+1)]), rain_b_inc, wb_q, stop_q))
-            #consumer.daemon = True
+            req_upd_qs.append(mp.Queue())
+            ind = []
+            city_chunk = []
+            for k in range(i, i+1):
+                ind.append(k)
+                city_chunk.append(cities[k])
+            print("ind:", ind, " c:", city_chunk)
+            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, req_upd_qs[-1], stop_q, rain_b_inc])
             
-            consumer.start()  # Launch consumer() as another proc
-            #consumers.append(list(cities[i:(i+1)]))
-            consumers.append(consumer)
+            producer.start()
+            producers.append(producer)
+            
+            indices.append(ind)
+            lst.append(city_chunk)
+            
     else:
-        if chunk != 0:
-            #end = int(math.floor(len(cities) / num_consumers)) - 1
-            chunk = int(len(cities) / (num_consumers - 1))
-            for i in range(0, num_consumers-1):
-                
-                consumer = Process(target=Consumer, args=((i*chunk, (i+1)*chunk), list(cities[i*chunk:(i+1)*chunk]), rain_b_inc, wb_q, stop_q))
-                #consumer.daemon = True
-                
-                consumer.start()  # Launch consumer() as another proc
-                #consumers.append(list(cities[i*chunk:(i+1)*chunk]))
-                consumers.append(consumer)
-            consumer = Process(target=Consumer, args=(((i+1)*chunk, len(cities)), list(cities[(i+1)*chunk:len(cities)]), rain_b_inc, wb_q, stop_q))
-            #consumer.daemon = True
-            
-            consumer.start()  # Launch consumer() as another proc
-            #consumers.append(list(cities[(i+1)*chunk:len(cities)]))
-            consumers.append(consumer)
-        else:
-            chunk = int(len(cities) / num_consumers)
-            for i in range(0, num_consumers):
-               
-               consumer = Process(target=Consumer, args=((i*chunk, (i+1)*chunk), list(cities[i*chunk:(i+1)*chunk]), rain_b_inc, wb_q, stop_q))
-               #consumer.daemon = True
-               
-               consumer.start()  # Launch consumer() as another proc
-               #consumers.append(list(cities[i*chunk:(i+1)*chunk]))
-               consumers.append(consumer)
-            
-    print("Returning consumers...")
-    return consumers
-
-def Consumer_Thread(ind, lock, stop_q, wb_q):
-    global cities
-    #time.sleep(15)
-    #_ind, _cities = wb_q.get(True)
-    while True:
-        #if not wb_q.empty():
-        #_ind, _cities = wb_q.get(True)
-        #if _ind is not None:
-        #time.sleep(4)
-        #print(len(cities))
-        lock.acquire()
-        for c in cities:
-            if c.is_active == True:
-                #print("Found active city", flush=True)
-                wb_q.put((ind, cities))
-                #print(wb_q.qsize(), flush=True)
-                break
-        lock.release()
-        time.sleep(4)
-        #print("Hum updated")
+        print("Num_Consumers >= len(cities)")
         
-        #current_process().cities = cities
-        
-        if not stop_q.empty():
-            print("OK", flush=True)
-            msg = stop_q.get(True)
-            print("Proc thread exited with msg ", msg, flush=True)
-            return
+    return producers, req_upd_qs
 
-def Consumer(ind, _cities, rain_b_inc, wb_q, stop_q):
-    global cities
-    cities = _cities
-    lock = mp.Lock()
-    for i in range(0, 1):
-        wb_q_thread = Thread(target=Consumer_Thread, args=(ind, lock, stop_q, wb_q))
-        wb_q_thread.start()
+def Producer(_id, ind, city_chunk, wb_q, req_upd_q, stop_q, rain_b_inc):
+    #lock = mp.Lock()
+    #for i in range(0, 1):
+    print("Producer: ", ind, flush=True)
+    
     #timer_cnt = 0
+    cnt = 0
+    buffered_objs = 30
+    lst = []
+    #with Pool(7) as p:
+    #lst.append(p.map([City() for i in range(0, buffered_objs)]))
+    """
+    for i in range(0, buffered_objs):
+        lst.append(City())
+        print(i, flush=True)
+    """
+        #print(lst[-1], flush=True)
+    FPS = 60
+    fps_cnt = 0
+    active_city_i = -1
+    pid = os.getpid()
     while True:
-        #time.sleep(1)
-        #timer_cnt += 1
-        #try:
-        #    cities = update_q.get(False)
-            
-        #except:
-        #print(cities, flush=True)
-        #lock.acquire()
-        for ci in range(0, len(cities)):
-            Weather_Effect_To_Ground(cities[ci].weather_effect, cities[ci].zones, rain_b_inc, lock)
-            """
-            zones = Weather_Effect_To_Ground(cities[ci].weather_effect, cities[ci].zones, rain_b_inc)
-            if zones is not None:
-                lock.acquire()
-                for i in range(0, len(zones)):
-                    cities[ci].zones[i].field.hum[:, :, 2] = zones[i]
-                lock.release()
-            """
-        #lock.release()
-        #if timer_cnt >= 20:
-        #    timer_cnt = 0
-        time.sleep(5)
-        #UNCOMMENT!
-        #wb_q.put((ind, cities))
+        #print("Producer:", ind, " cc:", city_chunk)
+        if not req_upd_q.empty():
+            active_city_i = req_upd_q.get()
+            print(pid, ":", active_city_i, ",", ind, " cc:", city_chunk, flush=True)
+            for i in range(0, len(ind)):
+                if active_city_i == ind[i]:
+                    wb_q.put((_id, city_chunk[i]))
         
+        if fps_cnt >= FPS:
+            cnt = 0 
+            for i in ind:
+                if active_city_i == i:
+                    continue
+                Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
+                Update_Explored_Zones(city_chunk[cnt])
+                cnt += 1
+            fps_cnt = 0
+        else:
+            fps_cnt += 1
+        #time.sleep(1./120)
+        #print()
+        #UNCOMMENT!
+        #wb_q.put((ind, city_chunk))
         #print(stop_q.qsize(), flush=True)
         if not stop_q.empty():
-            print("OK", flush=True)
             msg = stop_q.get(True)
-            for i in range(0, 1):
-                stop_q.put("BREAK THREAD")
             print(os.getpid(), " exited with msg ", msg, flush=True)
-            wb_q_thread.join()
-            return
-        #time.sleep(1./40)
-        #pass
-
-def Wb_Q_Thread(wb_q, stop_q, lock):
-    global cities
-    #time.sleep(15)
-    #_ind, _cities = wb_q.get(True)
-    while True:
-        #if not wb_q.empty():
-        _ind, _cities = wb_q.get(True)
-        if _ind is not None:
-            #lock.acquire()
-            
-            #ind = 0
-            thread_city = 0
-            for i in range(_ind[0], _ind[1]):
-                #print("i: ", i, " out of ",  range(_ind[0], _ind[1]))
-                #print(_cities, " ", len(_cities[thread_city].zones))
-                for zi in range(0, len(_cities[thread_city].zones)):
-                #for z in cities[i].zones:
-                    #print("thread_city: ", thread_city, " out of ",  range(0, len(_cities[thread_city].zones)))
-                    #cities[i].zones[zi].field.hum = _cities[i].zones[thread_city].field.hum
-                    #cities[i].zones[zi].field.hum = _cities[thread_city].zones[zi].field.hum
-                    lock.acquire()
-                    cities[i].zones[zi].field.hum = _cities[thread_city].zones[zi].field.hum
-                    lock.release()
-                    #print(zi)
-                    #print(cities[i].zones[zi].field.hum)
-                thread_city += 1
-                #ind += 1
-            #lock.release()
-            #print("Hum updated")
-            
-            #current_process().cities = cities
-        
-        if not stop_q.empty():
-            print("OK", flush=True)
-            msg = stop_q.get(True)
-            print("WB thread exited with msg ", msg, flush=True)
+            #print("Producer: ", cnt)
             return
 
 #def Event_Loop(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects):
@@ -762,7 +701,21 @@ def display_top(snapshot, key_type='lineno', limit=10):
         print("%s other: %.1f KiB" % (len(other), size / 1024))
     total = sum(stat.size for stat in top_stats)
     print("Total allocated size: %.1f KiB" % (total / 1024))
+
+def Weather_Effect_To_Ground_Pool(city, rain_b_inc):    
+    if city.weather_effect.type == WEATHER.types['RAIN']:
+        for z in city.zones:
+            z.field.hum[:, :, 2] +=  rain_b_inc
+            z.field.hum[z.field.hum[:, :, 2] > 240] = 240
+
+def Update_Cities(args):
+    Weather_Effect_To_Ground_Pool(args[0], args[1])
+
+    #cities[ci] = Update_Explored_Zones(cities[ci])
+    Update_Explored_Zones(args[0])
     
+    return args[0]
+
 """
 def Init_Event_Proc():
     
@@ -814,7 +767,7 @@ def main():
     
     #events_proc = Process(target=Init_Event_Proc).start()
     
-    FPS = 240 # frames per second setting
+    FPS = 60 # frames per second setting
     fpsClock = pygame.time.Clock()
     
     #direction: from the main process to the subprocesses
@@ -822,12 +775,12 @@ def main():
     #direction: from the subprocesses to the main process
     wb_q = mp.Queue()
     stop_q = mp.Queue()
-    #update_q = mp.Queue()
+    #req_upd_q = mp.Queue()
     print("CPUs", mp.cpu_count())
     
     lock = mp.Lock()
     
-    num_consumers = mp.cpu_count()-1
+    num_producers = mp.cpu_count()-1
     #consumers = Weather_Effect_To_Ground_Proc3(cities, num_consumers)
     #print(q_consumers)
     #l = mp.Lock()
@@ -836,20 +789,31 @@ def main():
     #with mp.Pool(num_consumers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
     #pool.map_async(Q_Consumer6, (q, wb_q))
     
-    consumers = Deal_Chunks(num_consumers, wb_q, stop_q)
+    producers, req_upd_qs = Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc)
+    #pool = mp.Pool()
+
+    
     
     #wbthreads = []
     #DO NOT DO THIS
-    #for i in range(0, 1):
-    wb_q_thread = Thread(target=Wb_Q_Thread, args=(wb_q, stop_q, lock))
-    wb_q_thread.start()
+    #for i in range(0, 5):
+        
+    #wb_q_thread = Thread(target=Wb_Q_Thread, args=(wb_q, stop_q, lock))
+    #wb_q_thread.start()
+    
     #wbthreads.append(wb_q_thread)
     
     #event_thread = Thread(target=Event_Loop, args=(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects))
     #event_thread.start()
     #timer_cnt = 0
     
+    last_i = 0
+    second_to_last_i = -1
+    origin = -1
     
+    active_city_changed = False
+    
+    #time.sleep(20) #loading time
     # infinite loop
     while running :
         #snapshot1 = tracemalloc.take_snapshot()
@@ -865,45 +829,72 @@ def main():
         else:
             timer_cnt += 1
         """
+        #update the active city
+        Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
+        Update_Explored_Zones(active_city)
         
         #draw map view
-        if selected_view == VIEW.types['MAP_VIEW']:
+        if selected_view == VIEW.types['MAP_VIEW']:            
             city_rects = Draw(display_surface, scouts, lakes, forests, cities)
         #draw active city view
         elif selected_view == VIEW.types['CITY_VIEW']:
             #print(cities)
             #lock.acquire()
+            
             d = Display_Overlay(active_city.zones)
             #lock.release()
             
             if d is not None:
                 
-                lock.acquire()
+                #lock.acquire()
                 #print("Drawing...")
+                #print(active_city.id)
                 active_city.data = d
-                lock.release()
+                #lock.release()
                 
                 #print("Done.")
-            
+                
             tractor_img_key, tractor_rect = active_city.Draw()
             pygame.surfarray.blit_array(display_surface, active_city.data)
             display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
-
             
             
+            #If active vity has changed, request update from process that
+            #has been simulating the particular city
+            if active_city_changed == True:
+                #sync the city's state with the city's origin-process
+                if origin >= 0:
+                    req_upd_qs[origin].put(active_city)
+                    
+                #request city state-update from process
+                for p_i in range(0, len(producers)):
+                    print("Updating processes...")
+                    req_upd_qs[p_i].put(last_i)
+                
+                #update the city's state
+                origin, temp_city = wb_q.get(True)
+                for j in range(0, len(temp_city.zones)):
+                    temp_city.zones[j].is_explored = cities[last_i].zones[j].is_explored
+                temp_city.unexplored_zones = cities[last_i].unexplored_zones
+                active_city = temp_city
+                
+                active_city_changed = False
+            
+                        
             if len(active_city.unexplored_zones) > 0:
+                #print("UZ")
                 Draw_Unexplored_Zones(active_city.unexplored_zones)
+           
             
-            #lock.acquire()
-            Draw_Explored_Zones(active_city.zones)
-            #lock.release()
-        
-        Update_Explored_Zones()
+            #draw the active city
+            Draw_Explored_Zones(active_city.zones)    
+
+        #Update_Explored_Zones(active_city)
         #draw GUI
         Draw_Action_Buttons()
 
         #draw weather effects on screen
-        active_city.weather_effect.draw(display_surface, pygame, images)
+        #active_city.weather_effect.draw(display_surface, pygame, images)
         #time.sleep(1)
         #lock.acquire()
         
@@ -921,18 +912,24 @@ def main():
                 #weather_effects_proc.join()
                 #multiproc_pool.close()
                 #multiproc_pool.join()
-                
-                for i in range(0, len(consumers)+2):
-                    stop_q.put("BREAK")
                 #"""
-                for idx, consumer in enumerate(consumers):
-                        print("    Waiting for consumer.join() index %s" % idx)
-                        if not consumer.is_alive():
-                            consumer.join()  # Wait for consumer() to finish
-                        print("        consumer() idx:%s is done" % idx)
+                for i in range(0, len(producers)):
+                    stop_q.put("BREAK")
+                
+                for idx, prod in enumerate(producers):
+                        print("    Waiting for producer.join() index %s" % idx)
+                        if not prod.is_alive():
+                            prod.join()  # Wait for consumer() to finish
+                        print("        producer() idx:%s is done" % idx)
                 #stop_q.put("BREAK")
-                if not wb_q_thread.is_alive():
-                    wb_q_thread.join()
+                """
+                for wbt in wbthreads:
+                    stop_q.put("BREAK")
+                    if not wbt.is_alive():
+                        wbt.join()
+                """
+                #if not wb_q_thread.is_alive():
+                #    wb_q_thread.join()
                 #"""
                 pygame.display.quit()
                 sys.exit()
@@ -998,14 +995,19 @@ def main():
                 if selected_view == VIEW.types['CITY_VIEW']:
                     # Explore clicked zone
                     for key, uz in active_city.unexplored_zones.items():
+                        print(uz.rect.x, uz.rect.y)
                         if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
                             print("Expanded to zone " + str(key))
-                            active_city.zones[key].explore()
-                            #active_city.unexplored_zones[key].explore()
-                            #active_city.zones.append(active_city.unexplored_zones[key])
-                            #Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            #uz.is_explored = True
+                            active_city.zones[key].is_explored = True
+                            #active_city.zones.append(copy.deepcopy(uz))
                             Init_Explored_Zones(active_city.data, active_city.zones[key])
-                            
+                            #active_city.zones[key].explore()
+                            #active_city.unexplored_zones[key].explore()
+                            #active_city.zones.append(copy.deepcopy(active_city.unexplored_zones[key]))
+                            #Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            #Init_Explored_Zones(active_city.data, active_city.zones[-1])
+                            #del uz
                             if key in active_city.unexplored_zones.keys():
                                 del active_city.unexplored_zones[key]
                                 
@@ -1016,9 +1018,13 @@ def main():
                         if city_rects[i].collidepoint(pygame.mouse.get_pos()):
                             print("clicked on city")
                             selected_view = VIEW.types['CITY_VIEW']
-                            active_city.is_active = False
+                            cities[last_i].is_active = False
+                            cities[i].is_active = True
                             active_city = cities[i]
-                            active_city.is_active = True
+                            second_to_last_i = last_i
+                            last_i = i
+                            active_city_changed = True
+                            #active_city.is_active = True
                             break
         
         #lock.release()
@@ -1105,7 +1111,7 @@ def Init_Rects():
         
 if __name__ == "__main__":
     
-    tracemalloc.start()
+    #tracemalloc.start()
 
     global time_cnt, rain_b_inc, tractor
     
@@ -1209,6 +1215,7 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, rect1, images)
         unexplored_zones[2] = Zone(2, rect2, images)
         """
+        #rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect = MyRect(_rect=rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
 
@@ -1216,7 +1223,7 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
         
         
-        
+        #"""
         rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect = MyRect(_rect=rect1)
         #unexplored_zones[1] = Zone(1, rect1.center, rect1.topleft, rect1.topright, rect1.bottomright, rect1.x, rect1.y)
@@ -1227,6 +1234,7 @@ if __name__ == "__main__":
         #unexplored_zones[2] = Zone(2, rect2.center, rect2.topleft, rect2.topright, rect2.bottomright, rect2.x, rect2.y)
         #print(type(images['shelter_scaled_img']))
         unexplored_zones[3] = Zone(3, copy.deepcopy(rect))
+        #"""
     for key, uz in unexplored_zones.items():
         zones.append(uz)
         
@@ -1244,10 +1252,17 @@ if __name__ == "__main__":
     #cities = []#manager.list()
     cities = list()#mp.Array('Synchronized', range(3))
     for i in range(0, CONSTANTS.types['CITY_NUM'], 3):
-        cities.append(City(i, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i], centers[i], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-        cities.append(City(i+1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+1], centers[i+1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-        cities.append(City(i+2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+2], centers[i+2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-
+        cities.append(City(i, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i], centers[i], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        #"""
+        cities.append(City(i+1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+1], centers[i+1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        cities.append(City(i+2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+2], centers[i+2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        #"""
     #shm = shared_memory.ShareableList(cities, name=c)
     
     scouts = []

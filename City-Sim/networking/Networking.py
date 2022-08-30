@@ -24,7 +24,7 @@ def Set_Tractor_Actions(tractor_actions):
     #POST
     #Prepare data to send
     data = {}
-    print(tractor_actions)
+    #print(tractor_actions)
     data['tractor_actions'] = []
     for k, v in tractor_actions.items():
         data[k] = v

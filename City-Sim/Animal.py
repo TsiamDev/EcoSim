@@ -7,6 +7,7 @@ Created on Tue Aug  9 13:59:44 2022
 
 import random
 import numpy as np
+import pprint
 
 from Const import ANIMAL, ANIMAL_SIZE, DISPLAY
 from MyRect import MyRect
@@ -16,7 +17,7 @@ class Animal:
     def __init__(self, _rect, _type):
         self.x = _rect.center[0]
         self.y = _rect.center[1]
-        self.rect = MyRect(_rect=_rect)
+        self.rect = MyRect(_x=self.x, _y=self.y)
         self.type = _type
         self.size = ANIMAL_SIZE.types['COW']
         
@@ -27,33 +28,38 @@ class Animal:
             self.img_key = 'cow_scaled_img'
             
             self.img = None
-            self.img_rect = MyRect(_rect=_rect)
+            self.img_rect =  self.rect#MyRect(_rect=_rect)
             #self.img_rect = self.img.get_rect()    
             #self.img_rect = self.img_rect.move(self.pos.x, self.pos.y)    
             #print(self.img_rect)
     
         self.w = None
         
-    def act(self, pygame, display_surface, zone, data, images):
+    def act(self, zone, data):
         if self.w is None:
             self.eat(zone, data)
-            x_dir, y_dir = self.draw(pygame, display_surface, zone)
+            x_dir, y_dir = self.draw(zone)
         else:
             #just produced - go home
-            print(self.w)
-            x_dir, y_dir = self.move(self.w, display_surface, zone)
+            #print(self.w)
+            x_dir, y_dir = self.move(self.w, zone)
         
+        #print("x,y: ", x_dir, y_dir)
+        #mag = random.randint(1, 5)
         self.img_rect.move(x_dir, y_dir)
+        #self.img_rect.move(1,1)
+        #print(self.img_rect.x, self.img_rect.y, flush=True)
         #rect = self.img_rect
         #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.bottomright[1]-rect.topright[1])
         #display_surface.blit(images[self.img_key], rect)   
     
     def draw_animal(self, display_surface, images, pygame):
         rect = self.img_rect
-        rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.bottomright[1]-rect.topright[1])
-        display_surface.blit(images[self.img_key], rect)  
+        rect = pygame.Rect((rect.x, rect.y), (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW']))#rect.topright[0]-rect.topleft[0], rect.bottomright[1]-rect.topright[1])
+        #pygame.Rect()
+        display_surface.blit(images[self.img_key], (rect.x, rect.y))  
     
-    def draw(self, pygame, display_surface, zone):
+    def draw(self, zone):
         #print("draw animal")      
         #zone.rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
         if self.x <= zone.rect.topleft[0]:# & (self.pos.x < zone.rect.top_right[0]):
@@ -94,8 +100,9 @@ class Animal:
         #display_surface.blit(self.img, self.img_rect)
         
         return self.x, self.y
+        #return x_off, y_off
 
-    def move(self, waypoints, display_surface, zone):    
+    def move(self, waypoints, zone):    
         if len(waypoints) > 0:      
             if waypoints[0][1] - self.img_rect.y < 0:
                 y_dir = -1
