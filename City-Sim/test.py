@@ -592,23 +592,89 @@ def Render_Current_FPS(text, font):
     label_rect = label.get_rect(center=(fps_rect.center))
     display_surface.blit(label, label_rect)
 
-def Deal_Chunks(num_consumers, wb_q, stop_q, rain_b_inc):
+def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
     global cities
     producers = []
     indices = []
     lst = []
-    print("Starting consumers...")
-    chunk = int(math.floor(len(cities) / num_consumers))
-    print("chunk:", chunk, flush=True)
+    print("Starting producers...")
+    #chunk_mod = int(math.floor(len(cities) % (num_producers +1)))
     req_upd_qs = []
-    if chunk == 0:
-        print("Num_Consumers < len(cities)")
+    if num_producers >= len(cities):
+        print("num_producers >= len(cities)")
         #assign one city to one process
         for i in range(0, len(cities)):
             req_upd_qs.append(mp.Queue())
             ind = []
             city_chunk = []
             for k in range(i, i+1):
+                ind.append(k)
+                city_chunk.append(cities[k])
+            print("ind:", ind, " cc:", city_chunk)
+            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, req_upd_qs[-1], stop_q, rain_b_inc])
+            
+            producer.start()
+            producers.append(producer)
+            
+            indices.append(ind)
+            lst.append(city_chunk)
+            
+    else:
+        print("num_producers < len(cities)")
+        #assign one city to one process
+        chunk = int(math.floor(len(cities) / num_producers))
+        print("chunk:", chunk, flush=True)
+
+        
+        for i in range(0, num_producers - 1): 
+            req_upd_qs.append(mp.Queue())
+            ind = []
+            start = i*chunk
+            end = (i+1)*chunk - 1
+            ind.append(start)
+            if start != end:
+                ind.append(end)
+            
+            if len(ind) > 1:
+                city_chunk = cities[ind[0]:ind[1]]
+            else:
+                city_chunk = [cities[ind[0]]]
+                
+            print("ind: ", ind, " cc: ", city_chunk)
+            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, req_upd_qs[-1], stop_q, rain_b_inc])
+            
+            producer.start()
+            producers.append(producer)
+            
+            indices.append(ind)
+            lst.append(city_chunk)
+
+        ind = []
+        req_upd_qs.append(mp.Queue())
+        start = (i+1)*chunk
+        end = (i+2)*chunk
+        ind.append(start)
+        ind.append(end)
+        
+        if len(ind) > 1:
+            city_chunk = cities[ind[0]:(ind[1]+1)]
+        else:
+            city_chunk = cities[ind[0]]
+        
+        producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, req_upd_qs[-1], stop_q, rain_b_inc])
+        
+        producer.start()
+        producers.append(producer)
+        
+        indices.append(ind)
+        lst.append(city_chunk)
+            
+        """
+        for i in range(0, num_producers - 1):
+            req_upd_qs.append(mp.Queue())
+            ind = []
+            city_chunk = []
+            for k in range(i*chunk, (i+1)*chunk):
                 ind.append(k)
                 city_chunk.append(cities[k])
             print("ind:", ind, " c:", city_chunk)
@@ -619,50 +685,88 @@ def Deal_Chunks(num_consumers, wb_q, stop_q, rain_b_inc):
             
             indices.append(ind)
             lst.append(city_chunk)
-            
-    else:
-        print("Num_Consumers >= len(cities)")
+          
+        print(k)
+        # next city to allocate
+        k = (i+1)*chunk
+        # the laast process's identifier
+        j = num_producers
+        print(ind[k:(i+2)*chunk])
+        #assign the remaining cities to the last process
+        ind = [h for h in range(k, (i+2)*chunk)]
+        city_chunk = [cities[ind[ci]] for ci in range(0, len(ind))]
+        print("ind:", ind, " c:", city_chunk)
+        producer = Process(target=Producer, args=[j, ind, city_chunk, wb_q, req_upd_qs[-1], stop_q, rain_b_inc])
         
+        producer.start()
+        producers.append(producer)
+        
+        indices.append(ind)
+        lst.append(city_chunk)
+        """
     return producers, req_upd_qs
 
 def Producer(_id, ind, city_chunk, wb_q, req_upd_q, stop_q, rain_b_inc):
     #lock = mp.Lock()
     #for i in range(0, 1):
-    print("Producer: ", ind, flush=True)
+    print("Producer: ", ind, " cc: ", city_chunk, flush=True)
     
     #timer_cnt = 0
     cnt = 0
-    buffered_objs = 30
-    lst = []
-    #with Pool(7) as p:
-    #lst.append(p.map([City() for i in range(0, buffered_objs)]))
-    """
-    for i in range(0, buffered_objs):
-        lst.append(City())
-        print(i, flush=True)
-    """
-        #print(lst[-1], flush=True)
     FPS = 60
     fps_cnt = 0
-    active_city_i = -1
     pid = os.getpid()
     while True:
         #print("Producer:", ind, " cc:", city_chunk)
+        #if a city state-update request has been made
         if not req_upd_q.empty():
-            active_city_i = req_upd_q.get()
-            print(pid, ":", active_city_i, ",", ind, " cc:", city_chunk, flush=True)
-            for i in range(0, len(ind)):
-                if active_city_i == ind[i]:
-                    wb_q.put((_id, city_chunk[i]))
+            active_city = req_upd_q.get(True)
+            if type(active_city) == City:
+                print(pid, ": received ", active_city.id, flush=True)
+                #the parent process has sent you a city state-update
+                #so, update the city
+                for cc in city_chunk:
+                    if cc.id == active_city.id:
+                        print(pid, ": has ", active_city.id, flush=True)
+                        cc = active_city
+                        break
+                    
+                #a second message containing the newly selected city's id
+                #has been sent by the parent process, so read it
+                new_city = req_upd_q.get(True)
+                #and if you were assigned this city, send a city 
+                #state-update to the parent process
+                for cc in city_chunk:
+                    #active_city is just an integer here!
+                    if cc.id == new_city:
+                        print(pid, ": updated ", new_city, flush=True)
+                        wb_q.put((_id, cc))
+                        break
+                
+            elif type(active_city) == int:
+                #search your cities, to see if you are simulating the requested
+                #city
+                for cc in city_chunk:
+                    #active_city is just an integer here!
+                    if cc.id == active_city:
+                        print(pid, ": updated ", active_city, flush=True)
+                        wb_q.put((_id, cc))
+                        break
+        
         
         if fps_cnt >= FPS:
-            cnt = 0 
-            for i in ind:
-                if active_city_i == i:
-                    continue
-                Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
-                Update_Explored_Zones(city_chunk[cnt])
-                cnt += 1
+            #print(ind)
+            #print("ind[i]:", ind[i])
+            #print("i:", i)
+            if len(ind) > 1:
+                cnt = 0
+                for m in range(ind[0], ind[1]):
+                    Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
+                    Update_Explored_Zones(city_chunk[cnt])
+                    cnt += 1
+            else:
+                Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
+                Update_Explored_Zones(city_chunk[0])
             fps_cnt = 0
         else:
             fps_cnt += 1
@@ -780,13 +884,13 @@ def main():
     
     lock = mp.Lock()
     
-    num_producers = mp.cpu_count()-1
-    #consumers = Weather_Effect_To_Ground_Proc3(cities, num_consumers)
+    num_producers = mp.cpu_count()
+    #consumers = Weather_Effect_To_Ground_Proc3(cities, num_producers)
     #print(q_consumers)
     #l = mp.Lock()
     #multiproc_pool = mp.Pool(mp.cpu_count())#, Weather_Effect_To_Ground_Proc, (multiproc_Q, l,))
     #multiproc_pool.start()# weather_effect.type))
-    #with mp.Pool(num_consumers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
+    #with mp.Pool(num_producers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
     #pool.map_async(Q_Consumer6, (q, wb_q))
     
     producers, req_upd_qs = Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc)
@@ -808,7 +912,7 @@ def main():
     #timer_cnt = 0
     
     last_i = 0
-    second_to_last_i = -1
+    last_active_city = -1
     origin = -1
     
     active_city_changed = False
@@ -859,17 +963,20 @@ def main():
             display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
             
             
-            #If active vity has changed, request update from process that
+            #If active city has changed, request update from process that
             #has been simulating the particular city
             if active_city_changed == True:
                 #sync the city's state with the city's origin-process
                 if origin >= 0:
-                    req_upd_qs[origin].put(active_city)
+                    print("origin:", origin)
+                    print("last_active_city.id:", last_active_city.id)
+                    req_upd_qs[origin].put(last_active_city)
                     
+
                 #request city state-update from process
                 for p_i in range(0, len(producers)):
                     print("Updating processes...")
-                    req_upd_qs[p_i].put(last_i)
+                    req_upd_qs[p_i].put(active_city.id)
                 
                 #update the city's state
                 origin, temp_city = wb_q.get(True)
@@ -1018,13 +1125,15 @@ def main():
                         if city_rects[i].collidepoint(pygame.mouse.get_pos()):
                             print("clicked on city")
                             selected_view = VIEW.types['CITY_VIEW']
-                            cities[last_i].is_active = False
-                            cities[i].is_active = True
-                            active_city = cities[i]
-                            second_to_last_i = last_i
-                            last_i = i
-                            active_city_changed = True
-                            #active_city.is_active = True
+                            if last_i != i:
+                                cities[last_i].is_active = False
+                                cities[i].is_active = True
+                                last_active_city = active_city
+                                active_city = cities[i]
+                                last_i = i
+                                active_city_changed = True
+                                #active_city.is_active = True
+                                
                             break
         
         #lock.release()
