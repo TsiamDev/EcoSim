@@ -12,8 +12,24 @@
         <button type="submit" class="btn btn-primary" name="b2">2</button>
         <button type="submit" class="btn btn-primary" name="b3">3</button>
         <button type="submit" class="btn btn-primary" name="b4">4</button>       
-        <button type="submit" class="btn btn-primary" name="b5">5</button>  
+        <button type="submit" class="btn btn-primary" name="b5">5</button>
+        <label for="Policy">Choose a Policy:</label>
+        <select id="Policy" name="Policy">
+          <option value="volvo">Volvo</option>
+          <option value="saab">Saab</option>
+          <option value="fiat">Fiat</option>
+          <option value="audi">Audi</option>
+        </select>  
     </form>    
     {% block content %}{% endblock content %}
     </body>
 </html>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<script>
+    window.onload = function() {
+        var my_javascript_variable = <?php echo json_encode($_POST['my_post'] ?? null) ?>;
+        console.log(my_javascript_variable)
+    }
+</script>
+
