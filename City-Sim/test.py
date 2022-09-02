@@ -737,9 +737,9 @@ def Producer(_id, ind, city_chunk, wb_q, req_upd_q, stop_q, rain_b_inc):
                 #and if you were assigned this city, send a city 
                 #state-update to the parent process
                 for cc in city_chunk:
-                    #active_city is just an integer here!
+                    #new_city is just an integer here!
                     if cc.id == new_city:
-                        print(pid, ": updated ", new_city, flush=True)
+                        print(pid, ": sent ", new_city, flush=True)
                         wb_q.put((_id, cc))
                         break
                 
@@ -749,7 +749,7 @@ def Producer(_id, ind, city_chunk, wb_q, req_upd_q, stop_q, rain_b_inc):
                 for cc in city_chunk:
                     #active_city is just an integer here!
                     if cc.id == active_city:
-                        print(pid, ": updated ", active_city, flush=True)
+                        print(pid, ": sent ", active_city, flush=True)
                         wb_q.put((_id, cc))
                         break
         
@@ -913,11 +913,13 @@ def main():
     
     last_i = 0
     last_active_city = -1
+    second_to_last_i = -1
     origin = -1
     
     active_city_changed = False
     
     #time.sleep(20) #loading time
+    print("Mian loop:", os.getpid())
     # infinite loop
     while running :
         #snapshot1 = tracemalloc.take_snapshot()
@@ -966,6 +968,28 @@ def main():
             #If active city has changed, request update from process that
             #has been simulating the particular city
             if active_city_changed == True:
+                #if the newly selected city is different than the last one
+                if last_i != second_to_last_i:
+                    #update the previously selected city
+                    print("Sent ", second_to_last_i)
+                    req_upd_qs[second_to_last_i-1].put(cities[second_to_last_i])
+                    
+                    #request the newly selected city's state-update,
+                    #by sending the selected city's id
+                    for p_i in range(0, len(producers)):
+                        print("Requesting, ", active_city.id, "...")
+                        req_upd_qs[p_i].put(active_city.id)
+                        
+                    #wait for the city's state-update from the 
+                    #designated process
+                    origin, temp_city = wb_q.get(True)
+                    for j in range(0, len(temp_city.zones)):
+                        temp_city.zones[j].is_explored = cities[last_i].zones[j].is_explored
+                    temp_city.unexplored_zones = cities[last_i].unexplored_zones
+                    active_city = temp_city
+                    
+                
+                """
                 #sync the city's state with the city's origin-process
                 if origin >= 0:
                     print("origin:", origin)
@@ -975,7 +999,7 @@ def main():
 
                 #request city state-update from process
                 for p_i in range(0, len(producers)):
-                    print("Updating processes...")
+                    print("Updating processes... ", active_city.id)
                     req_upd_qs[p_i].put(active_city.id)
                 
                 #update the city's state
@@ -984,7 +1008,7 @@ def main():
                     temp_city.zones[j].is_explored = cities[last_i].zones[j].is_explored
                 temp_city.unexplored_zones = cities[last_i].unexplored_zones
                 active_city = temp_city
-                
+                """
                 active_city_changed = False
             
                         
@@ -1126,13 +1150,16 @@ def main():
                             print("clicked on city")
                             selected_view = VIEW.types['CITY_VIEW']
                             if last_i != i:
+                                
+                                second_to_last_i = last_i
                                 cities[last_i].is_active = False
+                                last_active_city = cities[last_i]
+                                
                                 cities[i].is_active = True
-                                last_active_city = active_city
                                 active_city = cities[i]
                                 last_i = i
+                                
                                 active_city_changed = True
-                                #active_city.is_active = True
                                 
                             break
         
