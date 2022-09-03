@@ -9,7 +9,7 @@ import random
 
 from MyPoint import MyPoint
 
-from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS
+from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS, DISPLAY
 from networking.Networking import Set_Globals, Set_Tractor_Actions
 
 class Tractor:
@@ -134,45 +134,64 @@ class Tractor:
         # if tractor starts at (15,15) => top left corner of field
         x_off = self.rect.x #- 15 
         y_off = self.rect.y #- 15
+        is_out_of_field_bounds = False
+
+        #Calculate how many of the field's pixels
+        #the tractor will actually change
+        x_low = x_off
+        if (x_low - self.width) < 0:
+            is_out_of_field_bounds = True
+            
+        x_high = x_low + self.width
+        if x_high > (w + self.width):
+            x_high = w + self.width
         
-        #print((x_off, w), (y_off, h))
-        if w - x_off < self.width:
-            x_low = w - self.width
-        else:
-            x_low = x_off
+        if x_low == x_high:
+            is_out_of_field_bounds = True
+        
+        y_low = y_off
+        if (y_low - self.width) < 0:
+            is_out_of_field_bounds = True
             
-        x_high = x_off + self.width
-        if x_high > w:
-            x_high = w
+        y_high = y_low + self.width
+        if y_high > (h + self.width):
+            y_high = h + self.width
             
-        if h - y_off < self.width:
-            y_low = h - self.width
-        else:
-            y_low = y_off
-            
-        y_high = y_off + self.width
-        if y_high > h:
-            y_high = h
+        if y_low == y_high:
+            is_out_of_field_bounds = True
+
         #print((x_low, x_high), '-', (y_low, y_high))
 
-        # pick random <ground> color
-        r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-        g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-        b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-        
-        #update crop state
-        target[x_low:(x_high), y_low:y_high, 0] = r
-        target[x_low:(x_high), y_low:y_high, 1] = g
-        target[x_low:(x_high), y_low:y_high, 2] = b
-
-        if data is not None:
-            #update displayed field state
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+        if is_out_of_field_bounds == False:
+            # pick random <ground> color
+            r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+            g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+            b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
             
-        if isSowing == True:
-            self.zone.field.is_planted[x_low:(x_high), y_low:y_high] = 1
+            #update crop state
+            #target[x_low:(x_high), y_low:y_high, 0] = r
+            #target[x_low:(x_high), y_low:y_high, 1] = g
+            #target[x_low:(x_high), y_low:y_high, 2] = b
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
+    
+            if data is not None:
+                #update displayed field state
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+                
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+                
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 0] = target[:, :, 0]
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 1] = target[:, :, 1]
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 2] = target[:, :, 2]
+                
+            if isSowing == True:
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y] = 1
             
         return data
 
@@ -261,7 +280,7 @@ class Tractor:
         #and in what order
         #Set_Globals()
         #Set_Tractor_Actions(TRACTOR_ACTIONS.types)
-        self.action_Q = list([TRACTOR_ACTIONS.types['SOW'], TRACTOR_ACTIONS.types['SOW'],
+        self.action_Q = list([TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'],
                    TRACTOR_ACTIONS.types['FERTILIZE'], TRACTOR_ACTIONS.types['WATER'],
                    TRACTOR_ACTIONS.types['HARVEST']])
         self.action_Q_ind = 0

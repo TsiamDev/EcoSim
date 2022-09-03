@@ -501,11 +501,12 @@ def Display_Overlay(zones):
     
     #if selected_overlay is None do nothing
     if selected_overlay is not None:
-        data_temp = np.zeros((X, Y, 3), dtype=np.uint8)
+        data_temp = np.zeros((DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8)
         #clear the screen
         #display_surface.fill(black)
         for zone in zones:
             if zone.type is not CONST.types['BARN_SILO']:
+                print(zone.rect.topleft, zone.rect.topright)
                 if selected_overlay is OVERLAY.types['PH']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
                 elif selected_overlay is OVERLAY.types['HUM']:
@@ -932,22 +933,19 @@ def main():
                 
                 active_city_changed = False
             
+            #Update the active_city's pixels (data)
+            active_city.Draw()
             d = Display_Overlay(active_city.zones)
             #lock.release()
-            
             if d is not None:
-                
-                #lock.acquire()
-                #print("Drawing...")
-                #print(active_city.id)
                 active_city.data = d
-                #lock.release()
-                
-                #print("Done.")
-                
             #tractor_img_key, tractor_rect = active_city.Draw()
-            active_city.Draw()
+            
+            
+            #draw the active_city's data to screen
             pygame.surfarray.blit_array(display_surface, active_city.data)
+            
+            #Draw tractor of active_city to screen
             display_surface.blit(images[active_city.tractor.img_key], (active_city.tractor.rect.x, active_city.tractor.rect.y))
             
                         
@@ -959,14 +957,11 @@ def main():
             #draw the active city
             Draw_Explored_Zones(active_city.zones)    
 
-        #Update_Explored_Zones(active_city)
         #draw GUI
         Draw_Action_Buttons()
 
         #draw weather effects on screen
-        #active_city.weather_effect.draw(display_surface, pygame, images)
-        #time.sleep(1)
-        #lock.acquire()
+        active_city.weather_effect.draw(display_surface, pygame, images)
         
         # Event loop
         # iterate over the list of Event objects
@@ -1226,7 +1221,7 @@ if __name__ == "__main__":
     
     # create the display surface object
     # of specific dimension..e(X, Y).
-    display_surface = pygame.display.set_mode((X, Y ))
+    display_surface = pygame.display.set_mode((DISPLAY.X, DISPLAY.Y ))
     
     # Create a 1024x1024x3 array of 8 bit unsigned integers
     data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
