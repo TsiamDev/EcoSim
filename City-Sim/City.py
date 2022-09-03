@@ -218,7 +218,8 @@ class City:
         #self.Crop_Growth()
         self.Move_River()
         
-        d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
+        #d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
+        d = self.tractor.act(self.data, self.plant)
         if d is not None:
             self.data = d
             

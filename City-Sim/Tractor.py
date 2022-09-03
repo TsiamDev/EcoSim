@@ -57,7 +57,7 @@ class Tractor:
         self.Define_Policies()
         
     def move(self):
-        print(self.waypoints)
+        #print(self.waypoints)
         if len(self.waypoints) > 0:
             if self.waypoints[0][0] - self.rect.x < 0:
                 x_dir = -1
@@ -78,11 +78,11 @@ class Tractor:
                 y_dir = 0
             
             self.rect.move(x_dir*15, y_dir*15)
-            print(self.rect.x, self.rect.y)
+            #print(self.rect.x, self.rect.y)
             
             if (x_dir == 0) & (y_dir == 0):
                 del self.waypoints[0]
-                print(self.waypoints)
+                #print(self.waypoints)
                 if len(self.waypoints) == 0:
                     #self.action = TRACTOR_ACTIONS.types['IDLE']
                     lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
@@ -126,7 +126,7 @@ class Tractor:
         
         #print("tractor rect: ", self.rect)
         
-        return data, self.img_key, self.rect             
+        return data#, self.img_key, self.rect             
 
     def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
         #because tractor x,y is different from zone x,y
