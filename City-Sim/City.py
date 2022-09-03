@@ -218,8 +218,6 @@ class City:
         #self.Crop_Growth()
         self.Move_River()
         
-        #self.Draw_Unexplored_Zones()
-        
         d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
         if d is not None:
             self.data = d
