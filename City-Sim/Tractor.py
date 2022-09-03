@@ -28,6 +28,7 @@ class Tractor:
         self.img_key = 'tractor_scaled_img'
         
         self.rect = MyPoint(_x, _y)
+        print("Tractor rect:", self.rect)
         #self.rect = type('', (), {})()
         #self.rect.x = _x#self.img.get_rect().x
         #self.rect.y = _y#self.img.get_rect().y
@@ -44,6 +45,8 @@ class Tractor:
         #self.move_right = True
         
         self.action = TRACTOR_ACTIONS.types['IDLE']
+        self.action_Q = []
+        self.action_Q_ind = -1
         
         self.tractor_Q = []
         self.tractor_Q_ind = -1
@@ -53,44 +56,51 @@ class Tractor:
         
         self.Define_Policies()
         
-    def move(self, display_surface):
-        
+    def move(self):
+        print(self.waypoints)
         if len(self.waypoints) > 0:
-            
-            if self.waypoints[0][1] - self.rect.y < 0:
-                y_dir = -1
-            elif self.waypoints[0][1] - self.rect.y > 0:
-                y_dir = 1
-            else:
-                y_dir = 0
-                
-            if y_dir == 0:
-                if self.waypoints[0][0] - self.rect.x < 0:
-                    x_dir = -1
-                elif self.waypoints[0][0] - self.rect.x > 0:
-                    x_dir = 1
-                else:
-                    x_dir = 0
+            if self.waypoints[0][0] - self.rect.x < 0:
+                x_dir = -1
+            elif self.waypoints[0][0] - self.rect.x > 0:
+                x_dir = 1
             else:
                 x_dir = 0
             
-            self.rect = self.rect.move(x_dir*15, y_dir*15)
+                
+            if x_dir == 0:
+                if self.waypoints[0][1] - self.rect.y < 0:
+                    y_dir = -1
+                elif self.waypoints[0][1] - self.rect.y > 0:
+                    y_dir = 1
+                else:
+                    y_dir = 0
+            else:
+                y_dir = 0
             
+            self.rect.move(x_dir*15, y_dir*15)
+            print(self.rect.x, self.rect.y)
             
             if (x_dir == 0) & (y_dir == 0):
                 del self.waypoints[0]
+                print(self.waypoints)
                 if len(self.waypoints) == 0:
                     #self.action = TRACTOR_ACTIONS.types['IDLE']
                     lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
-                    self.waypoints  = [item for sublist in lst for item in sublist]
-                    self.tractor_Q = self.waypoints
-                    print(self.waypoints)
-                    print(Tractor.waypoints)
-                    self.tractor_Q_ind += 1
-                    if self.tractor_Q_ind >= len(self.tractor_Q):
-                        self.tractor_Q_ind = 0
-                    self.action = self.tractor_Q[self.tractor_Q_ind]
-                    print(self.action)
+                    #lst = [(15,15), (300,15), (300, 30), (15, 30), (15, 45), (300, 45), (300, 60), (15, 60)]
+                    """
+                    lst.append((15, 15))
+                    lst.append((300, 15))
+                    lst.append((300, 30))
+                    lst.append((30, 30))
+                    lst = [[(15, self.width * i), (300, self.width * (i+1))] for i in range(2, 20, 2)]
+                    """
+                    #print(lst)
+                    self.waypoints = [item for sublist in lst for item in sublist]
+                    #self.waypoints = lst
+                    self.action_Q_ind += 1
+                    if self.action_Q_ind >= len(self.action_Q):
+                        self.action_Q_ind = 0
+                    self.action = self.action_Q[self.action_Q_ind]
         
     def act(self, data, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
@@ -100,7 +110,7 @@ class Tractor:
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
             data = self.sow(data, plant)
-            print(self.waypoints)
+            #print(self.waypoints)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['WATER']:
             data = self.water(data)
@@ -114,6 +124,8 @@ class Tractor:
             data = self.harvest(data)
             self.move()
         
+        #print("tractor rect: ", self.rect)
+        
         return data, self.img_key, self.rect             
 
     def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
@@ -123,7 +135,7 @@ class Tractor:
         x_off = self.rect.x #- 15 
         y_off = self.rect.y #- 15
         
-        print((x_off, w), (y_off, h))
+        #print((x_off, w), (y_off, h))
         if w - x_off < self.width:
             x_low = w - self.width
         else:
@@ -247,8 +259,30 @@ class Tractor:
     def Define_Policies(self):
         #TODO prompt users to decide which actions the tractors will perform,
         #and in what order
-        Set_Globals()
-        Set_Tractor_Actions(TRACTOR_ACTIONS.types)
+        #Set_Globals()
+        #Set_Tractor_Actions(TRACTOR_ACTIONS.types)
+        self.action_Q = list([TRACTOR_ACTIONS.types['SOW'], TRACTOR_ACTIONS.types['SOW'],
+                   TRACTOR_ACTIONS.types['FERTILIZE'], TRACTOR_ACTIONS.types['WATER'],
+                   TRACTOR_ACTIONS.types['HARVEST']])
+        self.action_Q_ind = 0
+        
+        self.action = self.action_Q[self.action_Q_ind]
+        
+        #lst = [(15, 15), (300, 15), (300, 30), (15, 30), (15, 45), (300, 45), (300, 60), (15, 60),
+        #       (15, 75), (300, 75), (300, 90), (15, 90), (15, 105), (300, 105), (300, 120),
+        #       (15, 120), (15, 135), (300, 135), (300, 150), (15, 150), (15, 165)]
+        #lst = [(15, 15), (300, 15), (300, 30), (15, 30)]
+        #lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+        
+        lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+        self.waypoints = [item for sublist in lst for item in sublist]
+        
+        #self.tractor_Q = [item for sublist in lst for item in sublist]
+        #self.tractor_Q = lst
+        #self.tractor_Q_ind = 0
+        
+        #self.waypoints = self.tractor_Q
+        
 
     def init_Q(self, lst):
         self.tractor_Q = lst

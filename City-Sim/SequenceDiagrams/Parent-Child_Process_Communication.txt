@@ -1,0 +1,18 @@
+title Parent-Child Process Communication (Sim)
+
+actor Parent
+actor Child
+
+note over Parent: Click on a city detected.
+
+Parent->Child: Send active_city to all children.
+
+note over Child: One child updates its' active_city clone.
+
+Parent->Child: Send the newly selected city id to all children.
+
+Parent<--Child: The child that has the newly selected city, \nsends a (_id, req_city) tuple to the parent process
+
+note over Parent:The parent process updates the active_city
+
+

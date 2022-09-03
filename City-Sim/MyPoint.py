@@ -11,5 +11,5 @@ class MyPoint:
         self.y = _y
     
     def move(self, _x, _y):
-        self.x = _x
-        self.y = _y
+        self.x = self.x + _x
+        self.y = self.y + _y
