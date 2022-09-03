@@ -1,0 +1,18 @@
+title GUI workflow for picking a Policy
+
+actor Client
+actor Django Server (Backend)
+actor Sim's main process
+
+Django Server (Backend)<-Sim's main process:Request users to choose the initial Policies
+
+note over Sim's main process:Block the main process until you receive the response
+
+Client<-Django Server (Backend):POST (to all active user sessions), with a list of possible options and a timeout
+
+note over Django Server (Backend):Wait for POST from all users or timeout
+Client-->(3)Django Server (Backend):POST the user's choices, or timeout.
+
+Django Server (Backend)-->Sim's main process:(Once you collected all answers from the users,) POST to the Sim's main process
+
+note over Sim's main process:Update the player-cities and start the simulation

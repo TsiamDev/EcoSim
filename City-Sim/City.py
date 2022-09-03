@@ -54,7 +54,7 @@ class City:
         
         
         
-        
+        self.zones = None
         #Simulation stuff
         if _zones is None:
             self.zones = []
