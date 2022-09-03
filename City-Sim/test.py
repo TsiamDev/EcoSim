@@ -644,7 +644,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
                 ind.append(end)
             
             if len(ind) > 1:
-                city_chunk = cities[ind[0]:ind[1]]
+                city_chunk = cities[ind[0]:(ind[1]+2)]
             else:
                 city_chunk = [cities[ind[0]]]
                 
@@ -668,7 +668,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
         ind.append(end)
         
         if len(ind) > 1:
-            city_chunk = cities[ind[0]:(ind[1]+1)]
+            city_chunk = cities[ind[0]:(ind[1]+2)]
         else:
             city_chunk = cities[ind[0]]
         
@@ -690,6 +690,9 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
     fps_cnt = 0
     pid = os.getpid()
     print("Producer: ", pid, "ind:", ind, " cc: ", city_chunk, flush=True)
+    
+    new_city_id = None
+    
     while True:
         #print("Producer:", ind, " cc:", city_chunk)
         #if a city state-update request has been made
@@ -724,18 +727,28 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                 
         
         if fps_cnt >= FPS:
-            #print(ind)
+            print(ind)
+            print(len(ind))
             #print("ind[i]:", ind[i])
             #print("i:", i)
             if len(ind) > 1:
                 cnt = 0
                 for m in range(ind[0], ind[1]):
+                    #print(m)
+                    if new_city_id is not None:
+                        if m == new_city_id:
+                            continue
                     Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
                     Update_Explored_Zones(city_chunk[cnt])
+                    city_chunk[cnt].Draw()
                     cnt += 1
             else:
-                Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
-                Update_Explored_Zones(city_chunk[0])
+                if new_city_id is not None:
+                    if new_city_id != 0:
+                        Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
+                        Update_Explored_Zones(city_chunk[0])
+                        #move river and tractor
+                        city_chunk[0].Draw()
             fps_cnt = 0
         else:
             fps_cnt += 1
@@ -899,6 +912,14 @@ def main():
         Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
         Update_Explored_Zones(active_city)
         
+        #Update the active_city's pixels (data)
+        active_city.Draw()
+        d = Display_Overlay(active_city.zones)
+        #lock.release()
+        if d is not None:
+            active_city.data = d
+        #tractor_img_key, tractor_rect = active_city.Draw()
+        
         #draw map view
         if selected_view == VIEW.types['MAP_VIEW']:            
             city_rects = Draw(display_surface, scouts, lakes, forests, cities)
@@ -935,16 +956,7 @@ def main():
                         break
                 
                 active_city_changed = False
-            
-            #Update the active_city's pixels (data)
-            active_city.Draw()
-            d = Display_Overlay(active_city.zones)
-            #lock.release()
-            if d is not None:
-                active_city.data = d
-            #tractor_img_key, tractor_rect = active_city.Draw()
-            
-            
+                
             #draw the active_city's data to screen
             pygame.surfarray.blit_array(display_surface, active_city.data)
             
@@ -958,7 +970,9 @@ def main():
            
             
             #draw the active city
-            Draw_Explored_Zones(active_city.zones)    
+            Draw_Explored_Zones(active_city.zones)   
+            
+        
 
         #draw GUI
         Draw_Action_Buttons()
