@@ -366,24 +366,24 @@ def Main_Menu():
     global display_surface, menu, plant_menu, running, pygame, plant, pb, font
     
     WINDOW_SIZE = []
-    WINDOW_SIZE.append(700)
-    WINDOW_SIZE.append(700)
+    WINDOW_SIZE.append(850)
+    WINDOW_SIZE.append(850)
     
     display_surface = pygame.display.set_mode((WINDOW_SIZE[0], WINDOW_SIZE[1]), pygame.RESIZABLE)
     pygame.display.set_caption("Pasture Managerv0.01")
     
     menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='Welcome',
         width=WINDOW_SIZE[0] * 0.75
     )
     
     plant_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='My Plants',
-        width=WINDOW_SIZE[0] * 0.75
+        width=WINDOW_SIZE[0] * 0.8
     )
     
     
@@ -391,7 +391,10 @@ def Main_Menu():
     
     
     #show plant img
-    plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    #plant_img = pygame.image.load('Assets/Pictures/plant_leaves.png')
+    #plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    plant_menu.add.image('Assets/Pictures/plant.png', image_id='plant', scale=(0.3, 0.3), scale_smooth=True, align=pygame_menu.locals.ALIGN_CENTER)
+    
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
     plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_heat_val)
@@ -427,7 +430,7 @@ def Main_Menu():
     #if __name__ == '__main__':
     running = True
     while running:  
-        
+        #display_surface.blit(plant_img, (0,0))
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
