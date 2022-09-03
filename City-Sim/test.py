@@ -12,24 +12,24 @@ import numpy as np
 
 import pygame
 import pygame_menu
-import time
+#import time
 import sys
 import copy
 import os
-from pprint import pprint
+#from pprint import pprint
 import math
 import tracemalloc
 import linecache
 
 import cProfile as profile
-from threading import Thread
-import threading
+#from threading import Thread
+#import threading
 
-from multiprocessing.managers import SharedMemoryManager
-from multiprocessing import Process, shared_memory, current_process, Pool
+#from multiprocessing.managers import SharedMemoryManager
+from multiprocessing import Process#, shared_memory, current_process, Pool
 import multiprocessing as mp
 
-from queue import Queue
+#from queue import Queue
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
 from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE
@@ -625,7 +625,6 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
             
     else:
         print("num_producers < len(cities)")
-        #assign one city to one process
         chunk = int(math.floor(len(cities) / num_producers))
         print("chunk:", chunk, flush=True)
 
@@ -682,11 +681,6 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
     return producers, to_background_qs, wb_qs
 
 def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
-    #lock = mp.Lock()
-    #for i in range(0, 1):
-    
-    
-    #timer_cnt = 0
     cnt = 0
     FPS = 60
     fps_cnt = 0
@@ -884,16 +878,11 @@ def main():
     #event_thread.start()
     #timer_cnt = 0
     
-    last_i = 0
-    last_active_city = None
-    second_to_last_i = None
     origin = None
-    last_origin = None
     cur_i = None
     
     active_city_changed = False
     
-    #time.sleep(20) #loading time
     print("Main loop:", os.getpid())
     # infinite loop
     while running :
@@ -956,9 +945,10 @@ def main():
                 
                 #print("Done.")
                 
-            tractor_img_key, tractor_rect = active_city.Draw()
+            #tractor_img_key, tractor_rect = active_city.Draw()
+            active_city.Draw()
             pygame.surfarray.blit_array(display_surface, active_city.data)
-            display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
+            display_surface.blit(images[active_city.tractor.img_key], (active_city.tractor.rect.x, active_city.tractor.rect.y))
             
                         
             if len(active_city.unexplored_zones) > 0:

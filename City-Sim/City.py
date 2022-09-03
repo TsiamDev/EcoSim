@@ -90,8 +90,11 @@ class City:
         self.plant = _plant
         
             #tractor stuff
-        if _has_tractor is not None:
+        print("_has_tractor: ", _has_tractor)
+        self.tractor = None
+        if _has_tractor == True:
             self.tractor = Tractor(15, 15, self.zones[0])
+            #self.tractor = Tractor(0, 0, self.zones[0])
         
         self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
         
@@ -221,5 +224,6 @@ class City:
         if d is not None:
             self.data = d
             
-        return tractor_img_key, tractor_rect
-        
+        #print("tr: ", self.tractor.rect)
+        #return tractor_img_key, tractor_rect
+        #return self.tractor
