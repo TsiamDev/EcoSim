@@ -39,12 +39,13 @@ class WeatherParticle:
 class WeatherEffect:
     def __init__(self, _type):
         self.type = _type
-        
-        self.particles = []
-        for i in range(0, 100):
-            new_x = random.randint(1, 10)
-            new_y = random.randint(1, 10)
-            self.particles.append(WeatherParticle(self.type, new_x, new_y))
+        #print(self.type)
+        if self.type != 'NONE':
+            self.particles = []
+            for i in range(0, 100):
+                new_x = random.randint(1, 10)
+                new_y = random.randint(1, 10)
+                self.particles.append(WeatherParticle(self.type, new_x, new_y))
             
         
     
