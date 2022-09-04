@@ -738,7 +738,10 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
     
     new_city_id = None
     
+    day_cnt = 0
+    
     while True:
+        #print("Producer: ", _id, flush=True)
         #print("Producer:", ind, " cc:", city_chunk)
         #if a city state-update request has been made
         if not to_background_q.empty():
@@ -753,6 +756,7 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                     print(pid, ind, ": has ", active_city.id, flush=True)
                     break
             
+            #if not to_background_q.empty():
             new_city_id = to_background_q.get(True)
             #if you were assigned this city, send a city state-update 
             #to the parent process
@@ -786,6 +790,11 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                     Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
                     Update_Explored_Zones(city_chunk[cnt])
                     city_chunk[cnt].Draw()
+                    if day_cnt >= DAY.TICKS_TILL_DAY:
+                        city_chunk[cnt].Consume()
+                        day_cnt = 0
+                    else:
+                        day_cnt += 1
                     cnt += 1
             else:
                 if new_city_id is not None:
@@ -794,6 +803,11 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                         Update_Explored_Zones(city_chunk[0])
                         #move river and tractor
                         city_chunk[0].Draw()
+                        if day_cnt >= DAY.TICKS_TILL_DAY:
+                            city_chunk[0].Consume()
+                            day_cnt = 0
+                        else:
+                            day_cnt += 1
             fps_cnt = 0
         else:
             fps_cnt += 1
@@ -1158,7 +1172,7 @@ def main():
         #Draw the surface object to the screen.  
         pygame.display.update() 
         day_cnt += 1
-        print("Day_Tick: ", day_cnt)
+        #print("Day_Tick: ", day_cnt)
         fpsClock.tick(FPS)
         #time.sleep(1./120)
         #time_since_enter = pygame.time.get_ticks() - start_time

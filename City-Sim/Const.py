@@ -95,7 +95,7 @@ class VIEW(object):
 
 class DAY(object):
     def __init__(self):
-        self.TICKS_TILL_DAY = 20 * 100
+        self.TICKS_TILL_DAY = 20 * 50
 
 class TIME(object):
     def __init__(self):

@@ -176,12 +176,12 @@ class Animal:
                     if key == 'COW_MILK':
                         #found the indice
                         ind = val
-                        print(city.goods_amounts[ind])
+                        #print(city.goods_amounts[ind])
                         
                         #unload the harvested amount into the city silo
                         city.goods_amounts[ind] += self.product
                         self.product = 0
-                        print("Cow was milked", flush=True)
+                        #print("Cow was milked", flush=True)
                         
                         print("City ", city.id ," silo amount for ", key, " is ", city.goods_amounts[ind], flush=True)
                         break
