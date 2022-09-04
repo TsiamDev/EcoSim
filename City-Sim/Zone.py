@@ -26,7 +26,7 @@ class Zone:
                 
         #encompasing rectangle
         self.rect = MyRect(_rect=_rect)
-        print(self.rect)
+        #print(self.rect)
         
         if _type is None:
             self.type = CONST.types['PASTURE']#random.randint(1, len(CONST.types))

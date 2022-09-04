@@ -321,7 +321,7 @@ def start_sim():
 #My plants Menu
 
 def get_heat_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.heat_rng = rng
     #print(rng)
@@ -332,10 +332,21 @@ def get_heat_val(rng):
     g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[0]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (plant.c[0], int(g), plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
     
 def get_hum_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.hum_rng = rng
     #print(rng)
@@ -346,10 +357,21 @@ def get_hum_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[0]
     plant.c = (plant.c[0], plant.c[1], int(b))
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
 
 def get_PH_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.PH_rng = rng
     #print(rng)
@@ -360,10 +382,30 @@ def get_PH_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (int(r), plant.c[1], plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
+
+def Update_Plant_Img(widget, menu):
+    global plant_img_widget
+    
+    plant_img_widget = widget
+    print(widget)
+    print(menu)
 
 def Main_Menu():
-    global display_surface, menu, plant_menu, running, pygame, plant, pb, font
+    global display_surface, menu, plant_menu, running, pygame, plant, font
+    
+    global transparent_plant_image, plant_image, plant_img_widget
     
     WINDOW_SIZE = []
     WINDOW_SIZE.append(850)
@@ -391,9 +433,11 @@ def Main_Menu():
     
     
     #show plant img
-    #plant_img = pygame.image.load('Assets/Pictures/plant_leaves.png')
+    transparent_plant_image = pygame.image.load('Assets/Pictures/plant2.png')
+    transparent_plant_image = pygame.transform.scale(transparent_plant_image, (0.3*764, 0.3*545))
     #plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
-    plant_menu.add.image('Assets/Pictures/plant.png', image_id='plant', scale=(0.3, 0.3), scale_smooth=True, align=pygame_menu.locals.ALIGN_CENTER)
+    plant_img_widget = plant_menu.add.image('Assets/Pictures/plant.png', image_id='plant_img_widget', scale=(0.3, 0.3), scale_smooth=True)#, align=pygame_menu.locals.ALIGN_CENTER)
+    plant_img_widget.add_draw_callback(Update_Plant_Img)
     
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
@@ -406,7 +450,7 @@ def Main_Menu():
     #plant_menu.draw(sur, clear_surface=False)
     #bi = pygame_menu.baseimage.BaseImage('placeholder.png', drawing_mode=pygame_menu.baseimage.IMAGE_MODE_SIMPLE, load_from_file=True)
     #plant_menu.draw(bi.get_surface(), clear_surface=True)
-    pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
+    #pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
     plant_menu.add.button('Start', lambda: start_sim() )
     #TODO save changes
     #add selectable image
@@ -509,7 +553,7 @@ def Display_Overlay(zones):
         #display_surface.fill(black)
         for zone in zones:
             if zone.type is not CONST.types['BARN_SILO']:
-                print(zone.rect.topleft, zone.rect.topright)
+                #print(zone.rect.topleft, zone.rect.topright)
                 if selected_overlay is OVERLAY.types['PH']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
                 elif selected_overlay is OVERLAY.types['HUM']:
@@ -727,8 +771,8 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                 
         
         if fps_cnt >= FPS:
-            print(ind)
-            print(len(ind))
+            #print(ind)
+            #print(len(ind))
             #print("ind[i]:", ind[i])
             #print("i:", i)
             if len(ind) > 1:

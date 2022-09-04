@@ -90,19 +90,20 @@ class City:
         self.plant = _plant
         
             #tractor stuff
-        print("_has_tractor: ", _has_tractor)
+        #print("_has_tractor: ", _has_tractor)
         self.tractor = None
         if _has_tractor == True:
-            self.tractor = Tractor(15, 15, self.zones[0])
+            self.tractor = Tractor(15, 15, self.zones[0], self)
             #self.tractor = Tractor(0, 0, self.zones[0])
         
         self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
-        
+    
+    """DEPRECATED
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
             self.goods_amounts[i] = self.goods_amounts[i] + self.production[i] 
             print("City " + str(self.id) + " produced " + str(self.production[i]))
-        
+    """ 
     def Consume(self):
         # Calculate consumption rate    
         self.consumption = int(self.population / 100)
@@ -179,27 +180,44 @@ class City:
         
         if self.time_cnt > TIME.types['CROP']:
             for z in self.zones:
+                #if z.type == CONST.types['FIELD']:
                 if z.field is not None:
                     if z.field.has_init == True:
-                        """
+                        #"""
                         #crops grow - if <pixel> is planted
                         #growth_denominator = np.ones((z.rect.width, z.rect.height))
                         #t = np.where(np.logical_and(z.field.PH>=110, z.field.PH<=140))
                         #print(t[0])
                         #growth_denominator = z.field.PH[t]
                         #print(growth_denominator)
-                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
-                        z.field.crop_growth[z.field.is_planted > 0] += new_growth.astype(int)#(5, 0, 0)
+                        
+                        #grow
+                        #TODO: handle dividing by zero (z.field.PH)
+                        #new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
+                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) #/ z.field.PH
+                        #t = np.where(z.field.is_planted > 0)
+                        
+                        #t = z.field.is_planted[z.field.is_planted > 0]
+                        #print(len(t))
+                        #t = [[i for i in range(0, len(z.field.is_planted[0]))] j for j in range(0, z.)
+                        t = np.array(z.field.is_planted[:,:] > 0)
+                        print(t)
+                        print(len(t))
+                        if any(t[t == True]):
+                            z.field.crop_growth[t[:,:]] += new_growth.astype(int)#(5, 0, 0)
                         #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
                         #print(z.field.crop_growth[:, :, 0])
-                        z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
-                        z.field.crop_growth[z.field.crop_growth < 0] = 0
-                        """
+                        
+                        #wither
+                        #z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
+                        #z.field.crop_growth[z.field.crop_growth < 0] = 0
+                        
+                        #"""
                         #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
             self.time_cnt = 0
         
         #pygame.surfarray.blit_array(display_surface, data)
-        return self.data
+        #return self.data
     
     def Move_River(self):
         N = 300
@@ -214,15 +232,17 @@ class City:
             label_rect = label.get_rect(center=(uz.rect.center))
             display_surface.blit(label, label_rect)
     """
+    
+    #Update the city parameters
     def Draw(self):
-        #self.Crop_Growth()
+        #crops grow
+        self.Crop_Growth()
+        
+        #river flows
         self.Move_River()
         
-        #d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
+        #tractor acts
         d = self.tractor.act(self.data, self.plant)
         if d is not None:
             self.data = d
             
-        #print("tr: ", self.tractor.rect)
-        #return tractor_img_key, tractor_rect
-        #return self.tractor
