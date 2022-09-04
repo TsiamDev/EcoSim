@@ -85,6 +85,7 @@ class OVERLAY(object):
         self.types['P'] = 5
         self.types['K'] = 6
         self.types['CROP_GROWTH'] = 7
+        self.types['PLANT_FACE'] = 8
         
 class VIEW(object):
     def __init__(self):
@@ -95,7 +96,7 @@ class VIEW(object):
 class TIME(object):
     def __init__(self):
         self.types = {}
-        self.types['CROP'] = 100
+        self.types['CROP'] = 50
         self.types['ANIMAL_ACT'] = 70
         
 class WEATHER(object):

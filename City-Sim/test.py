@@ -570,7 +570,8 @@ def Display_Overlay(zones):
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
                     #print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
-                    
+                elif selected_overlay is OVERLAY.types['PLANT_FACE']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
                 #pygame.surfarray.blit_array(display_surface, data_temp)
         
         return data_temp
@@ -1108,7 +1109,7 @@ def main():
                         selected_overlay = OVERLAY.types['K']
                 elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
                     if selected_overlay == OVERLAY.types['CROP_GROWTH']:
-                        selected_overlay = None
+                        selected_overlay = OVERLAY.types['PLANT_FACE']
                     else:#if selected_overlay == None:
                         selected_overlay = OVERLAY.types['CROP_GROWTH']
                 
