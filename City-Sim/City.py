@@ -183,42 +183,15 @@ class City:
                 #if z.type == CONST.types['FIELD']:
                 if z.field is not None:
                     if z.field.has_init == True:
-                        #"""
                         #crops grow - if <pixel> is planted
-                        #growth_denominator = np.ones((z.rect.width, z.rect.height))
-                        #t = np.where(np.logical_and(z.field.PH>=110, z.field.PH<=140))
-                        #print(t[0])
-                        #growth_denominator = z.field.PH[t]
-                        #print(growth_denominator)
-                        
-                        #grow
                         #TODO: handle dividing by zero (z.field.PH)
-                        #new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
-                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) #/ z.field.PH
-                        #t = np.where(z.field.is_planted > 0)
-                        
-                        #t = z.field.is_planted[z.field.is_planted > 0]
+                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
+                        t = z.field.is_planted * new_growth
+                        #print(t)
                         #print(len(t))
-                        #t = [[i for i in range(0, len(z.field.is_planted[0]))] j for j in range(0, z.)
-                        t = np.array(z.field.is_planted[:,:] > 0)
-                        print(t)
-                        print(len(t))
-                        if any(t[t == True]):
-                            z.field.crop_growth[t[:,:]] += new_growth.astype(int)#(5, 0, 0)
-                        #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
-                        #print(z.field.crop_growth[:, :, 0])
-                        
-                        #wither
-                        #z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
-                        #z.field.crop_growth[z.field.crop_growth < 0] = 0
-                        
-                        #"""
-                        #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
+                        z.field.crop_growth += (z.field.is_planted * new_growth).astype(int)#new_growth.astype(int)#(5, 0, 0)
             self.time_cnt = 0
         
-        #pygame.surfarray.blit_array(display_surface, data)
-        #return self.data
-    
     def Move_River(self):
         N = 300
         #circularly shift the river portion of <data>

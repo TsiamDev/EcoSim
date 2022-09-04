@@ -45,7 +45,7 @@ class Field:
         self.PH[:, :, 2] = empty
         """
         
-        self.temp = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint8 )
+        self.temp = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         r = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         g = [[random.randint(0, 150) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         b = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
@@ -61,7 +61,7 @@ class Field:
         self.hum[:, :, 1] = empty
         self.hum[:, :, 2] = b
         
-        self.N = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint8 )
+        self.N = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         r = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         g = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         #self.N[:, :, 0] = r
@@ -69,34 +69,33 @@ class Field:
         self.N[:, :, 1] = g
         self.N[:, :, 2] = empty
         
-        self.P = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint8 )
+        self.P = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         r = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         g = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         self.P[:, :, 0] = r
         self.P[:, :, 1] = g
         self.P[:, :, 2] = empty
         
-        self.K = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint8 )
+        self.K = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         r = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         g = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         self.K[:, :, 0] = r
         self.K[:, :, 1] = g
         self.K[:, :, 2] = empty
         
-
+        self.plant_face = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.int32 )
 
 
         self.crop_growth = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.int32 )
+        self.is_planted = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         
         if isPasture is not None:
-            self.is_planted = np.ones( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.uint8 )
-            
             g = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 
             self.crop_growth[:, :, 0] = empty
             self.crop_growth[:, :, 1] = g
         else:
-            self.is_planted = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.uint8 )
+            
             r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
             g = [[random.randint(45, 50) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 

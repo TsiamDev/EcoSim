@@ -132,7 +132,8 @@ class Tractor:
         
         return data#, self.img_key, self.rect             
 
-    def render_soil(self, w, h, _r, _g, _b, data, target, plant=None, isSowing=None, isHarvesting=None):
+    #is_planted, is a numpy array (:,:,3)
+    def render_soil(self, w, h, _r, _g, _b, data, target, plant_face=None, isCultivating=None, is_planted=None, plant=None, isSowing=None, isHarvesting=None):
         #because tractor x,y is different from zone x,y
         # - 15 => road width
         # if tractor starts at (15,15) => top left corner of field
@@ -165,18 +166,39 @@ class Tractor:
             is_out_of_field_bounds = True
 
         #print((x_low, x_high), '-', (y_low, y_high))
+        
+        # pick random <ground> color
+        r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+        g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+        b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+
 
         if is_out_of_field_bounds == False:
             
             if isHarvesting == True:
                 red = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] 
                 green = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1]
-
-                if any(green[green > 180]) & (any(red[red > 180])):
+                #print(green > 180)
+                #t = any(green > 180) & any(red > 180)
+                t = sum(sum(green + red)) #/ (15 * 15 * 100)
+                print(t)
+                if t > (15 * 15 * 100):
                     harvested_amount = sum(sum(green+red)) / 2000
                     self.trailer = self.trailer + harvested_amount
-                    #print("Stomach: ", self.stomach)                  
                     
+                    #remove the <is_planted> status
+                    is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+                    
+                    #remove the <plant_face> status
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+                    
+                    self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    
+                    #print("is_planted removed")
                     #if the trailer has reached its' capacity
                     #put the harvested amount to the city's silo
                     if self.trailer >= self.trailer_capacity:
@@ -200,11 +222,16 @@ class Tractor:
                                 self.trailer = 0
                                 print("Emptied trailer into city silo.", flush=True)
             
-            # pick random <ground> color
-            r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-            g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-            b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-            
+            if isCultivating == True:
+                #remove the <is_planted> status
+                is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+                
+                #remove the <plant_face> status
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+
+                        
             #update crop state
             #target[x_low:(x_high), y_low:y_high, 0] = r
             #target[x_low:(x_high), y_low:y_high, 1] = g
@@ -228,8 +255,9 @@ class Tractor:
                 data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 2] = target[:, :, 2]
                 
             if isSowing == True:
-                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y] = 1
-            
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
+                
         return data
 
     def fertilize_N(self, data):
@@ -274,7 +302,7 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, isCultivating=True)
 
     def sow(self, data, plant):
         
@@ -282,11 +310,16 @@ class Tractor:
         w = len(self.zone.field.crop_growth[0])
         h = len(self.zone.field.crop_growth[1])
         
+        #"""
         r = (0, plant.c[0])
         g = (0, plant.c[1])
         b = (0, plant.c[2])
-        
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, isSowing=True)  
+        """
+        r = (0, 0)
+        g = (0, 255)
+        b = (0, 0)
+        """
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.plant_face, isSowing=True)  
     
     #data is unused here
     def water(self, data):
@@ -310,7 +343,7 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant=_plant, isHarvesting=True)
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, plant=_plant, isHarvesting=True)
 
     def Define_Policies(self):
         #TODO prompt users to decide which actions the tractors will perform,
