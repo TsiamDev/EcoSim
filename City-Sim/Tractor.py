@@ -181,7 +181,7 @@ class Tractor:
                 #print(green > 180)
                 #t = any(green > 180) & any(red > 180)
                 t = sum(sum(green + red)) #/ (15 * 15 * 100)
-                print(t)
+                #print(t)
                 if t > (15 * 15 * 100):
                     harvested_amount = sum(sum(green+red)) / 2000
                     self.trailer = self.trailer + harvested_amount
@@ -201,23 +201,23 @@ class Tractor:
                     #print("is_planted removed")
                     #if the trailer has reached its' capacity
                     #put the harvested amount to the city's silo
+                    #print(self.trailer >= self.trailer_capacity)
                     if self.trailer >= self.trailer_capacity:
                         
                         #TODO: go to the city's silo
                         
                         #find the appropriate container
                         ind = None
-                        for key, g in GOODS.types.items():
+                        for key, val in GOODS.types.items():
+                            #print(key, plant.type)
                             if key == plant.type:
                                 #found the indice
-                                ind = g
-                                break
-                        #if apropriate storage exists
-                        if ind is not None:
-                            if ind < len(self.city.goods_amounts):
+                                ind = val
+                                #print(self.city.goods_amounts[ind])
+                                
                                 #unload the harvested amount into the city silo
                                 self.city.goods_amounts[ind] += self.trailer
-                                
+                                print("New city ", self.city.id ," silo amount for ", key, " ", self.city.goods_amounts[ind])
                                 #empty the trailer
                                 self.trailer = 0
                                 print("Emptied trailer into city silo.", flush=True)
