@@ -124,6 +124,12 @@ class CONSUMPTION(object):
         self.types['GRAIN_CONS'] = 10
         self.types['WOOD_CONS'] = 5
         self.types['WATER_CONS'] = 7
+        
+class TRAILERS(object):
+    def __init__(self):
+        self.TRAILER_S = 500
+        self.TRAILER_M = 1500
+        self.TRAILER_L = 2500
     
 # instantiate Constants
 CONST = CONST()
@@ -152,3 +158,5 @@ CONSUMPTION = CONSUMPTION()
 CONSTANTS = CONSTANTS()
 
 CONSTRUCT_SIZE = CONSTRUCT_SIZE()
+
+TRAILERS = TRAILERS()

@@ -9,14 +9,15 @@ import random
 
 from MyPoint import MyPoint
 
-from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS, DISPLAY
-from networking.Networking import Set_Globals, Set_Tractor_Actions
+#from Const import  TRACTOR_PARAMETERS, 
+from Const import TRACTOR_ACTIONS, DISPLAY, TRAILERS, GOODS
+#from networking.Networking import Set_Globals, Set_Tractor_Actions
 
 class Tractor:
     static_id = 0
     waypoints = []
     
-    def __init__(self, _x, _y, _zone, ):
+    def __init__(self, _x, _y, _zone, _city):
         
         self._id = Tractor.static_id
         Tractor.static_id += 1
@@ -28,7 +29,7 @@ class Tractor:
         self.img_key = 'tractor_scaled_img'
         
         self.rect = MyPoint(_x, _y)
-        print("Tractor rect:", self.rect)
+        #print("Tractor rect:", self.rect)
         #self.rect = type('', (), {})()
         #self.rect.x = _x#self.img.get_rect().x
         #self.rect.y = _y#self.img.get_rect().y
@@ -36,11 +37,14 @@ class Tractor:
         #self.rect
         #self.rect = self.rect.move(_x, _y)
         
-        
+        self.city = _city
         #self.x = _x
         #self.y = _y
         
         self.zone = _zone
+        
+        self.trailer_capacity = TRAILERS.TRAILER_S
+        self.trailer = 0
         
         #self.move_right = True
         
@@ -57,7 +61,7 @@ class Tractor:
         self.Define_Policies()
         
     def move(self):
-        print(self.waypoints)
+        #print(self.waypoints)
         if len(self.waypoints) > 0:
             if self.waypoints[0][0] - self.rect.x < 0:
                 x_dir = -1
@@ -78,11 +82,11 @@ class Tractor:
                 y_dir = 0
             
             self.rect.move(x_dir*15, y_dir*15)
-            print(self.rect.x, self.rect.y)
+            #print(self.rect.x, self.rect.y)
             
             if (x_dir == 0) & (y_dir == 0):
                 del self.waypoints[0]
-                print(self.waypoints)
+                #print(self.waypoints)
                 if len(self.waypoints) == 0:
                     #self.action = TRACTOR_ACTIONS.types['IDLE']
                     lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
@@ -121,14 +125,14 @@ class Tractor:
             data = self.fertilize_K(data)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
-            data = self.harvest(data)
+            data = self.harvest(data, plant)
             self.move()
         
         #print("tractor rect: ", self.rect)
         
-        return data, self.img_key, self.rect             
+        return data#, self.img_key, self.rect             
 
-    def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
+    def render_soil(self, w, h, _r, _g, _b, data, target, plant=None, isSowing=None, isHarvesting=None):
         #because tractor x,y is different from zone x,y
         # - 15 => road width
         # if tractor starts at (15,15) => top left corner of field
@@ -163,6 +167,39 @@ class Tractor:
         #print((x_low, x_high), '-', (y_low, y_high))
 
         if is_out_of_field_bounds == False:
+            
+            if isHarvesting == True:
+                red = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] 
+                green = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1]
+
+                if any(green[green > 180]) & (any(red[red > 180])):
+                    harvested_amount = sum(sum(green+red)) / 2000
+                    self.trailer = self.trailer + harvested_amount
+                    #print("Stomach: ", self.stomach)                  
+                    
+                    #if the trailer has reached its' capacity
+                    #put the harvested amount to the city's silo
+                    if self.trailer >= self.trailer_capacity:
+                        
+                        #TODO: go to the city's silo
+                        
+                        #find the appropriate container
+                        ind = None
+                        for key, g in GOODS.types.items():
+                            if key == plant.type:
+                                #found the indice
+                                ind = g
+                                break
+                        #if apropriate storage exists
+                        if ind is not None:
+                            if ind < len(self.city.goods_amounts):
+                                #unload the harvested amount into the city silo
+                                self.city.goods_amounts[ind] += self.trailer
+                                
+                                #empty the trailer
+                                self.trailer = 0
+                                print("Emptied trailer into city silo.", flush=True)
+            
             # pick random <ground> color
             r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
             g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
@@ -249,7 +286,7 @@ class Tractor:
         g = (0, plant.c[1])
         b = (0, plant.c[2])
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, True)  
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, isSowing=True)  
     
     #data is unused here
     def water(self, data):
@@ -263,7 +300,7 @@ class Tractor:
         
         return self.render_soil(w, h, r, g, b, None, self.zone.field.hum) 
     
-    def harvest(self, data):
+    def harvest(self, data, _plant):
        
         #reset <ground> color to <soil> color
         w = len(self.zone.field.crop_growth[0])
@@ -273,7 +310,7 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant=_plant, isHarvesting=True)
 
     def Define_Policies(self):
         #TODO prompt users to decide which actions the tractors will perform,

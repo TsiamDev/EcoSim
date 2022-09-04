@@ -32,9 +32,12 @@ while True :
     #clear screen
     display_surface.fill((0,0,0))
 
+    t = np.array(data[:,:,0] > 150)
+    data[t[:,:], :] = data[t[:,:], :] + 10
+
     pygame.surfarray.blit_array(display_surface, data)
     
-    pygame.display.flip()
+    pygame.display.update()
     
     # Event loop
     # iterate over the list of Event objects

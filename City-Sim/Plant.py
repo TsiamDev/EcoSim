@@ -5,6 +5,10 @@ Created on Mon Aug  8 07:09:19 2022
 @author: TsiamDev
 """
 
+from Const import GOODS
+
+#import random
+
 class Plant:
     def __init__(self):
         print("New Plant")
@@ -13,6 +17,8 @@ class Plant:
         self.PH_rng = (0, 255)
         self.color = (0, 255)
         self.c = (255, 255, 255)
+        
+        self.type = GOODS.types['GRAIN']#random.randint(0, len(GOODS.types.items()))
         
     def calc_color(self):
         if (self.heat_rng is not None) and (self.hum_rng is not None) and (self.PH_rng is not None):

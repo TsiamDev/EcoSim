@@ -321,7 +321,7 @@ def start_sim():
 #My plants Menu
 
 def get_heat_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.heat_rng = rng
     #print(rng)
@@ -332,10 +332,21 @@ def get_heat_val(rng):
     g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[0]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (plant.c[0], int(g), plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
     
 def get_hum_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.hum_rng = rng
     #print(rng)
@@ -346,10 +357,21 @@ def get_hum_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[0]
     plant.c = (plant.c[0], plant.c[1], int(b))
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
 
 def get_PH_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.PH_rng = rng
     #print(rng)
@@ -360,30 +382,50 @@ def get_PH_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (int(r), plant.c[1], plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
+
+def Update_Plant_Img(widget, menu):
+    global plant_img_widget
+    
+    plant_img_widget = widget
+    print(widget)
+    print(menu)
 
 def Main_Menu():
-    global display_surface, menu, plant_menu, running, pygame, plant, pb, font
+    global display_surface, menu, plant_menu, running, pygame, plant, font
+    
+    global transparent_plant_image, plant_image, plant_img_widget
     
     WINDOW_SIZE = []
-    WINDOW_SIZE.append(700)
-    WINDOW_SIZE.append(700)
+    WINDOW_SIZE.append(850)
+    WINDOW_SIZE.append(850)
     
     display_surface = pygame.display.set_mode((WINDOW_SIZE[0], WINDOW_SIZE[1]), pygame.RESIZABLE)
     pygame.display.set_caption("Pasture Managerv0.01")
     
     menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='Welcome',
         width=WINDOW_SIZE[0] * 0.75
     )
     
     plant_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='My Plants',
-        width=WINDOW_SIZE[0] * 0.75
+        width=WINDOW_SIZE[0] * 0.8
     )
     
     
@@ -391,7 +433,12 @@ def Main_Menu():
     
     
     #show plant img
-    plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    transparent_plant_image = pygame.image.load('Assets/Pictures/plant2.png')
+    transparent_plant_image = pygame.transform.scale(transparent_plant_image, (0.3*764, 0.3*545))
+    #plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    plant_img_widget = plant_menu.add.image('Assets/Pictures/plant.png', image_id='plant_img_widget', scale=(0.3, 0.3), scale_smooth=True)#, align=pygame_menu.locals.ALIGN_CENTER)
+    plant_img_widget.add_draw_callback(Update_Plant_Img)
+    
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
     plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_heat_val)
@@ -403,7 +450,7 @@ def Main_Menu():
     #plant_menu.draw(sur, clear_surface=False)
     #bi = pygame_menu.baseimage.BaseImage('placeholder.png', drawing_mode=pygame_menu.baseimage.IMAGE_MODE_SIMPLE, load_from_file=True)
     #plant_menu.draw(bi.get_surface(), clear_surface=True)
-    pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
+    #pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
     plant_menu.add.button('Start', lambda: start_sim() )
     #TODO save changes
     #add selectable image
@@ -427,7 +474,7 @@ def Main_Menu():
     #if __name__ == '__main__':
     running = True
     while running:  
-        
+        #display_surface.blit(plant_img, (0,0))
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -506,7 +553,7 @@ def Display_Overlay(zones):
         #display_surface.fill(black)
         for zone in zones:
             if zone.type is not CONST.types['BARN_SILO']:
-                print(zone.rect.topleft, zone.rect.topright)
+                #print(zone.rect.topleft, zone.rect.topright)
                 if selected_overlay is OVERLAY.types['PH']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
                 elif selected_overlay is OVERLAY.types['HUM']:
@@ -641,7 +688,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
                 ind.append(end)
             
             if len(ind) > 1:
-                city_chunk = cities[ind[0]:ind[1]]
+                city_chunk = cities[ind[0]:(ind[1]+2)]
             else:
                 city_chunk = [cities[ind[0]]]
                 
@@ -665,7 +712,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
         ind.append(end)
         
         if len(ind) > 1:
-            city_chunk = cities[ind[0]:(ind[1]+1)]
+            city_chunk = cities[ind[0]:(ind[1]+2)]
         else:
             city_chunk = cities[ind[0]]
         
@@ -687,6 +734,9 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
     fps_cnt = 0
     pid = os.getpid()
     print("Producer: ", pid, "ind:", ind, " cc: ", city_chunk, flush=True)
+    
+    new_city_id = None
+    
     while True:
         #print("Producer:", ind, " cc:", city_chunk)
         #if a city state-update request has been made
@@ -722,17 +772,27 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
         
         if fps_cnt >= FPS:
             #print(ind)
+            #print(len(ind))
             #print("ind[i]:", ind[i])
             #print("i:", i)
             if len(ind) > 1:
                 cnt = 0
                 for m in range(ind[0], ind[1]):
+                    #print(m)
+                    if new_city_id is not None:
+                        if m == new_city_id:
+                            continue
                     Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
                     Update_Explored_Zones(city_chunk[cnt])
+                    city_chunk[cnt].Draw()
                     cnt += 1
             else:
-                Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
-                Update_Explored_Zones(city_chunk[0])
+                if new_city_id is not None:
+                    if new_city_id != 0:
+                        Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
+                        Update_Explored_Zones(city_chunk[0])
+                        #move river and tractor
+                        city_chunk[0].Draw()
             fps_cnt = 0
         else:
             fps_cnt += 1
@@ -896,6 +956,14 @@ def main():
         Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
         Update_Explored_Zones(active_city)
         
+        #Update the active_city's pixels (data)
+        active_city.Draw()
+        d = Display_Overlay(active_city.zones)
+        #lock.release()
+        if d is not None:
+            active_city.data = d
+        #tractor_img_key, tractor_rect = active_city.Draw()
+        
         #draw map view
         if selected_view == VIEW.types['MAP_VIEW']:            
             city_rects = Draw(display_surface, scouts, lakes, forests, cities)
@@ -932,16 +1000,7 @@ def main():
                         break
                 
                 active_city_changed = False
-            
-            #Update the active_city's pixels (data)
-            active_city.Draw()
-            d = Display_Overlay(active_city.zones)
-            #lock.release()
-            if d is not None:
-                active_city.data = d
-            #tractor_img_key, tractor_rect = active_city.Draw()
-            
-            
+                
             #draw the active_city's data to screen
             pygame.surfarray.blit_array(display_surface, active_city.data)
             
@@ -955,7 +1014,9 @@ def main():
            
             
             #draw the active city
-            Draw_Explored_Zones(active_city.zones)    
+            Draw_Explored_Zones(active_city.zones)   
+            
+        
 
         #draw GUI
         Draw_Action_Buttons()
