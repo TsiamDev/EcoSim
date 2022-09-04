@@ -221,6 +221,7 @@ class Tractor:
                                 #empty the trailer
                                 self.trailer = 0
                                 print("Emptied trailer into city silo.", flush=True)
+                                break
             
             if isCultivating == True:
                 #remove the <is_planted> status

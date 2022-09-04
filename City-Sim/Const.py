@@ -92,7 +92,11 @@ class VIEW(object):
         self.types ={}        
         self.types['CITY_VIEW'] = 8
         self.types['MAP_VIEW'] = 9
-        
+
+class DAY(object):
+    def __init__(self):
+        self.TICKS_TILL_DAY = 20 * 100
+
 class TIME(object):
     def __init__(self):
         self.types = {}
@@ -104,6 +108,7 @@ class WEATHER(object):
         self.types = {}
         self.types['SNOW'] = 1
         self.types['RAIN'] = 2
+        self.types['NONE'] = 3
         
 class CONSUMPTION_POLICY(object):
     def __init__(self):
@@ -117,14 +122,16 @@ class GOODS(object):
         self.types['GRAIN'] = 0
         self.types['WOOD'] = 1
         self.types['WATER'] = 2
+        self.types['COW_MILK'] = 3
     
-# defines consumption per 100 people
+# defines consumption per 100 people (in Liters)
 class CONSUMPTION(object):
     def __init__(self):
         self.types = {}
-        self.types['GRAIN_CONS'] = 10
+        self.types['GRAIN_CONS'] = 100
         self.types['WOOD_CONS'] = 5
         self.types['WATER_CONS'] = 7
+        self.types['COW_MILK_CONS'] = 25
         
 class TRAILERS(object):
     def __init__(self):
@@ -149,6 +156,7 @@ OVERLAY = OVERLAY()
 VIEW = VIEW()
 
 TIME = TIME()
+DAY = DAY()
 
 WEATHER = WEATHER()
 

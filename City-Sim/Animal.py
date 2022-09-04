@@ -9,7 +9,7 @@ import random
 import numpy as np
 import pprint
 
-from Const import ANIMAL, ANIMAL_SIZE, DISPLAY
+from Const import ANIMAL, ANIMAL_SIZE, DISPLAY, GOODS
 from MyRect import MyRect
 
 
@@ -35,9 +35,9 @@ class Animal:
     
         self.w = None
         
-    def act(self, zone, data):
+    def act(self, zone, data, city):
         if self.w is None:
-            self.eat(zone, data)
+            self.eat(zone, data, city)
             x_dir, y_dir = self.draw(zone)
         else:
             #just produced - go home
@@ -134,7 +134,7 @@ class Animal:
                     
             return self.x, self.y
 
-    def produce(self, green, red, zone):
+    def produce(self, green, red, zone, city):
         #food = sum((sum(green) + sum(red))) / 2
         food = sum(sum(green)) / 1000
         self.stomach = self.stomach + food
@@ -161,13 +161,32 @@ class Animal:
             #print(x_off, x_off+self.size, y_off, y_off+self.size)
             zone.field.PH[x_off:x_off+self.size, y_off:y_off+self.size, 1] += excrement
             
-            #TODO offload
+            #add waypoints
             if self.w is None:
                 self.w = []
                 self.w.append(zone.pasture.shelter_rect.center)
                 self.w.append(zone.rect.center)
+                
+                #TODO: Offload the product when you get to the barn
+                
+                #find the appropriate container
+                ind = None
+                for key, val in GOODS.types.items():
+                    #print(key, plant.type)
+                    if key == 'COW_MILK':
+                        #found the indice
+                        ind = val
+                        print(city.goods_amounts[ind])
+                        
+                        #unload the harvested amount into the city silo
+                        city.goods_amounts[ind] += self.product
+                        self.product = 0
+                        print("Cow was milked", flush=True)
+                        
+                        print("City ", city.id ," silo amount for ", key, " is ", city.goods_amounts[ind], flush=True)
+                        break
 
-    def eat(self, zone, data):
+    def eat(self, zone, data, city):
         field = zone.field
         
         w = len(field.crop_growth[0])
@@ -200,7 +219,7 @@ class Animal:
         #print(any(green[green > 50]))
         #print(red)
         if any(green[green > 50]):
-            self.produce(green, red, zone)
+            self.produce(green, red, zone, city)
         
             
         #if green.any() > 0:

@@ -26,12 +26,19 @@ class City:
         self.pos = _coords
         self.center = _center
         
+        #City's money
         self.reserve = reserve
         
         self.consumption_policy = cons_policy
         
-        # Goods
-        self.goods_prices = prices
+        # Goods 
+        #Prices
+        #self.goods_prices = prices
+        self.goods_prices = []
+        for g in GOODS.types.items():
+            self.goods_prices.append((random.randint(10, 25)))
+            #print(g)
+        #Silos
         self.goods_amounts = []
         for g in GOODS.types.items():
             self.goods_amounts.append(20)
@@ -43,7 +50,7 @@ class City:
         # Consumption
         self.consumption = int(self.population / 100)
         
-        # Production
+        # Production - Deprecated
         self.production = [0 for i in GOODS.types.items()]
         #?
         #self.production[j%3] = 51
@@ -115,25 +122,25 @@ class City:
         # Calculate surplus
         avail_goods_cnt = 0
         i = 0
-        for cons in CONSUMPTION.types.items():
+        for key, cons in CONSUMPTION.types.items():
             #print(self.consumption)
             #print("c" + str(int(cons)))
             #print("cons: " + str(int(cons) * self.consumption) )
             amount = int(cons) * self.consumption
             if self.goods_amounts[i] >= amount:
-                self.goods_amounts[i] = self.goods_amounts[i] - amount
+                self.goods_amounts[i] -= amount
                 print("City consumed " + str(amount) + " of " + str(i))
-                self.reserve = self.reserve + amount * self.goods_prices[i]
-                avail_goods_cnt = avail_goods_cnt + 1
+                self.reserve += amount * self.goods_prices[i]
+                avail_goods_cnt += 1
             elif self.goods_amounts[i] > 0:
                 print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i))
                 self.goods_amounts[i] = 0
-                self.reserve = self.reserve + self.consumption * self.goods_prices[i]
-                avail_goods_cnt = avail_goods_cnt + 1
+                self.reserve += self.consumption * self.goods_prices[i]
+                avail_goods_cnt += 1
             else:
                 print("City did not have enough, of resource " + str(i) + ", to consume.")
             print("City reserve: " + str(self.reserve))
-            i = i + 1
+            i += 1
         #print(avail_goods_cnt)
         print("City Surplus: " + str(self.goods_amounts))
         
@@ -185,11 +192,14 @@ class City:
                     if z.field.has_init == True:
                         #crops grow - if <pixel> is planted
                         #TODO: handle dividing by zero (z.field.PH)
-                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
-                        t = z.field.is_planted * new_growth
+                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.3 + z.field.hum * 0.1) / z.field.PH
+                        #t = z.field.is_planted * new_growth
                         #print(t)
                         #print(len(t))
                         z.field.crop_growth += (z.field.is_planted * new_growth).astype(int)#new_growth.astype(int)#(5, 0, 0)
+                        
+                        #remove moisture from the top soil
+                        z.field.hum -= (0.1 * z.field.hum).astype(int)
             self.time_cnt = 0
         
     def Move_River(self):

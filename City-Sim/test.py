@@ -32,7 +32,7 @@ import multiprocessing as mp
 #from queue import Queue
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
-from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE
+from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE, DAY
 
 from Zone import Zone
 #from Tractor import Tractor
@@ -168,7 +168,7 @@ def Update_Explored_Zones(city):
             #move the animals
             #zone.pasture.animals_act(zone, city.data)                
             for i in range (0, len(zone.pasture.animals)):
-                zone.pasture.animals[i].act(zone, city.data)
+                zone.pasture.animals[i].act(zone, city.data, city)
                 #print((zone.pasture.animals[i].rect.x,zone.pasture.animals[i].rect.y))
             #animal_act_timer = 0
             #else:
@@ -945,6 +945,8 @@ def main():
     
     active_city_changed = False
     
+    day_cnt = 0
+    
     print("Main loop:", os.getpid())
     # infinite loop
     while running :
@@ -953,9 +955,14 @@ def main():
         #clear screen
         display_surface.fill(black)
 
+        #TODO: enable
         #update the active city
-        Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
+        #Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
         Update_Explored_Zones(active_city)
+        
+        if day_cnt >= DAY.TICKS_TILL_DAY:
+            active_city.Consume()
+            day_cnt = 0
         
         #Update the active_city's pixels (data)
         active_city.Draw()
@@ -1022,8 +1029,9 @@ def main():
         #draw GUI
         Draw_Action_Buttons()
 
+        #TODO: enable
         #draw weather effects on screen
-        active_city.weather_effect.draw(display_surface, pygame, images)
+        #active_city.weather_effect.draw(display_surface, pygame, images)
         
         # Event loop
         # iterate over the list of Event objects
@@ -1149,6 +1157,8 @@ def main():
         Render_Current_FPS(str(int(fpsClock.get_fps())), font)
         #Draw the surface object to the screen.  
         pygame.display.update() 
+        day_cnt += 1
+        print("Day_Tick: ", day_cnt)
         fpsClock.tick(FPS)
         #time.sleep(1./120)
         #time_since_enter = pygame.time.get_ticks() - start_time
@@ -1386,7 +1396,7 @@ if __name__ == "__main__":
     scouts.append(Scout(centered_centers[0], pygame.Rect(coords[0][0] + DISPLAY.CITY_W/2 - DISPLAY.SCOUT_W/2, coords[0][1] + DISPLAY.CITY_H/2 - DISPLAY.SCOUT_H/2, DISPLAY.SCOUT_W, DISPLAY.SCOUT_H)))
     
     #Weather effects
-    weather_effect = WeatherEffect(WEATHER.types['RAIN'])
+    #weather_effect = WeatherEffect(WEATHER.types['RAIN'])
     
     selected_overlay = None
     

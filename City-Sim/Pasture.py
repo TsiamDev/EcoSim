@@ -37,7 +37,7 @@ class Pasture:
         #self.shelter_rect = self.shelter_img.get_rect()
         #self.shelter_rect = self.shelter_rect.move(rect.topleft)
         
-    def animals_act(self, zone, data):
+    def animals_act(self, zone, data, city):
         #th_list = []
         """
         kws = {}
@@ -48,7 +48,7 @@ class Pasture:
         """
         #print(len(self.animals), flush=True)
         for i in range (0, len(self.animals)):
-            self.animals[i].act(zone, data)
+            self.animals[i].act(zone, data, city)
         """   
             th_list.append(Thread(target=self.animals[i].act, kwargs=kws))
             th_list[-1].start()
