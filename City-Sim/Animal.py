@@ -7,7 +7,9 @@ Created on Tue Aug  9 13:59:44 2022
 
 import random
 import numpy as np
-import pprint
+#import pprint
+
+from perlin_noise import PerlinNoise
 
 from Const import ANIMAL, ANIMAL_SIZE, DISPLAY, GOODS
 from MyRect import MyRect
@@ -35,6 +37,8 @@ class Animal:
     
         self.w = None
         
+        self.noise = PerlinNoise(octaves=10, seed=42)
+        
     def act(self, zone, data, city):
         if self.w is None:
             self.eat(zone, data, city)
@@ -60,6 +64,7 @@ class Animal:
         display_surface.blit(images[self.img_key], (rect.x, rect.y))  
     
     def draw(self, zone):
+        #"""
         #print("draw animal")      
         #zone.rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
         if self.x <= zone.rect.topleft[0]:# & (self.pos.x < zone.rect.top_right[0]):
@@ -83,10 +88,36 @@ class Animal:
             y_high_bound = 0
         else:
             y_high_bound = 1
-
+        
         x_off = random.randint(x_low_bound, x_high_bound)
         y_off = random.randint(y_low_bound, y_high_bound)
+        """
+        field = zone.field
         
+        w = len(field.crop_growth[0])
+        h = len(field.crop_growth[1])
+        
+        x_low = self.x - zone.rect.topleft[0]
+        x_high = self.x + self.size - zone.rect.topleft[0]
+        
+        y_low = self.y - zone.rect.topleft[1]
+        y_high = self.y + self.size - zone.rect.topleft[1]
+        
+        if x_low < 0:
+            x_low = 0
+            
+        if y_low < 0:
+            y_low = 0
+            
+        if x_high > w:
+            x_high = w
+            
+        if y_high > h:
+            y_high = h 
+        
+        x_off = random.randint(x_low, x_high)
+        y_off = random.randint(y_low, y_high)
+        """
         #print(x_low_bound, x_high_bound, y_low_bound, y_high_bound)
         #print(x_off, y_off)
         #print(self.pos.x, self.pos.y)
@@ -158,6 +189,11 @@ class Animal:
             #print(self.x, self.x+self.size, self.y, self.y+self.size)
             x_off = self.x - zone.rect.topleft[0]
             y_off = self.y - zone.rect.topleft[1]
+            print(x_off,y_off)
+            if (x_off + self.size) > DISPLAY.FIELD_W:
+                x_off = DISPLAY.FIELD_W - self.size
+            if (y_off + self.size) > DISPLAY.FIELD_H:
+                y_off = DISPLAY.FIELD_H - self.size
             #print(x_off, x_off+self.size, y_off, y_off+self.size)
             zone.field.PH[x_off:x_off+self.size, y_off:y_off+self.size, 1] += excrement
             
@@ -165,7 +201,13 @@ class Animal:
             if self.w is None:
                 self.w = []
                 self.w.append(zone.pasture.shelter_rect.center)
-                self.w.append(zone.rect.center)
+                #Randomize the go-to location to break out of 
+                #the random walk's local minima's
+                _x = random.randint(zone.rect.topleft[0], zone.rect.topright[0] - self.size)
+                _y = random.randint(zone.rect.topright[1], zone.rect.bottomright[1] - self.size)
+
+                self.w.append((_x, _y))
+                #self.w.append(zone.rect.center)
                 
                 #TODO: Offload the product when you get to the barn
                 

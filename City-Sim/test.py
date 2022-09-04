@@ -224,7 +224,7 @@ def Draw_Action_Buttons():
     #buttons
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
-    global switch_scene_btn
+    global switch_scene_btn, city_statistics_btn
     
     btn_h = 15
     btn_w = 70
@@ -295,6 +295,11 @@ def Draw_Action_Buttons():
     switch_scene_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 12*btn_h + 12*btn_padding, btn_w, btn_h))
     label = font.render("Switch View", 1, blue)
     label_rect = label.get_rect(center=(switch_scene_btn.center))
+    display_surface.blit(label, label_rect)
+    
+    city_statistics_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 13*btn_h + 13*btn_padding, btn_w, btn_h))
+    label = font.render("City Statistics", 1, blue)
+    label_rect = label.get_rect(center=(city_statistics_btn.center))
     display_surface.blit(label, label_rect)
 
 """"""""""""""""""""""""""""""""""" GUI """
@@ -874,10 +879,12 @@ def main():
     
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
-    global switch_scene_btn
+    global switch_scene_btn, city_statistics_btn
     
     global scouts, forests, lakes, cities
     global rain_b_inc, images, multiproc_Q
+    
+    global brown
     
     global animal_act_timer, weather_effect
     animal_act_timer = 0
@@ -959,6 +966,8 @@ def main():
     
     active_city_changed = False
     
+    plot = False
+    
     day_cnt = 0
     
     print("Main loop:", os.getpid())
@@ -967,7 +976,7 @@ def main():
         #snapshot1 = tracemalloc.take_snapshot()
         #start_time = pygame.time.get_ticks()
         #clear screen
-        display_surface.fill(black)
+        display_surface.fill(brown)
 
         #TODO: enable
         #update the active city
@@ -1140,6 +1149,10 @@ def main():
                         selected_view = VIEW.types['MAP_VIEW']
                     else:#if selected_view == OVERLAY.types['MAP_VIEW']:
                         selected_view = VIEW.types['CITY_VIEW']
+                
+                if city_statistics_btn.collidepoint(pygame.mouse.get_pos()):
+                    plot = not plot
+                    active_city.Plot(plot)
                 
                 if selected_view == VIEW.types['CITY_VIEW']:
                     # Explore clicked zone

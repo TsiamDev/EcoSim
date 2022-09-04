@@ -64,8 +64,8 @@ class Field:
         self.N = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H, 3), dtype=np.uint32 )
         r = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
         g = [[random.randint(0, 255) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-        #self.N[:, :, 0] = r
-        self.N[:, :, 0] = empty
+        self.N[:, :, 0] = r
+        #self.N[:, :, 0] = empty
         self.N[:, :, 1] = g
         self.N[:, :, 2] = empty
         

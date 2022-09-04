@@ -5,6 +5,8 @@ Created on Sun Aug  7 21:21:26 2022
 @author: TsiamDev
 """
 
+#TODO: Adjust quantities for EASY/MEDIUM/HARD game modes 
+
 class DISPLAY(object):
     def __init__(self):
         self.X = 750
@@ -95,7 +97,7 @@ class VIEW(object):
 
 class DAY(object):
     def __init__(self):
-        self.TICKS_TILL_DAY = 20 * 50
+        self.TICKS_TILL_DAY = 20 * 50 #(FPS * Frame number)
 
 class TIME(object):
     def __init__(self):
@@ -132,16 +134,23 @@ class CONSUMPTION(object):
         self.types['WOOD_CONS'] = 5
         self.types['WATER_CONS'] = 7
         self.types['COW_MILK_CONS'] = 25
-        
+
+
 class TRAILERS(object):
     def __init__(self):
         self.TRAILER_S = 500
         self.TRAILER_M = 1500
         self.TRAILER_L = 2500
-    
+
+#this class defines the (multiplicative) thresholds that make the decision,
+#of how much (eg) grain the machine's WIDTH*WIDTH square will yield
+class PLANT_HARVEST_FACTOR(object):
+    def __init__(self):
+        self.GRAIN = 300
+        
+        
 # instantiate Constants
 CONST = CONST()
-#print(len(CONST.types))
 
 FIELD = FIELD()
 
@@ -169,3 +178,5 @@ CONSTANTS = CONSTANTS()
 CONSTRUCT_SIZE = CONSTRUCT_SIZE()
 
 TRAILERS = TRAILERS()
+
+PLANT_HARVEST_FACTOR = PLANT_HARVEST_FACTOR()

@@ -10,7 +10,7 @@ import random
 from MyPoint import MyPoint
 
 #from Const import  TRACTOR_PARAMETERS, 
-from Const import TRACTOR_ACTIONS, DISPLAY, TRAILERS, GOODS
+from Const import TRACTOR_ACTIONS, DISPLAY, TRAILERS, GOODS, PLANT_HARVEST_FACTOR
 #from networking.Networking import Set_Globals, Set_Tractor_Actions
 
 class Tractor:
@@ -182,7 +182,10 @@ class Tractor:
                 #t = any(green > 180) & any(red > 180)
                 t = sum(sum(green + red)) #/ (15 * 15 * 100)
                 #print(t)
-                if t > (15 * 15 * 100):
+                if plant.type == 'GRAIN':
+                    threshold = self.width * self.width * PLANT_HARVEST_FACTOR.GRAIN
+
+                if t > threshold:
                     harvested_amount = sum(sum(green+red)) / 2000
                     self.trailer = self.trailer + harvested_amount
                     
@@ -352,7 +355,8 @@ class Tractor:
         #Set_Globals()
         #Set_Tractor_Actions(TRACTOR_ACTIONS.types)
         self.action_Q = list([TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'],
-                   TRACTOR_ACTIONS.types['FERTILIZE'], TRACTOR_ACTIONS.types['WATER'],
+                   TRACTOR_ACTIONS.types['FERTILIZE'], TRACTOR_ACTIONS.types['WATER'], 
+                   TRACTOR_ACTIONS.types['WATER'], TRACTOR_ACTIONS.types['WATER'],
                    TRACTOR_ACTIONS.types['HARVEST']])
         self.action_Q_ind = 0
         

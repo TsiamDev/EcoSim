@@ -185,19 +185,23 @@ class City:
         
         self.time_cnt += 1
         
-        if self.time_cnt > TIME.types['CROP']:
+        if self.time_cnt >= TIME.types['CROP']:
             for z in self.zones:
                 #if z.type == CONST.types['FIELD']:
                 if z.field is not None:
                     if z.field.has_init == True:
                         #crops grow - if <pixel> is planted
                         #TODO: handle dividing by zero (z.field.PH)
-                        new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.3 + z.field.hum * 0.1) / z.field.PH
+                        new_growth = np.zeros((len(z.field.N), len(z.field.N), 2), dtype=np.uint32)
+                        new_growth[:,:,0] = (z.field.N[:,:,0] * 0.1 + z.field.P[:,:,0] * 0.1 + z.field.K[:,:,2] * 0.1 + z.field.hum[:,:,2] * 0.2) / (z.field.PH[:,:,1] / 2)
+                        new_growth[:,:,1] = (z.field.N[:,:,1] * 0.1 + z.field.P[:,:,1] * 0.1 + z.field.K[:,:,2] * 0.1 + z.field.hum[:,:,2] * 0.2) / (z.field.PH[:,:,1] / 2)
                         #t = z.field.is_planted * new_growth
                         #print(t)
                         #print(len(t))
-                        z.field.crop_growth += (z.field.is_planted * new_growth).astype(int)#new_growth.astype(int)#(5, 0, 0)
-                        
+                        z.field.crop_growth[:,:,0] += (z.field.is_planted[:,:,0] * new_growth[:,:,0]).astype(int)#new_growth.astype(int)#(5, 0, 0)
+                        z.field.crop_growth[z.field.crop_growth[:,:,0] > 255, 0] = 255
+                        z.field.crop_growth[:,:,1] += (z.field.is_planted[:,:,1] * new_growth[:,:,1]).astype(int)
+                        z.field.crop_growth[z.field.crop_growth[:,:,1] > 255, 1] = 255
                         #remove moisture from the top soil
                         z.field.hum -= (0.1 * z.field.hum).astype(int)
             self.time_cnt = 0
@@ -215,6 +219,18 @@ class City:
             label_rect = label.get_rect(center=(uz.rect.center))
             display_surface.blit(label, label_rect)
     """
+    
+    def Plot(self, plot):
+        if plot == True:
+            print("Drawing plot")
+            #TODO: Draw the plot
+        elif plot == False:
+            print("Hiding plot")
+            #TODO: Hide the plot
+        else:
+            print("something went wrong with <plot> variable")
+            return
+            
     
     #Update the city parameters
     def Draw(self):
