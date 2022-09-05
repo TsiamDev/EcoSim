@@ -40,7 +40,11 @@ class WeatherEffect:
     def __init__(self, _type):
         self.type = _type
         #print(self.type)
-        
+        if _type == WEATHER.types['SNOW']:
+            self.str_type = 'SNOW'
+        elif _type == WEATHER.types['RAIN']:
+            self.str_type = 'RAIN'
+            
         self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
         self.days_duration = random.randint(1, 5)
         self.days_cnt = 0
@@ -61,6 +65,7 @@ class WeatherEffect:
                 self.is_active = False
                 print("Weather effect ended")
             else:
+                print(self.str_type, "with severity: ", self.severity)
                 print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
         else:
             self.severity = random.randint(0, len(WEATHER_SEVERITY.types))

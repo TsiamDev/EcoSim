@@ -989,6 +989,9 @@ def main():
         if day_cnt >= DAY.TICKS_TILL_DAY:
             active_city.Consume()
             active_city.weather_effect.Update_Duration()
+            rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+            rain_b_inc += [[random.randint(1*active_city.weather_effect.severity, 3*active_city.weather_effect.severity) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+
             day_cnt = 0
         
         #Update the active_city's pixels (data)
