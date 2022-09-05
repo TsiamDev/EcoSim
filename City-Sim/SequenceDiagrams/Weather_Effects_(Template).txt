@@ -1,0 +1,12 @@
+title Extreme Weather Dissasters (template)
+
+actor WeatherEffect
+actor City.data
+
+WeatherEffect->City.data: affects terrain with severity 'LOW'
+WeatherEffect->City.data: ...
+WeatherEffect->City.data: affects terrain with severity 'MEDIUM'
+WeatherEffect->City.data: ...
+WeatherEffect->City.data: affects terrain with severity 'HIGH'
+
+note over City.data: as time passes, the affected terrain parameters become exagerated

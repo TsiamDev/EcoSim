@@ -1,0 +1,13 @@
+title Extreme Weather Dissasters (flood)
+
+actor WeatherEffect
+actor City.data
+
+WeatherEffect->City.data: affects terrain with severity 'LOW'
+note over City.data: field soil becomes hydrated (slow)
+
+WeatherEffect->City.data: affects terrain with severity 'MEDIUM'
+note over City.data: field soil becomes hydrated (fast)
+WeatherEffect->City.data: affects terrain with severity 'HIGH'
+note over City.data: the river starts to expand
+note over City.data: as time passes, any improvements without defences become flooded \n(unusable for the duration of the event)
