@@ -189,7 +189,7 @@ class Animal:
             #print(self.x, self.x+self.size, self.y, self.y+self.size)
             x_off = self.x - zone.rect.topleft[0]
             y_off = self.y - zone.rect.topleft[1]
-            print(x_off,y_off)
+            #print(x_off,y_off)
             if (x_off + self.size) > DISPLAY.FIELD_W:
                 x_off = DISPLAY.FIELD_W - self.size
             if (y_off + self.size) > DISPLAY.FIELD_H:
@@ -225,7 +225,7 @@ class Animal:
                         self.product = 0
                         #print("Cow was milked", flush=True)
                         
-                        print("City ", city.id ," silo amount for ", key, " is ", city.goods_amounts[ind], flush=True)
+                        #print("City ", city.id ," silo amount for ", key, " is ", city.goods_amounts[ind], flush=True)
                         break
 
     def eat(self, zone, data, city):

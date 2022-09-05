@@ -220,7 +220,7 @@ class Tractor:
                                 
                                 #unload the harvested amount into the city silo
                                 self.city.goods_amounts[ind] += self.trailer
-                                print("City ", self.city.id ," silo amount for ", key, " is ", self.city.goods_amounts[ind])
+                                #print("City ", self.city.id ," silo amount for ", key, " is ", self.city.goods_amounts[ind])
                                 #empty the trailer
                                 self.trailer = 0
                                 #print("Emptied trailer into city silo.", flush=True)
