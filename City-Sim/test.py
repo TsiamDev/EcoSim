@@ -538,7 +538,7 @@ def Crop_Growth():
     pygame.surfarray.blit_array(display_surface, data)
     #return data
 
-def Display_Overlay(zones):
+def Display_Overlay(zones, data):
     global selected_overlay
     
     
@@ -578,6 +578,9 @@ def Display_Overlay(zones):
                 elif selected_overlay is OVERLAY.types['PLANT_FACE']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
                 #pygame.surfarray.blit_array(display_surface, data_temp)
+        
+        #update river
+        data_temp[0:DISPLAY.RIVER_W, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :] = data[0:DISPLAY.RIVER_W, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :]
         
         return data_temp
     return None
@@ -978,7 +981,7 @@ def main():
         #snapshot1 = tracemalloc.take_snapshot()
         #start_time = pygame.time.get_ticks()
         #clear screen
-        display_surface.fill(brown)
+        display_surface.fill((255, 248, 220))
 
         #TODO: enable
         #update the active city
@@ -995,12 +998,12 @@ def main():
             day_cnt = 0
         
         #Update the active_city's pixels (data)
-        active_city.Draw()
-        d = Display_Overlay(active_city.zones)
+        d = Display_Overlay(active_city.zones, active_city.data)
         #lock.release()
         if d is not None:
             active_city.data = d
         #tractor_img_key, tractor_rect = active_city.Draw()
+        active_city.Draw()
         
         #draw map view
         if selected_view == VIEW.types['MAP_VIEW']:            

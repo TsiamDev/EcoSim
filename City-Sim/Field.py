@@ -94,6 +94,9 @@ class Field:
 
             self.crop_growth[:, :, 0] = empty
             self.crop_growth[:, :, 1] = g
+            
+            self.plant_face[:, :, 0] = empty
+            self.plant_face[:, :, 1] = g
         else:
             
             r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
@@ -103,6 +106,7 @@ class Field:
             self.crop_growth[:, :, 1] = g
        
         self.crop_growth[:, :, 2] = empty
+        self.plant_face[:, :, 2] = empty
         
     def translate(self, value, leftMin, leftMax, rightMin, rightMax):
         # Figure out how 'wide' each range is

@@ -237,11 +237,12 @@ class City:
         #crops grow
         self.Crop_Growth()
         
+        #tractor acts
+        self.tractor.act(self.data, self.plant)
+        #d = self.tractor.act(self.data, self.plant)
+        #if d is not None:
+        #    self.data = d
+            
         #river flows
         self.Move_River()
-        
-        #tractor acts
-        d = self.tractor.act(self.data, self.plant)
-        if d is not None:
-            self.data = d
             

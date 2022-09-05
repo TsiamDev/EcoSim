@@ -130,7 +130,7 @@ class Tractor:
         
         #print("tractor rect: ", self.rect)
         
-        return data#, self.img_key, self.rect             
+        #return data#, self.img_key, self.rect             
 
     #is_planted, is a numpy array (:,:,3)
     def render_soil(self, w, h, _r, _g, _b, data, target, plant_face=None, isCultivating=None, is_planted=None, plant=None, isSowing=None, isHarvesting=None):

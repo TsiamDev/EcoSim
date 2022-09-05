@@ -275,6 +275,10 @@ class Animal:
             field.crop_growth[x_low:x_high, y_low:y_high, 2] = 0
             #field.crop_growth[field.crop_growth[x_low:x_high, y_low:y_high, :] < 0] = 0
             
+            field.plant_face[x_low:x_high, y_low:y_high, 0] = r
+            field.plant_face[x_low:x_high, y_low:y_high, 1] = g
+            field.plant_face[x_low:x_high, y_low:y_high, 2] = 0
+            
             r = [[random.randint(70, 83) for i in range(self.y, self.y+self.size)] for j in range(self.x, self.x+self.size)]
             g = [[random.randint(45, 50) for i in range(self.y, self.y+self.size)] for j in range(self.x, self.x+self.size)]
             data[self.x:self.x+self.size, self.y:self.y+self.size, 0] = r
