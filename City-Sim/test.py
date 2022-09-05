@@ -404,8 +404,8 @@ def Update_Plant_Img(widget, menu):
     global plant_img_widget
     
     plant_img_widget = widget
-    print(widget)
-    print(menu)
+    #print(widget)
+    #print(menu)
 
 def Main_Menu():
     global display_surface, menu, plant_menu, running, pygame, plant, font
@@ -612,7 +612,7 @@ def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):
             
             #zones[zi].field.hum[zones[zi].field.hum[:, :, 2] > 240] = 240
             #_parent_zones[zi].field.hum[zones[zi].field.hum[:, :, 2] > 240] = 240
-            z.field.hum[z.field.hum[:, :, 2] > 240] = 240
+            z.field.hum[z.field.hum[:, :, 2] > 240, 2] = 240
             #zn[zn > 240] = 240
             #arr.append(zn)
             
@@ -892,9 +892,7 @@ def main():
     
     #Define_Policies(tractor)
 
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-
+    
     running = True
     selected_view = VIEW.types['CITY_VIEW']
     """
@@ -916,6 +914,10 @@ def main():
     active_city = cities[0]
     active_city.is_active = True
     city_rects = []
+    
+    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
+    rain_b_inc += [[random.randint(1*active_city.weather_effect.severity, 3*active_city.weather_effect.severity) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+
     
     #events_proc = Process(target=Init_Event_Proc).start()
     
@@ -980,11 +982,13 @@ def main():
 
         #TODO: enable
         #update the active city
-        #Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
+        if active_city.weather_effect.is_active == True:
+            Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
         Update_Explored_Zones(active_city)
         
         if day_cnt >= DAY.TICKS_TILL_DAY:
             active_city.Consume()
+            active_city.weather_effect.Update_Duration()
             day_cnt = 0
         
         #Update the active_city's pixels (data)
@@ -1054,7 +1058,8 @@ def main():
 
         #TODO: enable
         #draw weather effects on screen
-        #active_city.weather_effect.draw(display_surface, pygame, images)
+        if active_city.weather_effect.is_active == True:
+            active_city.weather_effect.draw(display_surface, pygame, images)
         
         # Event loop
         # iterate over the list of Event objects
@@ -1185,6 +1190,7 @@ def main():
         #Draw the surface object to the screen.  
         pygame.display.update() 
         day_cnt += 1
+        
         #print("Day_Tick: ", day_cnt)
         fpsClock.tick(FPS)
         #time.sleep(1./120)

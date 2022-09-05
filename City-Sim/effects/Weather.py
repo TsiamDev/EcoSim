@@ -7,8 +7,8 @@ Created on Thu Aug 11 23:30:34 2022
 
 import random
 
-from Const import DISPLAY, WEATHER
-from MyRect import MyRect
+from Const import DISPLAY, WEATHER, WEATHER_SEVERITY
+#from MyRect import MyRect
 from MyPoint import MyPoint
 
 class WeatherParticle:
@@ -35,11 +35,18 @@ class WeatherParticle:
         #self.rect = MyRect(x, y)
         self.img = None
         self.point = MyPoint(x, y)#self.img.get_rect().move(pos.x, pos.y)
-
+        
 class WeatherEffect:
     def __init__(self, _type):
         self.type = _type
         #print(self.type)
+        
+        self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
+        self.days_duration = random.randint(1, 5)
+        self.days_cnt = 0
+        
+        self.is_active = True
+        
         if self.type != 'NONE':
             self.particles = []
             for i in range(0, 100):
@@ -47,7 +54,22 @@ class WeatherEffect:
                 new_y = random.randint(1, 10)
                 self.particles.append(WeatherParticle(self.type, new_x, new_y))
             
-        
+    def Update_Duration(self):
+        if self.is_active == True:
+            self.days_cnt += 1
+            if self.days_cnt >= self.days_duration:
+                self.is_active = False
+                print("Weather effect ended")
+            else:
+                print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
+        else:
+            self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
+            self.days_duration = random.randint(1, 5)
+            self.days_cnt = 0
+            
+            self.is_active = True
+            
+            print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
     
     def draw_snow(self, display_surface):
         #while running == True:
