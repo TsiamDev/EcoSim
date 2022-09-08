@@ -46,7 +46,7 @@ class WeatherEffect:
             self.str_type = 'RAIN'
             
         self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
-        self.days_duration = random.randint(1, 5)
+        self.days_duration = 1#random.randint(1, 5)
         self.days_cnt = 0
         
         self.is_active = True

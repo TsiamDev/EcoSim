@@ -244,6 +244,12 @@ class Tractor:
             target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
             target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
     
+        
+            if isSowing == True:
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
+
+    
             if data is not None:
                 #update displayed field state
                 #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
@@ -257,11 +263,7 @@ class Tractor:
                 data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 0] = target[:, :, 0]
                 data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 1] = target[:, :, 1]
                 data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 2] = target[:, :, 2]
-                
-            if isSowing == True:
-                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
-                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
-                
+                            
         return data
 
     def fertilize_N(self, data):

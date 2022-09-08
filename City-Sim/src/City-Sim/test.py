@@ -18,10 +18,10 @@ import copy
 import os
 #from pprint import pprint
 import math
-import tracemalloc
-import linecache
+#import tracemalloc
+#import linecache
 
-import cProfile as profile
+#import cProfile as profile
 #from threading import Thread
 #import threading
 
@@ -581,7 +581,6 @@ def Display_Overlay(zones, data):
         
         #update river
         data_temp[0:DISPLAY.RIVER_W, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :] = data[0:DISPLAY.RIVER_W, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :]
-        
         return data_temp
     return None
 
@@ -831,7 +830,7 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
             return
 
 #def Event_Loop(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects):
-    
+"""
 def display_top(snapshot, key_type='lineno', limit=10):
     snapshot = snapshot.filter_traces((
         tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
@@ -854,7 +853,7 @@ def display_top(snapshot, key_type='lineno', limit=10):
         print("%s other: %.1f KiB" % (len(other), size / 1024))
     total = sum(stat.size for stat in top_stats)
     print("Total allocated size: %.1f KiB" % (total / 1024))
-
+"""
 def Weather_Effect_To_Ground_Pool(city, rain_b_inc):    
     if city.weather_effect.type == WEATHER.types['RAIN']:
         for z in city.zones:
@@ -998,8 +997,8 @@ def main():
             day_cnt = 0
         
         #Update the active_city's pixels (data)
+        #Display_Overlay(active_city.zones, active_city.data)
         d = Display_Overlay(active_city.zones, active_city.data)
-        #lock.release()
         if d is not None:
             active_city.data = d
         #tractor_img_key, tractor_rect = active_city.Draw()

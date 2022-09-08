@@ -1,0 +1,19 @@
+- Download Python 3.x from the official website
+- Install Python 3.x
+- Run test.py and with your favourite package installer,
+  download and install all the missing dependencies,
+  as the python interpreter reports them to you
+  (I used simply "pip install <package>" for the following packages)
+
+!!!Oh and make sure you have upgraded your package installer (pip?) first!
+
+
+#Here is a list of the packages this simulation uses:
+1. numpy
+2. pygame & pygame_menu
+3. perlin_noise
+4. matplotlib
+5. multiprocessing
+
+(Hopefully I am not forgetting any - if I am,
+ please drop me a line and I will remedy this)
