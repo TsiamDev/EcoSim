@@ -238,7 +238,7 @@ def Draw_Action_Buttons():
     btn_padding = 2
     
     #font = pygame.font.SysFont("monospace", 10)
-    
+    #"""
     cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 0, btn_w, btn_h))
     label = font.render("Cultivate", 1, blue)
     label_rect = label.get_rect(center=(cultivate_btn.center))
@@ -248,7 +248,7 @@ def Draw_Action_Buttons():
     label = font.render("Sow", 1, blue)
     label_rect = label.get_rect(center=(sow_btn.center))
     display_surface.blit(label, label_rect)
-    
+    #"""
     PH_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 2*btn_h + 2*btn_padding, btn_w, btn_h))
     label = font.render("PH", 1, blue)
     label_rect = label.get_rect(center=(PH_btn.center))
@@ -283,7 +283,7 @@ def Draw_Action_Buttons():
     label = font.render("Crop Growth", 1, blue)
     label_rect = label.get_rect(center=(crop_growth_btn.center))
     display_surface.blit(label, label_rect)
-
+    #"""
     harvest_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 9*btn_h + 9*btn_padding, btn_w, btn_h))
     label = font.render("Harvest", 1, blue)
     label_rect = label.get_rect(center=(harvest_btn.center))
@@ -298,17 +298,17 @@ def Draw_Action_Buttons():
     label = font.render("Fertilize N-P-K", 1, blue)
     label_rect = label.get_rect(center=(fertilize_btn.center))
     display_surface.blit(label, label_rect)
-    
+    #"""
     switch_scene_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 12*btn_h + 12*btn_padding, btn_w, btn_h))
     label = font.render("Switch View", 1, blue)
     label_rect = label.get_rect(center=(switch_scene_btn.center))
     display_surface.blit(label, label_rect)
-    
+    #"""
     city_statistics_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 13*btn_h + 13*btn_padding, btn_w, btn_h))
     label = font.render("City Statistics", 1, blue)
     label_rect = label.get_rect(center=(city_statistics_btn.center))
     display_surface.blit(label, label_rect)
-
+    #"""
 """"""""""""""""""""""""""""""""""" GUI """
 def on_resize() -> None:
     """
@@ -904,6 +904,7 @@ def main():
     
     running = True
     selected_view = VIEW.types['CITY_VIEW']
+    selected_overlay = OVERLAY.types['PLANT_FACE']
     """
     kw = {}
     #kw['display_surface'] = display_surface
@@ -981,6 +982,13 @@ def main():
     
     day_cnt = 0
     
+    #zoom controls
+    zoom = 750
+    zoom_x = 0
+    zoom_y = 0
+    
+    isPanning = False
+    
     print("Main loop:", os.getpid())
     # infinite loop
     while running :
@@ -1053,7 +1061,6 @@ def main():
             
             #Draw tractor of active_city to screen
             display_surface.blit(images[active_city.tractor.img_key], (active_city.tractor.rect.x, active_city.tractor.rect.y))
-            
                         
             if len(active_city.unexplored_zones) > 0:
                 #print("UZ")
@@ -1067,6 +1074,10 @@ def main():
 
         #draw GUI
         Draw_Action_Buttons()
+        
+        zoomed_screen = pygame.transform.smoothscale(display_surface, (zoom, zoom))
+        display_surface.fill((255, 248, 220))
+        display_surface.blit(zoomed_screen, (zoom_x, zoom_y))
 
         #TODO: enable
         #draw weather effects on screen
@@ -1076,8 +1087,34 @@ def main():
         # Event loop
         # iterate over the list of Event objects
         # that was returned by pygame.event.get() method.
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            zoom_y += zoom / 30
+            #if zoom_y > 
+        elif keys[pygame.K_a]:
+            zoom_x += zoom / 30
+        elif keys[pygame.K_s]:
+            zoom_y -= zoom / 30
+        elif keys[pygame.K_d]:
+            zoom_x -= zoom / 30
+            
+        if zoom_x <= -300:
+            zoom_x = -300
+            
+        if zoom_x >= 60:
+            zoom_x = 60
+            
+            
+        if zoom_y <= -300:
+            zoom_y = -300
+        
+        if zoom_y >= 60:
+            zoom_y = 60
+            
+        print(zoom_x, zoom_y)
+            
         for event in pygame.event.get() :
-      
+            
             # if event object type is QUIT
             # then quitting the pygame
             # and program both.
@@ -1109,92 +1146,110 @@ def main():
                 pygame.display.quit()
                 sys.exit()
                 
+            if event.type == pygame.K_SPACE:
+                zoom_x = 0
+                zoom_y = 0
+                zoom = 750
+                
+            if event.type == pygame.MOUSEWHEEL:
+                zoom += (zoom / 10) * event.y
+                if zoom >= 900:
+                    zoom = 900
+                print("Zoom: ", zoom)
+                    
+                pos = pygame.mouse.get_pos()
+                print(pos)
+                zoom_x = pos[0] - zoom / 2
+                zoom_y = pos[1] - zoom / 2
+                    
             if event.type == pygame.MOUSEBUTTONDOWN:
-                #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
-                
-                #Player Actions
-                """
-                if cultivate_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
-                elif sow_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['SOW']
-                elif water_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['WATER']
-                elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['HARVEST']
-                elif fertilize_btn.collidepoint(pygame.mouse.get_pos()):
-                    tractor.action = TRACTOR_ACTIONS.types['FERTILIZE']
-                """
-                if PH_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['PH']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['PH']
-                elif hum_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['HUM']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['HUM']
-                elif temp_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['TEMP']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['TEMP']
-                elif N_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['N']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['N']
-                elif P_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['P']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['P']
-                elif K_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['K']:
-                        selected_overlay = None
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['K']
-                elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_overlay == OVERLAY.types['CROP_GROWTH']:
-                        selected_overlay = OVERLAY.types['PLANT_FACE']
-                    else:#if selected_overlay == None:
-                        selected_overlay = OVERLAY.types['CROP_GROWTH']
-                
-                if switch_scene_btn.collidepoint(pygame.mouse.get_pos()):
-                    if selected_view == VIEW.types['CITY_VIEW']:
-                        selected_view = VIEW.types['MAP_VIEW']
-                    else:#if selected_view == OVERLAY.types['MAP_VIEW']:
-                        selected_view = VIEW.types['CITY_VIEW']
-                
-                if city_statistics_btn.collidepoint(pygame.mouse.get_pos()):
-                    plot = not plot
-                    active_city.Plot(plot)
-                
-                if selected_view == VIEW.types['CITY_VIEW']:
-                    # Explore clicked zone
-                    for key, uz in active_city.unexplored_zones.items():
-                        if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
-                            print("Expanded to zone " + str(key))
-                            active_city.zones[key].is_explored = True
-                            Init_Explored_Zones(active_city.data, active_city.zones[key])
-                            
-                            if key in active_city.unexplored_zones.keys():
-                                del active_city.unexplored_zones[key]
-                                
-                            break
-                        
-                elif selected_view == VIEW.types['MAP_VIEW']:
-                    #Click on a city
-                    for i in range(0, len(city_rects)):
-                        if city_rects[i].collidepoint(pygame.mouse.get_pos()):
-                            print("clicked on city")
+                #if left click
+                if event.button == 1:
+                    #if pygame.Rect(0,15,15,300).collidepoint(pygame.mouse.get_pos()):
+                    
+                    #Player Actions
+                    """
+                    if cultivate_btn.collidepoint(pygame.mouse.get_pos()):
+                        tractor.action = TRACTOR_ACTIONS.types['CULTIVATE']
+                    elif sow_btn.collidepoint(pygame.mouse.get_pos()):
+                        tractor.action = TRACTOR_ACTIONS.types['SOW']
+                    elif water_btn.collidepoint(pygame.mouse.get_pos()):
+                        tractor.action = TRACTOR_ACTIONS.types['WATER']
+                    elif harvest_btn.collidepoint(pygame.mouse.get_pos()):
+                        tractor.action = TRACTOR_ACTIONS.types['HARVEST']
+                    elif fertilize_btn.collidepoint(pygame.mouse.get_pos()):
+                        tractor.action = TRACTOR_ACTIONS.types['FERTILIZE']
+                    """
+                    if PH_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['PH']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['PH']
+                    elif hum_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['HUM']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['HUM']
+                    elif temp_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['TEMP']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['TEMP']
+                    elif N_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['N']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['N']
+                    elif P_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['P']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['P']
+                    elif K_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['K']:
+                            selected_overlay = None
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['K']
+                    elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_overlay == OVERLAY.types['CROP_GROWTH']:
+                            selected_overlay = OVERLAY.types['PLANT_FACE']
+                        else:#if selected_overlay == None:
+                            selected_overlay = OVERLAY.types['CROP_GROWTH']
+                    
+                    if switch_scene_btn.collidepoint(pygame.mouse.get_pos()):
+                        if selected_view == VIEW.types['CITY_VIEW']:
+                            selected_view = VIEW.types['MAP_VIEW']
+                        else:#if selected_view == OVERLAY.types['MAP_VIEW']:
                             selected_view = VIEW.types['CITY_VIEW']
-                            
-                            cur_i = i
-                            active_city_changed = True
+                    
+                    if city_statistics_btn.collidepoint(pygame.mouse.get_pos()):
+                        plot = not plot
+                        active_city.Plot(plot)
+                    
+                    if selected_view == VIEW.types['CITY_VIEW']:
+                        # Explore clicked zone
+                        for key, uz in active_city.unexplored_zones.items():
+                            if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
+                                print("Expanded to zone " + str(key))
+                                active_city.zones[key].is_explored = True
+                                Init_Explored_Zones(active_city.data, active_city.zones[key])
                                 
-                            break
+                                if key in active_city.unexplored_zones.keys():
+                                    del active_city.unexplored_zones[key]
+                                    
+                                break
+                            
+                    elif selected_view == VIEW.types['MAP_VIEW']:
+                        #Click on a city
+                        for i in range(0, len(city_rects)):
+                            if city_rects[i].collidepoint(pygame.mouse.get_pos()):
+                                print("clicked on city")
+                                selected_view = VIEW.types['CITY_VIEW']
+                                
+                                cur_i = i
+                                active_city_changed = True
+                                    
+                                break
         
         #lock.release()
         #Draw the current FPS on the screen
