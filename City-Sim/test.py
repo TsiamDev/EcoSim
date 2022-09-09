@@ -85,7 +85,10 @@ def Init_Explored_Zones(data, zone):
             rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
             # update the field
             #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            
+            #enable?
             g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            
             #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
 
             #data[15:N+15,15:N+15,0] = r
@@ -96,7 +99,11 @@ def Init_Explored_Zones(data, zone):
             #print(rect.topright)
             #print(rect.bottomright)
             #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
+            
+            #enable?
             data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
+            #zone.field.crop_growth[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
+            
             
             zone.field.has_init = True
         """

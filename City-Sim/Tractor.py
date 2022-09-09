@@ -110,22 +110,23 @@ class Tractor:
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
             data = None
         elif self.action == TRACTOR_ACTIONS.types['CULTIVATE']:
-            data = self.cultivate(data)
+            self.cultivate()
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
-            data = self.sow(data, plant)
+            self.sow(plant)
             #print(self.waypoints)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['WATER']:
-            data = self.water(data)
+            self.water()
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['FERTILIZE']:
-            data = self.fertilize_N(data)
-            data = self.fertilize_P(data)
-            data = self.fertilize_K(data)
+            self.fertilize_N_P_K()
+            #data = self.fertilize_N(data)
+            #data = self.fertilize_P(data)
+            #data = self.fertilize_K(data)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
-            data = self.harvest(data, plant)
+            self.harvest(plant)
             self.move()
         
         #print("tractor rect: ", self.rect)
@@ -133,7 +134,7 @@ class Tractor:
         #return data#, self.img_key, self.rect             
 
     #is_planted, is a numpy array (:,:,3)
-    def render_soil(self, w, h, _r, _g, _b, data, target, plant_face=None, isCultivating=None, is_planted=None, plant=None, isSowing=None, isHarvesting=None):
+    def render_soil(self, w, h, _r, _g, _b):
         #because tractor x,y is different from zone x,y
         # - 15 => road width
         # if tractor starts at (15,15) => top left corner of field
@@ -167,106 +168,14 @@ class Tractor:
 
         #print((x_low, x_high), '-', (y_low, y_high))
         
-        # pick random <ground> color
+        # pick random <plant> color
         r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
         g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
         b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
 
-
-        if is_out_of_field_bounds == False:
-            
-            if isHarvesting == True:
-                red = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] 
-                green = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1]
-                #print(green > 180)
-                #t = any(green > 180) & any(red > 180)
-                t = sum(sum(green + red)) #/ (15 * 15 * 100)
-                #print(t)
-                if plant.type == 'GRAIN':
-                    threshold = self.width * self.width * PLANT_HARVEST_FACTOR.GRAIN
-
-                if t > threshold:
-                    harvested_amount = sum(sum(green+red)) / 2000
-                    self.trailer = self.trailer + harvested_amount
-                    
-                    #remove the <is_planted> status
-                    is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
-                    
-                    #remove the <plant_face> status
-                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
-                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
-                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
-                    
-                    self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
-                    self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
-                    self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
-                    
-                    #print("is_planted removed")
-                    #if the trailer has reached its' capacity
-                    #put the harvested amount to the city's silo
-                    #print(self.trailer >= self.trailer_capacity)
-                    if self.trailer >= self.trailer_capacity:
-                        
-                        #TODO: go to the city's silo
-                        
-                        #find the appropriate container
-                        ind = None
-                        for key, val in GOODS.types.items():
-                            #print(key, plant.type)
-                            if key == plant.type:
-                                #found the indice
-                                ind = val
-                                #print(self.city.goods_amounts[ind])
-                                
-                                #unload the harvested amount into the city silo
-                                self.city.goods_amounts[ind] += self.trailer
-                                #print("City ", self.city.id ," silo amount for ", key, " is ", self.city.goods_amounts[ind])
-                                #empty the trailer
-                                self.trailer = 0
-                                #print("Emptied trailer into city silo.", flush=True)
-                                break
-            
-            if isCultivating == True:
-                #remove the <is_planted> status
-                is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
-                
-                #remove the <plant_face> status
-                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
-                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
-                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
-
-                        
-            #update crop state
-            #target[x_low:(x_high), y_low:y_high, 0] = r
-            #target[x_low:(x_high), y_low:y_high, 1] = g
-            #target[x_low:(x_high), y_low:y_high, 2] = b
-            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
-            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
-            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
+        return r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high
     
-        
-            if isSowing == True:
-                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
-                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
-
-    
-            if data is not None:
-                #update displayed field state
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
-                
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
-                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
-                
-                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 0] = target[:, :, 0]
-                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 1] = target[:, :, 1]
-                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 2] = target[:, :, 2]
-                            
-        return data
-
-    def fertilize_N(self, data):
+    def fertilize_N_P_K(self):
         #reset <ground> color to <soil> color
         w = len(self.zone.field.N[0])
         h = len(self.zone.field.N[1])
@@ -275,31 +184,22 @@ class Tractor:
         g = (255, 255)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.N)
+        r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high = self.render_soil(w, h, r, g, b)
     
-    def fertilize_P(self, data):
-        #reset <ground> color to <soil> color
-        w = len(self.zone.field.P[0])
-        h = len(self.zone.field.P[1])
-        
-        r = (0, 0)
-        g = (255, 255)
-        b = (0, 0)
-        
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.P)
-
-    def fertilize_K(self, data):
-        #reset <ground> color to <soil> color
-        w = len(self.zone.field.K[0])
-        h = len(self.zone.field.K[1])
-        
-        r = (0, 0)
-        g = (255, 255)
-        b = (0, 0)
-        
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.K)
-
-    def cultivate(self, data):
+        if is_out_of_field_bounds == False:
+            self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = g
+            self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            
+            self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = g
+            self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            
+            self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = g
+            self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 0
+            
+    def cultivate(self):
         #reset <ground> color to <soil> color
         w = len(self.zone.field.crop_growth[0])
         h = len(self.zone.field.crop_growth[1])
@@ -308,9 +208,24 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, isCultivating=True)
+        r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high = self.render_soil(w, h, r, g, b)
+        
+        if is_out_of_field_bounds == False:
+            #remove the <is_planted> status
+            self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+            
+            #update the <plant_face> status
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
 
-    def sow(self, data, plant):
+            #update the <crop_growth> status
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+
+
+    def sow(self, plant):
         
         #reset <ground> color to <soil> color
         w = len(self.zone.field.crop_growth[0])
@@ -325,10 +240,30 @@ class Tractor:
         g = (0, 255)
         b = (0, 0)
         """
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.plant_face, isSowing=True)  
-    
+        r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high = self.render_soil(w, h, r, g, b)
+        
+        if is_out_of_field_bounds == False:
+            #add the <is_planted> status
+            self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
+            self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
+            
+            #add the <plant_face> status
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
+
+            #pick random intial stage of crop growth
+            _r = [[random.randint(15, 25) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+            _g = [[random.randint(15, 25) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+            _b = [[random.randint(15, 25) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
+
+            #add <crop_growth>
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = _r
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = _g
+            self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = _b
+
     #data is unused here
-    def water(self, data):
+    def water(self):
         #reset <ground> color to <soil> color
         w = len(self.zone.field.hum[0])
         h = len(self.zone.field.hum[1])
@@ -337,9 +272,16 @@ class Tractor:
         g = (0, 0)
         b = (255, 255)
         
-        return self.render_soil(w, h, r, g, b, None, self.zone.field.hum) 
+        r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high = self.render_soil(w, h, r, g, b)
     
-    def harvest(self, data, _plant):
+        if is_out_of_field_bounds == False:
+            #add water to <hum> layer
+            self.zone.field.hum[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            self.zone.field.hum[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            self.zone.field.hum[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
+                       
+            
+    def harvest(self, _plant):
        
         #reset <ground> color to <soil> color
         w = len(self.zone.field.crop_growth[0])
@@ -349,8 +291,64 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, plant=_plant, isHarvesting=True)
+        r, g, b, is_out_of_field_bounds, x_low, x_high, y_low, y_high = self.render_soil(w, h, r, g, b)
 
+        if is_out_of_field_bounds == True:
+            red = self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] 
+            green = self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1]
+            #print(green > 180)
+            #t = any(green > 180) & any(red > 180)
+            t = sum(sum(green + red)) #/ (15 * 15 * 100)
+            #print(t)
+            if _plant.type == 'GRAIN':
+                threshold = self.width * self.width * PLANT_HARVEST_FACTOR.GRAIN
+        
+            if t > threshold:
+                harvested_amount = sum(sum(green+red)) / 2000
+                self.trailer = self.trailer + harvested_amount
+                
+                #remove the <is_planted> status
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+                
+                #remove the <plant_face> status
+                self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                self.zone.field.plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+                
+                self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                self.zone.field.crop_growth[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+                
+                
+                #self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                #self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                #self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                
+                #print("is_planted removed")
+                #if the trailer has reached its' capacity
+                #put the harvested amount to the city's silo
+                #print(self.trailer >= self.trailer_capacity)
+                if self.trailer >= self.trailer_capacity:
+                    
+                    #TODO: go to the city's silo
+                    
+                    #find the appropriate container
+                    ind = None
+                    for key, val in GOODS.types.items():
+                        #print(key, plant.type)
+                        if key == _plant.type:
+                            #found the indice
+                            ind = val
+                            #print(self.city.goods_amounts[ind])
+                            
+                            #unload the harvested amount into the city silo
+                            self.city.goods_amounts[ind] += self.trailer
+                            #print("City ", self.city.id ," silo amount for ", key, " is ", self.city.goods_amounts[ind])
+                            #empty the trailer
+                            self.trailer = 0
+                            #print("Emptied trailer into city silo.", flush=True)
+                            break
+                        
     def Define_Policies(self):
         #TODO prompt users to decide which actions the tractors will perform,
         #and in what order
