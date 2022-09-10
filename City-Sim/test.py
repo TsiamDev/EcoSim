@@ -1088,6 +1088,10 @@ def main():
         # iterate over the list of Event objects
         # that was returned by pygame.event.get() method.
         keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            zoom_x = 0
+            zoom_y = 0
+            zoom = 750
         if keys[pygame.K_w]:
             zoom_y += zoom / 30
             #if zoom_y > 
@@ -1098,20 +1102,8 @@ def main():
         elif keys[pygame.K_d]:
             zoom_x -= zoom / 30
             
-        if zoom_x <= -300:
-            zoom_x = -300
             
-        if zoom_x >= 60:
-            zoom_x = 60
-            
-            
-        if zoom_y <= -300:
-            zoom_y = -300
-        
-        if zoom_y >= 60:
-            zoom_y = 60
-            
-        print(zoom_x, zoom_y)
+        #print(zoom_x, zoom_y)
             
         for event in pygame.event.get() :
             
@@ -1146,22 +1138,21 @@ def main():
                 pygame.display.quit()
                 sys.exit()
                 
-            if event.type == pygame.K_SPACE:
-                zoom_x = 0
-                zoom_y = 0
-                zoom = 750
                 
             if event.type == pygame.MOUSEWHEEL:
                 zoom += (zoom / 10) * event.y
-                if zoom >= 900:
-                    zoom = 900
+                if zoom >= 1400:
+                    zoom = 1400
+                
+                if zoom <= 600:
+                    zoom = 600
                 print("Zoom: ", zoom)
                     
                 pos = pygame.mouse.get_pos()
                 print(pos)
-                zoom_x = pos[0] - zoom / 2
-                zoom_y = pos[1] - zoom / 2
-                    
+                zoom_x = pos[0] - DISPLAY.X #zoom / 2
+                zoom_y = pos[1] - DISPLAY.Y #zoom / 2
+                
             if event.type == pygame.MOUSEBUTTONDOWN:
                 #if left click
                 if event.button == 1:
@@ -1229,7 +1220,11 @@ def main():
                     if selected_view == VIEW.types['CITY_VIEW']:
                         # Explore clicked zone
                         for key, uz in active_city.unexplored_zones.items():
-                            if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
+                            #if pygame.Rect((zoom_x+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, zoom_y + 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H)).collidepoint(pygame.mouse.get_pos()):    
+                            #    print("Hello")
+                            #pygame.draw.rect(display_surface, (255,255,255), (zoom_x, zoom_y, DISPLAY.ZONE_W / DISPLAY.X, DISPLAY.ZONE_H / DISPLAY.Y))
+                            #"""
+                            if pygame.Rect(uz.rect.x+zoom_x, uz.rect.y+zoom_y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
                                 print("Expanded to zone " + str(key))
                                 active_city.zones[key].is_explored = True
                                 Init_Explored_Zones(active_city.data, active_city.zones[key])
@@ -1238,7 +1233,7 @@ def main():
                                     del active_city.unexplored_zones[key]
                                     
                                 break
-                            
+                            #"""
                     elif selected_view == VIEW.types['MAP_VIEW']:
                         #Click on a city
                         for i in range(0, len(city_rects)):
@@ -1250,6 +1245,22 @@ def main():
                                 active_city_changed = True
                                     
                                 break
+        
+        if zoom_x <= -1000:
+            zoom_x = -1000
+            print("z_x:", zoom_x)
+    
+        if zoom_x >= 60:
+            zoom_x = 60
+            print("z_x:", zoom_x)
+            
+        if zoom_y <= -1000:
+            zoom_y = -1000
+            print("z_y:", zoom_y)
+        
+        if zoom_y >= 60:
+            zoom_y = 60
+            print("z_y:", zoom_y)
         
         #lock.release()
         #Draw the current FPS on the screen
