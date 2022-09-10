@@ -8,18 +8,17 @@
     {% csrf_token %}
     <form type="submit" action = "success" method = "post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-primary" name="b1">1</button>
-        <button type="submit" class="btn btn-primary" name="b2">2</button>
-        <button type="submit" class="btn btn-primary" name="b3">3</button>
-        <button type="submit" class="btn btn-primary" name="b4">4</button>       
-        <button type="submit" class="btn btn-primary" name="b5">5</button>
-        <label for="Policy">Choose a Policy:</label>
-        <select id="Policy" name="Policy">
-          <option value="volvo">Volvo</option>
-          <option value="saab">Saab</option>
-          <option value="fiat">Fiat</option>
-          <option value="audi">Audi</option>
-        </select>  
+        <div id="film-list">
+            {% if films %}
+                <ul>
+                {% for film in films %}
+                    <li>{{ film.name }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>You do not have any films in your list</p>
+            {% endif %}
+        </div>
     </form>    
     {% block content %}{% endblock content %}
     </body>

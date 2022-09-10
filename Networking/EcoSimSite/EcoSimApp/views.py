@@ -1,21 +1,21 @@
 from django.shortcuts import render
-
-# Create your views here.
 from django.http import HttpResponse
-import json
+# Create your views here.
+
 
 #for setting the csrf cookie
 def index(request):
 	#set session
-	if not request.session or not request.session.session_key:
-   		request.session.save()
-	print(request.session.session_key)
-	#data = {}
-
-	if request.method == 'GET':
-		print('GET')
-
-	return render(request, 'base.html')#, data)
+    if not request.session or not request.session.session_key:
+        request.session.save()
+    print(request.session.session_key)
+    
+	#if request.method == 'GET':
+	#	print('GET')
+    #data = {}
+    #data = "Waiting for server..."
+    return render(request, 'base.html')
+    #return HttpResponse(data)
 
 #for setting the tractor actions (by voting)
 def set_tractor_actions(request):
