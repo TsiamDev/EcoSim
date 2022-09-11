@@ -1,0 +1,12 @@
+title Server Client Communication
+
+actor Client
+
+actor Server
+actor Client-Singleton
+
+note over Client: Many Clients exist
+Client-Singleton->Server: Choices
+Server->Client: Choices
+Client-->Server: Selection
+Server-->Client-Singleton: Selection
