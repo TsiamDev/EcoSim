@@ -1,0 +1,42 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<form class="sortable" hx-post="/user_list" hx-trigger="end">
+    {% csrf_token %}
+    <div class="htmx-indicator">Updating...</div>
+    <div><input type='hidden' name='item' value='1'/>Item 1</div>
+    <div><input type='hidden' name='item' value='2'/>Item 2</div>
+    <div><input type='hidden' name='item' value='3'/>Item 3</div>
+    <div><input type='hidden' name='item' value='4'/>Item 4</div>
+    <div><input type='hidden' name='item' value='5'/>Item 5</div>
+</form>
+
+{% endblock content %}
+
+{% block script %}
+    <script src="https://unpkg.com/htmx.org@1.8.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script> 
+    <script>
+    
+        htmx.onLoad(function(content) {
+            var sortables = content.querySelectorAll(".sortable");
+            for (var i = 0; i < sortables.length; i++) {
+              var sortable = sortables[i];
+              new Sortable(sortable, {
+                  animation: 150,
+                  ghostClass: 'blue-background-class'
+              });
+            }
+        })
+    
+        var socket = new WebSocket('ws://' + window.location.host + '/users');
+        //var socket = new WebSocket('ws://' + window.location.pathname );
+        socket.onopen = function open() {
+          console.log('WebSockets connection created.');
+        };
+          
+        if (socket.readyState == WebSocket.OPEN) {
+          socket.onopen();
+        }
+    </script>
+{% endblock script %}

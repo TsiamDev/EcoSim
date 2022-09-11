@@ -14,13 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 from EcoSimApp.views import *
 
 urlpatterns = [
+    path('EcoSimApp/', include('EcoSimApp.urls')),
     path('admin/', admin.site.urls),
     path('index/', index, name='index'),
     path('set_tractor_actions/', set_tractor_actions, name='set_tractor_actions'),
     path('index/success', success, name='success'),
+    #path('user_list', user_list, name='user_list'),
 ]

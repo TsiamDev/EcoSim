@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 # Create your views here.
 
+def room(request, room_name):
+    return render(request, "room.html", {"room_name": room_name})
+
 
 #for setting the csrf cookie
 def index(request):
@@ -14,8 +17,9 @@ def index(request):
 	#	print('GET')
     #data = {}
     #data = "Waiting for server..."
-    return render(request, 'base.html')
+    #return render(request, 'base.html')
     #return HttpResponse(data)
+    return render(request, "index.html")
 
 #for setting the tractor actions (by voting)
 def set_tractor_actions(request):
