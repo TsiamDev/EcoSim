@@ -33,6 +33,7 @@ import multiprocessing as mp
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
 from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE, DAY
+from Const import WEATHER_SEVERITY
 
 from Zone import Zone
 #from Tractor import Tractor
@@ -545,18 +546,11 @@ def Crop_Growth():
     pygame.surfarray.blit_array(display_surface, data)
     #return data
 
-def Display_Overlay(zones, data):
+def Display_Overlay(active_city):
     global selected_overlay
     
-    
-    """
-    data_PH = np.zeros((X, Y, 3), dtype=np.uint8)
-    data_hum = np.zeros((X, Y, 3), dtype=np.uint8)
-    data_temp = np.zeros((X, Y, 3), dtype=np.uint8)
-    data_N = np.zeros((X, Y, 3), dtype=np.uint8)
-    data_P = np.zeros((X, Y, 3), dtype=np.uint8)
-    data_K = np.zeros((X, Y, 3), dtype=np.uint8)
-    """
+    zones = active_city.zones
+    data = active_city.data
     
     #if selected_overlay is None do nothing
     if selected_overlay is not None:
@@ -569,9 +563,29 @@ def Display_Overlay(zones, data):
                 if selected_overlay is OVERLAY.types['PH']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
                 elif selected_overlay is OVERLAY.types['HUM']:
-                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.hum
+                    if active_city.weather_effect.is_active == True:
+                        if active_city.weather_effect.type == WEATHER.types['RAIN']:
+                            if active_city.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 1] = 0
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 0] = 0
+                                zone.field.hum[:, :, 2] += active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                zone.field.hum[:, :, 1] = 0
+                                zone.field.hum[:, :, 0] = 0  
+                    else:
+                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.hum
                 elif selected_overlay is OVERLAY.types['TEMP']:
-                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.temp
+                    if active_city.weather_effect.is_active == True:
+                        if active_city.weather_effect.type == WEATHER.types['RAIN']:
+                            if active_city.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 1] = 0
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 0] = 0
+                                zone.field.temp[:, :, 2] += active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                zone.field.temp[:, :, 1] = 0
+                                zone.field.temp[:, :, 0] = 0  
+                    else:
+                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.temp
                 elif selected_overlay is OVERLAY.types['N']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.N
                 elif selected_overlay is OVERLAY.types['P']:
@@ -581,9 +595,34 @@ def Display_Overlay(zones, data):
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
                     #print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
-                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
+                    if active_city.weather_effect.is_active == True:
+                        if active_city.weather_effect.type == WEATHER.types['RAIN']:
+                            if active_city.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 1] = 0
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 0] = 0
+                                zone.field.crop_growth[:, :, 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                zone.field.crop_growth[:, :, 1] = 0
+                                zone.field.crop_growth[:, :, 0] = 0                    
+                    else:
+                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
+                        zone.field.crop_growth[:, :, 2] = 0
                 elif selected_overlay is OVERLAY.types['PLANT_FACE']:
-                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
+                    if active_city.weather_effect.is_active == True:
+                        if active_city.weather_effect.type == WEATHER.types['RAIN']:
+                            if active_city.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 1] = 0
+                                data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], 0] = 0
+                                #print(zone.rect.topleft, zone.rect.topright, zone.rect.bottomright)
+                                #print(range(zone.rect.topleft[0]-15, zone.rect.topright[0]-15))
+                                #print(range(zone.rect.topright[1]-15, zone.rect.bottomright[1]-15))
+                                zone.field.plant_face[:, :, 2] = active_city.terrain[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1]]
+                                zone.field.plant_face[:, :, 1] = 0
+                                zone.field.plant_face[:, :, 0] = 0
+                    else:
+                        zone.field.plant_face[:, :, 2] = 0
+                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
                 #pygame.surfarray.blit_array(display_surface, data_temp)
         
         #update river
@@ -999,21 +1038,21 @@ def main():
 
         #TODO: enable
         #update the active city
-        if active_city.weather_effect.is_active == True:
-            Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
         Update_Explored_Zones(active_city)
         
         if day_cnt >= DAY.TICKS_TILL_DAY:
             active_city.Consume()
+            #Pick new weather effect and its' duration
             active_city.weather_effect.Update_Duration()
             rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
             rain_b_inc += [[random.randint(1*active_city.weather_effect.severity, 3*active_city.weather_effect.severity) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 
             day_cnt = 0
-        
+            
+                
         #Update the active_city's pixels (data)
         #Display_Overlay(active_city.zones, active_city.data)
-        d = Display_Overlay(active_city.zones, active_city.data)
+        d = Display_Overlay(active_city)
         if d is not None:
             active_city.data = d
         #tractor_img_key, tractor_rect = active_city.Draw()
@@ -1081,8 +1120,9 @@ def main():
 
         #TODO: enable
         #draw weather effects on screen
-        if active_city.weather_effect.is_active == True:
-            active_city.weather_effect.draw(display_surface, pygame, images)
+        #if active_city.weather_effect.is_active == True:
+        active_city.weather_effect.draw(display_surface, pygame, images)
+ 
         
         # Event loop
         # iterate over the list of Event objects

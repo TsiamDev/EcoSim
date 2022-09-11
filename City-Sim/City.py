@@ -11,6 +11,7 @@ from effects.Weather import WeatherEffect
 from Zone import Zone
 from MyRect import MyRect
 from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER, CONST
+from Const import WEATHER_SEVERITY
 
 import numpy as np
 import random
@@ -104,7 +105,20 @@ class City:
             #self.tractor = Tractor(0, 0, self.zones[0])
         
         self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
-    
+        
+        #surface level relative to water level: "sea level" 0, is 128
+        #river has 0 depth everywhere
+        self.terrain = np.array([[random.randint(0, 128) for i in range(DISPLAY.X)] for j in range(DISPLAY.Y)])
+        self.river = np.array([[255 for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.X)])
+        _x = DISPLAY.ROAD_WIDTH * 2 + DISPLAY.ZONE_H
+        self.terrain[:, _x:_x+DISPLAY.RIVER_H] = self.river
+        self.ind = 1
+        
+        self.terrain = self.terrain.astype('uint32')
+        self.river = self.river.astype('uint32')
+        
+        #self.weather_effect.is_active = False
+        
     """DEPRECATED
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
@@ -230,7 +244,18 @@ class City:
         else:
             print("something went wrong with <plot> variable")
             return
-            
+    
+    def Overflow_River(self):
+        x = 330 - self.ind
+        if x < 0:
+            x = 0
+        self.terrain[:, x:330] += 5
+        self.terrain[:, 360:(360+self.ind)] += 5
+        #self.terrain[self.depth > 128] = 255
+        self.terrain[:, 330:360] = self.river
+        
+        self.data[:, x:330, 2] = self.terrain[:, x:330]
+        self.data[:, 360:(360+self.ind), 2] = self.terrain[:, 360:(360+self.ind)]
     
     #Update the city parameters
     def Draw(self):
@@ -243,6 +268,15 @@ class City:
         #if d is not None:
         #    self.data = d
             
-        #river flows
-        self.Move_River()
+        #river flow
+        if self.weather_effect.is_active == True:
+            if self.weather_effect.type == WEATHER.types['RAIN']:
+                if self.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                    self.Overflow_River()
+                    self.Move_River()
+                    self.ind += 1
+        else:
+            self.Move_River()
+            self.ind = 1
+        
             

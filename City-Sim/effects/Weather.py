@@ -7,7 +7,7 @@ Created on Thu Aug 11 23:30:34 2022
 
 import random
 
-from Const import DISPLAY, WEATHER, WEATHER_SEVERITY
+from Const import DISPLAY, WEATHER, WEATHER_SEVERITY, WEATHER_DURATION
 #from MyRect import MyRect
 from MyPoint import MyPoint
 
@@ -45,8 +45,8 @@ class WeatherEffect:
         elif _type == WEATHER.types['RAIN']:
             self.str_type = 'RAIN'
             
-        self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
-        self.days_duration = 1#random.randint(1, 5)
+        self.severity = 3#random.randint(0, len(WEATHER_SEVERITY.types))
+        self.days_duration = 1#random.randint(1, WEATHER_DURATION.types['LOW'])
         self.days_cnt = 0
         
         self.is_active = True
@@ -67,15 +67,16 @@ class WeatherEffect:
             else:
                 print(self.str_type, "with severity: ", self.severity)
                 print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
+        #"""
         else:
             self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
-            self.days_duration = random.randint(1, 5)
+            self.days_duration = random.randint(0, WEATHER_DURATION.types['LOW'])
             self.days_cnt = 0
             
             self.is_active = True
             
             print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
-    
+        #"""
     def draw_snow(self, display_surface):
         #while running == True:
         for i in range(0, len(self.particles)):
