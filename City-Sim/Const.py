@@ -15,7 +15,7 @@ class DISPLAY(object):
         self.FIELD_H = 300
         self.ROAD_WIDTH = 15
         self.RIVER_H = 30
-        self.RIVER_W = 2 * 300 + 6 * self.ROAD_WIDTH
+        self.RIVER_W = self.X
         self.N = 300
         self.ZONE_W = self.N
         self.ZONE_H = self.N
