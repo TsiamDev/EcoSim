@@ -112,6 +112,13 @@ class WEATHER(object):
         self.types['RAIN'] = 2
         self.types['NONE'] = 3
         
+class WEATHER_DURATION(object):
+    def __init__(self):
+        self.types = {}
+        self.types['LOW'] = 1
+        self.types['MEDIUM'] = 2
+        self.types['HIGH'] = 3
+        
 class WEATHER_SEVERITY(object):
     def __init__(self):
         self.types = {}
@@ -176,6 +183,7 @@ DAY = DAY()
 
 WEATHER = WEATHER()
 WEATHER_SEVERITY = WEATHER_SEVERITY()
+WEATHER_DURATION = WEATHER_DURATION()
 
 CONSUMPTION_POLICY = CONSUMPTION_POLICY()
 GOODS = GOODS()
