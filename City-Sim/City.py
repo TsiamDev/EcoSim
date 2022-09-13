@@ -85,18 +85,23 @@ class City:
         self.data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
         self.is_active = False
         
-        """
+        #set colors
+        self.r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]  
+        self.g = [[random.randint(45, 50) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+        self.b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+
+        
+        #"""
             #river stuff
         if _has_river is not None:
             
             r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
             g = [[random.randint(0, 50) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-            b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
             
             self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 0] = r
             self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 1] = g
-            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = b
-        """
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = self.b
+        #"""
             #plant stuff
         self.plant = _plant
         
@@ -114,7 +119,7 @@ class City:
         self.terrain = np.zeros((750, 750, 3), dtype=np.int32)
         self.Update_Terrain()
         #self.terrain[:, :, 2] = np.array([[random.randint(0, 128) for i in range(DISPLAY.X)] for j in range(DISPLAY.Y)])
-        #self.river = np.array([[255 for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.X)])
+        self.river = self.b
         #_x = DISPLAY.ROAD_WIDTH * 2 + DISPLAY.ZONE_H
         #self.terrain[:, _x:_x+DISPLAY.RIVER_H, 2] = self.river
         self.ind = 1
@@ -132,10 +137,7 @@ class City:
         
         self.stop_updating_terrain = False
         
-        #set ground colors
-        self.r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]  
-        self.g = [[random.randint(45, 50) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-
+               
     """DEPRECATED
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
@@ -286,6 +288,11 @@ class City:
                 #reinitialize temperature to "very cold"
                 zone.field.temp[:, :, 0:1] = 0
                 zone.field.temp[:, :, 2] = 255
+                
+                #stabilize river water surface
+                self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = self.b
+                self.river = self.b
+                
                 print("field reinitialized")
                 
     def Overflow_River(self):
@@ -345,8 +352,8 @@ class City:
                     self.terrain[self.terrain < 0] = 0
                     #print(len(self.terrain[0]), len(self.terrain[1]))
                 else:
-                    self.terrain[:, :, 2] += (np.uint32)(self.sign * 1)
-                    self.terrain[:, :, 2] += (np.uint32)(self.sign * 1)
+                    self.terrain[:, :, 2] += (np.int32)(self.sign * 1)
+                    self.terrain[:, :, 2] += (np.int32)(self.sign * 1)
                     self.terrain[ self.terrain < 0] = 0
                     #print(len(self.terrain[0]), len(self.terrain[1]))
                 self.terrain[:, 330:360, 2] = 200
@@ -386,11 +393,11 @@ class City:
                 #self.terrain[self.terrain < 0] = 0
                 flag = False
                 
-                if (self.terrain[:, self.upper_y:330, 2] > 0).any():
-                    temp = self.terrain[:, self.upper_y:330, 2] 
+                if (self.terrain[:, :330, 2] > 0).any():
+                    temp = self.terrain[:, :330, 2] 
                     temp -= 10
                     temp[temp < 0] = 0
-                    self.terrain[:, self.upper_y:330, 2] = temp
+                    self.terrain[:, :330, 2] = temp
                     flag = True
                 
                 if (self.terrain[:, 360:, 2] > 0).any():
@@ -399,8 +406,8 @@ class City:
                     temp[temp < 0] = 0
                     self.terrain[:, 360:, 2] = temp
                     flag = True
-                print(self.upper_y, self.ind)
-                print(self.terrain[:, 360:, :])
+                #print(self.upper_y, self.ind)
+                #print(self.terrain[:, 360:, :])
                 
                 #self.terrain[:, self.upper_y:self.ind, 2] < 0 = 0
                

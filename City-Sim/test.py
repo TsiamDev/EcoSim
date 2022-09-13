@@ -515,6 +515,27 @@ def Main_Menu():
     #sys.exit()
 """"""""""""""""""""""""""""""""""""""        
 
+def Draw_Overlay(zone, data_temp):
+    
+    if selected_overlay is OVERLAY.types['PH']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
+    elif selected_overlay is OVERLAY.types['HUM']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.hum
+    elif selected_overlay is OVERLAY.types['TEMP']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.temp
+    elif selected_overlay is OVERLAY.types['N']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.N
+    elif selected_overlay is OVERLAY.types['P']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.P
+    elif selected_overlay is OVERLAY.types['K']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
+    elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
+    elif selected_overlay is OVERLAY.types['PLANT_FACE']:
+        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
+
+    return data_temp
+
 def Display_Overlay(selected_overlay, active_city):
     zones = active_city.zones
     #data = active_city.data
@@ -533,31 +554,17 @@ def Display_Overlay(selected_overlay, active_city):
                     #elif active_city.weather_effect.severity == WEATHER_SEVERITY.types['MED']:
                     else:
                         data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
+                        data_temp =  Draw_Overlay(zone, data_temp)
             else:
                 if active_city.we_was_active == True:
                     #lag for flood water drainage
                     data_temp[:, :, :] = active_city.terrain[:, :, :]
                 else:
                     #business as usual
-                    if selected_overlay is OVERLAY.types['PH']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
-                    elif selected_overlay is OVERLAY.types['HUM']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.hum
-                    elif selected_overlay is OVERLAY.types['TEMP']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.temp
-                    elif selected_overlay is OVERLAY.types['N']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.N
-                    elif selected_overlay is OVERLAY.types['P']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.P
-                    elif selected_overlay is OVERLAY.types['K']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
-                    elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
-                    elif selected_overlay is OVERLAY.types['PLANT_FACE']:
-                        data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
-    
+                    data_temp =  Draw_Overlay(zone, data_temp)
     #update river
     #data_temp[(DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :, :] = data[(DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :, :]                    
+    data_temp[:, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :] = active_city.data[:, (DISPLAY.FIELD_H+30):(DISPLAY.FIELD_H+60), :]
     active_city.data = data_temp
             
 def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
