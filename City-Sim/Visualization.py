@@ -19,23 +19,32 @@ from Scout import Scout
 
 from Constants import *
 
-def Draw_Lakes(surface, lakes):
+def Draw_Lakes(surface, lakes, img):
     for i in range(0, LAKES_NUM):
-        pygame.draw.circle(surface, LAKE_COLOR, lakes[i], 10, 0)
+        pygame.draw.circle(surface, (0, 0, 0), (lakes[i][0],lakes[i][1]), 10, 0)
+        img_rect = img.get_rect().move(lakes[i][0]-13, lakes[i][1]-13)
+        surface.blit(img, img_rect)
 
-def Draw_Forests(surface, forests):
+def Draw_Forests(surface, forests, img):
     for i in range(0, FORESTS_NUM):
-        pygame.draw.circle(surface, FOREST_COLOR, forests[i], 10, 0)
+        #pygame.draw.circle(surface, FOREST_COLOR, forests[i], 10, 0)
+        pygame.draw.circle(surface, (0, 0, 0), (forests[i][0], forests[i][1]), 10, 1)
+        img_rect = img.get_rect().move(forests[i][0]-13, forests[i][1]-13)
+        surface.blit(img, img_rect)
 
-def Draw_Env(surface, lakes, forests):
-    Draw_Lakes(surface, lakes)
-    Draw_Forests(surface, forests)
+def Draw_Env(surface, lakes, forests, images):
+    Draw_Lakes(surface, lakes, images['lake'])
+    Draw_Forests(surface, forests, images['forest'])
 
-def Draw_Cities(surface, cities):
+def Draw_Cities(surface, cities, img):
     # Draw Cities
     city_rects = []
     for i in range(0, len(cities)):
-        city_rects.append( pygame.draw.rect(surface, CITY_COLOR, pygame.Rect(cities[i].pos[0], cities[i].pos[1], CITY_W, CITY_W)))
+        rect = pygame.Rect(cities[i].pos[0], cities[i].pos[1], CITY_W, CITY_W)
+        city_rects.append( pygame.draw.rect(surface, (0, 0, 0), rect)) 
+        img_rect = img.get_rect().move(cities[i].pos[0]-5, cities[i].pos[1]-5)
+        surface.blit(img, img_rect)
+        
         
     return city_rects
 
@@ -51,15 +60,17 @@ def Draw_Scouts(surface, scouts):
         #pygame.draw.rect(surface, SCOUT_COLOR, scouts[i].rect)
         pygame.draw.circle(surface, SCOUT_COLOR, scouts[i].pos, scouts[i].radius)
     
-def Draw(surface, scouts, lakes, forests, cities):
+def Draw(surface, scouts, lakes, forests, cities, images):
     surface.fill((83, 50, 0))
     
+    #TODO: Enable
     Draw_Scouts(surface, scouts)
     
-    Draw_Env(surface, lakes, forests)
+    Draw_Env(surface, lakes, forests, images)
     
-    city_rects = Draw_Cities(surface, cities)
-    Draw_Routes(surface, cities)  
+    city_rects = Draw_Cities(surface, cities, images['city'])
+    #TODO: Enable:
+    #Draw_Routes(surface, cities)  
     
     return city_rects
     
