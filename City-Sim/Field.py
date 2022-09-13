@@ -108,6 +108,8 @@ class Field:
         self.crop_growth[:, :, 2] = empty
         self.plant_face[:, :, 2] = empty
         
+        self.re_init_after_storm = False
+        
     def translate(self, value, leftMin, leftMax, rightMin, rightMax):
         # Figure out how 'wide' each range is
         leftSpan = leftMax - leftMin

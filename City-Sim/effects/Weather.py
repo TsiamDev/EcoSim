@@ -57,24 +57,31 @@ class WeatherEffect:
                 new_x = random.randint(1, 10)
                 new_y = random.randint(1, 10)
                 self.particles.append(WeatherParticle(self.type, new_x, new_y))
+                
+        #self.re_init_after_storm = False
             
-    def Update_Duration(self):
+    def Update_Duration(self, active_city):
         if self.is_active == True:
             self.days_cnt += 1
             if self.days_cnt >= self.days_duration:
                 self.is_active = False
+                self.type = WEATHER.types['NONE']
+                self.str_type = 'NONE'
+                active_city.Re_Init_After_Flood()
                 print("Weather effect ended")
             else:
                 print(self.str_type, "with severity: ", self.severity)
                 print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
         #"""
         else:
-            self.severity = random.randint(0, len(WEATHER_SEVERITY.types))
-            self.days_duration = random.randint(0, WEATHER_DURATION.types['LOW'])
+            self.severity = random.randint(1, len(WEATHER_SEVERITY.types))
+            self.days_duration = random.randint(1, WEATHER_DURATION.types['LOW'])
+            self.type = WEATHER.types['RAIN']#random.randint(1, len(WEATHER.types))
+            self.str_type = 'RAIN'
             self.days_cnt = 0
             
             self.is_active = True
-            
+            print(self.str_type, "with severity: ", self.severity)
             print("Weather effect days remaining: ", self.days_duration - self.days_cnt)
         #"""
     def draw_snow(self, display_surface):

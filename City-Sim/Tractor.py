@@ -105,6 +105,7 @@ class Tractor:
                     if self.action_Q_ind >= len(self.action_Q):
                         self.action_Q_ind = 0
                     self.action = self.action_Q[self.action_Q_ind]
+                    print("Tractor: ", self.action)
         
     def act(self, data, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:

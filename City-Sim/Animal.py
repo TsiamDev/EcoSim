@@ -19,7 +19,7 @@ class Animal:
     def __init__(self, _rect, _type):
         self.x = _rect.center[0]
         self.y = _rect.center[1]
-        self.rect = MyRect(_x=self.x, _y=self.y)
+        self.rect = MyRect(_x=self.x, _y=self.y, _center=(_rect.center[0], _rect.center[1]))
         self.type = _type
         self.size = ANIMAL_SIZE.types['COW']
         
