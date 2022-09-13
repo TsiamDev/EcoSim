@@ -111,7 +111,7 @@ class City:
         
         #surface level relative to water level: "sea level" 0, is 128
         #river has 0 depth everywhere
-        self.terrain = np.zeros((750, 750, 3), dtype=np.uint32)
+        self.terrain = np.zeros((750, 750, 3), dtype=np.int32)
         self.Update_Terrain()
         #self.terrain[:, :, 2] = np.array([[random.randint(0, 128) for i in range(DISPLAY.X)] for j in range(DISPLAY.Y)])
         #self.river = np.array([[255 for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.X)])
@@ -123,6 +123,7 @@ class City:
         self.lag = 0
         self.start = time.time()
         self.end = time.time()
+        self.we_was_active = False
         
         #self.terrain = self.terrain.astype('uint32')
         #self.river = self.river.astype('uint32')
@@ -130,6 +131,11 @@ class City:
         #self.weather_effect.is_active = False
         
         self.stop_updating_terrain = False
+        
+        #set ground colors
+        self.r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]  
+        self.g = [[random.randint(45, 50) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
+
     """DEPRECATED
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
@@ -261,18 +267,16 @@ class City:
         for zone in self.zones:
             if zone._is(CONST.types['FIELD']) or zone._is(CONST.types['PASTURE']):
                 #reset crop_growth to zero (plain ground)
-                r = [[random.randint(70, 83) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]  
-                g = [[random.randint(45, 50) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-                zone.field.crop_growth[:, :, 0] = r
-                zone.field.crop_growth[:, :, 1] = g
+                zone.field.crop_growth[:, :, 0] = self.r
+                zone.field.crop_growth[:, :, 1] = self.g
                 zone.field.crop_growth[:, :, 2] = 0
                 
                 #remove is_planted status
                 zone.field.is_planted[:, :] = 0
                 
                 #reset plant_face to plain ground
-                zone.field.plant_face[:, :, 0] = r
-                zone.field.plant_face[:, :, 1] = g
+                zone.field.plant_face[:, :, 0] = self.r
+                zone.field.plant_face[:, :, 1] = self.g
                 zone.field.plant_face[:, :, 2] = 0
                 
                 #reinitialize humidity to "soaking wet"
@@ -339,11 +343,14 @@ class City:
                     self.terrain[:, (360):(360+self.ind), 2] += self.sign * 5
                     self.terrain[self.terrain > 255] = 255
                     self.terrain[self.terrain < 0] = 0
+                    #print(len(self.terrain[0]), len(self.terrain[1]))
                 else:
                     self.terrain[:, :, 2] += (np.uint32)(self.sign * 1)
                     self.terrain[:, :, 2] += (np.uint32)(self.sign * 1)
                     self.terrain[ self.terrain < 0] = 0
+                    #print(len(self.terrain[0]), len(self.terrain[1]))
                 self.terrain[:, 330:360, 2] = 200
+                #print(len(self.terrain[0]), len(self.terrain[1]))
                 #river = np.roll(river[:, :], 1, axis=0)
                 #depth[:, 330:360, 2] = river
                 self.ind += self.sign * 1
@@ -363,6 +370,68 @@ class City:
                 for i in range (0, len(zone.pasture.animals)):
                     zone.pasture.animals[i].act(zone, self.data, self)
     
+    def Normal_City_Workflow(self):
+        if self.we_was_active == True:
+            #print("Stage 2 - flood water drains")
+            self.end = time.time()
+            #print(self.end - self.start)
+                
+            if (self.end - self.start) >= 0.005:
+                #weather effect was just active, give some time for
+                #water drainage animation
+                #print(range(self.upper_y, 330))
+                #print(range(360, 360+self.ind))
+                
+                #self.terrain[:, :, 2] -= 5
+                #self.terrain[self.terrain < 0] = 0
+                flag = False
+                
+                if (self.terrain[:, self.upper_y:330, 2] > 0).any():
+                    temp = self.terrain[:, self.upper_y:330, 2] 
+                    temp -= 10
+                    temp[temp < 0] = 0
+                    self.terrain[:, self.upper_y:330, 2] = temp
+                    flag = True
+                
+                if (self.terrain[:, 360:, 2] > 0).any():
+                    temp = self.terrain[:, 360:, 2]
+                    temp -= 10
+                    temp[temp < 0] = 0
+                    self.terrain[:, 360:, 2] = temp
+                    flag = True
+                print(self.upper_y, self.ind)
+                print(self.terrain[:, 360:, :])
+                
+                #self.terrain[:, self.upper_y:self.ind, 2] < 0 = 0
+               
+                #if self.lag >= 150:
+                if flag == False:
+                    #self.lag = 0
+                    self.we_was_active = False
+                    self.Re_Init_After_Flood()
+                #else:
+                #self.lag += 1
+                
+                self.start = time.time()
+        else:
+            #business as usual
+            self.stop_updating_terrain = False
+            self.ind = 1
+            self.sign = 1
+            self.upper_y = 330
+            
+            #crops grow
+            self.Crop_Growth()
+            
+            #animals move
+            self.Move_Animals()
+            
+            #tractor acts
+            self.tractor.act(self.data, self.plant)
+            
+            #river flows normally
+            self.Move_River()
+            
     #Update the city parameters
     def Draw(self):     
         
@@ -375,46 +444,10 @@ class City:
                     #self.Move_River()
                     self.stop_updating_terrain = True
                     self.we_was_active = True
+                else:
+                    self.Normal_City_Workflow()
         else:
-            if self.we_was_active == True:
-                #print("Stage 2 - flood water drains")
-                self.end = time.time()
-                #print(self.end - self.start)
-                    
-                if (self.end - self.start) >= 0.005:
-                    #weather effect was just active, give some time for
-                    #water drainage animation
-                    #print(range(self.upper_y, 330))
-                    #print(range(360, 360+self.ind))
-                    
-                    #self.terrain[:, :, 2] -= 5
-                    #self.terrain[self.terrain < 0] = 0
-                    self.terrain[:, self.upper_y:330, 2] -= 1
-                    self.terrain[:, (360):(360+self.ind), 2] -= 1
-                    #self.terrain[:, self.upper_y:self.ind, 2] < 0 = 0
-                   
-                    if self.lag >= 150:
-                        self.lag = 0
-                        self.we_was_active = False
-                    else:
-                        self.lag += 1
-                    
-                    self.start = time.time()
-            else:
-                #business as usual
-                self.stop_updating_terrain = False
-                
-                #crops grow
-                self.Crop_Growth()
-                
-                #animals move
-                self.Move_Animals()
-                
-                #tractor acts
-                self.tractor.act(self.data, self.plant)
-                
-                #river flows normally
-                self.Move_River()
+            self.Normal_City_Workflow()
             
         if self.stop_updating_terrain == False:
             self.Update_Terrain()

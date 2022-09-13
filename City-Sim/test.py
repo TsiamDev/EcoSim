@@ -968,8 +968,7 @@ def main():
 
         #update the active city
         #Update_Explored_Zones(active_city)
-        #Draw weather particles
-        active_city.weather_effect.draw(display_surface, pygame, images)
+        
         
         if day_cnt >= DAY.TICKS_TILL_DAY:
             active_city.Consume()
@@ -1040,6 +1039,9 @@ def main():
 
         #draw GUI
         Draw_Action_Buttons()
+        
+        #Draw weather particles
+        active_city.weather_effect.draw(display_surface, pygame, images)
         
         zoomed_screen = pygame.transform.smoothscale(display_surface, (zoom, zoom))
         display_surface.fill((255, 248, 220))
