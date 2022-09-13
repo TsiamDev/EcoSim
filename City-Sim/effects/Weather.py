@@ -45,8 +45,8 @@ class WeatherEffect:
         elif _type == WEATHER.types['RAIN']:
             self.str_type = 'RAIN'
             
-        self.severity = 3#random.randint(0, len(WEATHER_SEVERITY.types))
-        self.days_duration = 1#random.randint(1, WEATHER_DURATION.types['LOW'])
+        self.severity = 3#random.randint(1, len(WEATHER_SEVERITY.types))
+        self.days_duration = random.randint(1, len(WEATHER_DURATION.types))
         self.days_cnt = 0
         
         self.is_active = True
@@ -65,9 +65,14 @@ class WeatherEffect:
             self.days_cnt += 1
             if self.days_cnt >= self.days_duration:
                 self.is_active = False
+                
+                #if self.type == WEATHER.types['RAIN']:
+                #    if self.severity == WEATHER_SEVERITY.types['HIGH']:
+                #        active_city.Re_Init_After_Flood()
+                
                 self.type = WEATHER.types['NONE']
                 self.str_type = 'NONE'
-                active_city.Re_Init_After_Flood()
+                
                 print("Weather effect ended")
             else:
                 print(self.str_type, "with severity: ", self.severity)

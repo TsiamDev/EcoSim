@@ -97,7 +97,7 @@ class VIEW(object):
 
 class DAY(object):
     def __init__(self):
-        self.TICKS_TILL_DAY = 20 * 10 #(FPS * Frame number)
+        self.TICKS_TILL_DAY = 20 * 20 #(FPS * Frame number)
 
 class TIME(object):
     def __init__(self):
