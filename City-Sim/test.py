@@ -26,8 +26,9 @@ import math
 #import threading
 
 #from multiprocessing.managers import SharedMemoryManager
-from multiprocessing import Process#, shared_memory, current_process, Pool
+from multiprocessing import Process, Barrier, Value#, shared_memory, current_process, Pool
 import multiprocessing as mp
+import psutil
 
 #from queue import Queue
 
@@ -631,8 +632,9 @@ def Render_Current_FPS(text, font):
     label_rect = label.get_rect(center=(fps_rect.center))
     display_surface.blit(label, label_rect)
 
-def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
+def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc, barrier, days):
     global cities
+    #barrier = Barrier(num_producers+1)
     producers = []
     indices = []
     lst = []
@@ -648,16 +650,15 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
             wb_q = mp.Queue()
             ind = []
             city_chunk = []
-            for k in range(i, i+1):
-                ind.append(k)
-                city_chunk.append(cities[k])
+            #for k in range(i, i+1):
+            ind.append(i)
+            city_chunk.append(cities[i])
             print("ind:", ind, " cc:", city_chunk)
-            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
+            producers.append(Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, barrier, days]))
+            #producers[-1].cpu_affinity(i)
+            producers[-1].start()
             
-            producer.start()
-            producers.append(producer)
-            
-            to_background_qs.append(mp.Queue())
+            to_background_qs.append(to_background_q)
             wb_qs.append(wb_q)
             indices.append(ind)
             lst.append(city_chunk)
@@ -667,7 +668,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
         chunk = int(math.floor(len(cities) / num_producers))
         print("chunk:", chunk, flush=True)
 
-        i = 0
+        #i = 0
         for i in range(0, num_producers - 1): 
             to_background_q = mp.Queue()
             wb_q = mp.Queue()
@@ -679,38 +680,38 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
                 ind.append(end)
             
             if len(ind) > 1:
-                city_chunk = cities[ind[0]:(ind[1]+2)]
+                city_chunk = cities[ind[0]:(ind[1]+1)]
             else:
                 city_chunk = [cities[ind[0]]]
                 
             print("ind: ", ind, " cc: ", city_chunk)
-            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
-            
-            producer.start()
-            producers.append(producer)
+            producers.append(Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, barrier, days]))
+            #producers[-1].cpu_affinity(i)
+            producers[-1].start()
             
             to_background_qs.append(to_background_q)
             wb_qs.append(wb_q)
             indices.append(ind)
             lst.append(city_chunk)
 
+        i += 1
         ind = []
         to_background_q = mp.Queue()
         wb_q = mp.Queue()
-        start = (i+1)*chunk
-        end = (i+2)*chunk
+        start = (i)*chunk
+        #end = (i+2)*chunk
+        end = len(cities)
         ind.append(start)
         ind.append(end)
         
-        if len(ind) > 1:
-            city_chunk = cities[ind[0]:(ind[1]+2)]
-        else:
-            city_chunk = cities[ind[0]]
+        city_chunk = cities[ind[0]:ind[1]]
         
-        producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
+        producers.append(Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, barrier, days]))
+        #producers[-1].cpu_affinity(i+1)
+        producers[-1].start()
         
-        producer.start()
-        producers.append(producer)
+        #producer.start()
+        #producers.append(producer)
         
         to_background_qs.append(to_background_q)
         wb_qs.append(wb_q)
@@ -719,7 +720,7 @@ def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
             
     return producers, to_background_qs, wb_qs
 
-def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
+def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, barrier, days):
     cnt = 0
     FPS = 60
     fps_cnt = 0
@@ -729,13 +730,18 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
     new_city_id = None
     
     day_cnt = 0
+    days_passed = 0
     
+    proc = psutil.Process()
+    proc.cpu_affinity([_id])
+    print(pid, " on ", proc.cpu_affinity(), flush=True)
     while True:
+        #print(pid, " on ", proc.cpu_affinity())
         #print("Producer: ", _id, flush=True)
         #print("Producer:", ind, " cc:", city_chunk)
         #if a city state-update request has been made
         if not to_background_q.empty():
-            print("Receiving...")
+            print("Receiving...", flush=True)
             active_city = to_background_q.get(True)
             print(pid, ind, ": received ", active_city.id, flush=True)
             #the parent process has sent you a city state-update
@@ -766,42 +772,51 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
                 wb_q.put((-1, -1))
                 
         
-        if fps_cnt >= FPS:
-            #print(ind)
-            #print(len(ind))
-            #print("ind[i]:", ind[i])
-            #print("i:", i)
-            if len(ind) > 1:
-                cnt = 0
-                for m in range(ind[0], ind[1]):
-                    #print(m)
-                    if new_city_id is not None:
-                        if m == new_city_id:
-                            continue
-                    Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
-                    Update_Explored_Zones(city_chunk[cnt])
-                    city_chunk[cnt].Draw()
-                    if day_cnt >= DAY.TICKS_TILL_DAY:
-                        city_chunk[cnt].Consume()
-                        day_cnt = 0
-                    else:
-                        day_cnt += 1
-                    cnt += 1
-            else:
+        #if fps_cnt >= FPS:
+        #print(pid, " is in FPS", flush=True)
+        #print(ind)
+        #print(len(ind))
+        #print("ind[i]:", ind[i])
+        #print("i:", i)
+        if len(ind) > 1:
+            #print("len(ind) is ", len(ind))
+            cnt = 0
+            for m in range(ind[0], ind[1]):
+                #print(m, flush=True)
                 if new_city_id is not None:
-                    if new_city_id != 0:
-                        Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
-                        Update_Explored_Zones(city_chunk[0])
-                        #move river and tractor
-                        city_chunk[0].Draw()
-                        if day_cnt >= DAY.TICKS_TILL_DAY:
-                            city_chunk[0].Consume()
-                            day_cnt = 0
-                        else:
-                            day_cnt += 1
-            fps_cnt = 0
-        else:
-            fps_cnt += 1
+                    if m == new_city_id:
+                        continue
+                Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
+                #Update_Explored_Zones(city_chunk[cnt])
+                city_chunk[cnt].Draw()
+                if day_cnt >= DAY.TICKS_TILL_DAY:
+                    city_chunk[cnt].Consume()
+                    day_cnt = 0
+                    days_passed += 1
+                    print("Producer: ", pid, " days passed: ", days_passed, flush = True)
+                else:
+                    day_cnt += 1
+                cnt += 1
+        elif len(ind) == 1:
+            #print("len(ind) is ", len(ind))
+            #if new_city_id is not None:
+            #if new_city_id != 0:
+            Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
+            #Update_Explored_Zones(city_chunk[0])
+            #move river and tractor
+            city_chunk[0].Draw()
+            if day_cnt >= DAY.TICKS_TILL_DAY:
+                city_chunk[0].Consume()
+                day_cnt = 0
+                days_passed += 1
+                print("Producer: ", pid, " days passed: ", days_passed, flush = True)
+            else:
+                day_cnt += 1
+        #else:
+        #print("len(ind) is ", len(ind))
+        fps_cnt = 0
+        #else:
+        #    fps_cnt += 1
         #time.sleep(1./120)
         #print()
         #UNCOMMENT!
@@ -809,10 +824,17 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
         #print(stop_q.qsize(), flush=True)
         if not stop_q.empty():
             msg = stop_q.get(True)
-            print(os.getpid(), " exited with msg ", msg, flush=True)
-            #print("Producer: ", cnt)
+            print(pid, " exited with msg ", msg, flush=True)
+            print("Producer: ", pid, " days passed: ", days_passed, flush = True)
+            days.value = days_passed
             return
-
+        """
+        try:
+            #print("Waiting in barrier...", pid, flush=True)
+            barrier.wait()
+            #print("Passed barrier...", pid, flush=True)
+        except Exception as bbe: print(bbe)
+        #"""
 #def Event_Loop(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects):
 """
 def display_top(snapshot, key_type='lineno', limit=10):
@@ -920,7 +942,7 @@ def main():
     
     lock = mp.Lock()
     
-    num_producers = 3#mp.cpu_count()
+    num_producers = 4#mp.cpu_count()
     #consumers = Weather_Effect_To_Ground_Proc3(cities, num_producers)
     #print(q_consumers)
     #l = mp.Lock()
@@ -928,8 +950,9 @@ def main():
     #multiproc_pool.start()# weather_effect.type))
     #with mp.Pool(num_producers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
     #pool.map_async(Q_Consumer6, (q, wb_q))
-    
-    producers, to_background_qs, wb_qs = Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc)
+    days = Value('i', 0)
+    barrier = Barrier(num_producers+1, timeout=None)
+    producers, to_background_qs, wb_qs = Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc, barrier, days)
     #pool = mp.Pool()
     print(len(to_background_qs))
     print(len(producers))
@@ -957,6 +980,7 @@ def main():
     plot = False
     
     day_cnt = 0
+    days_passed = 0
     
     #zoom controls
     zoom = 750
@@ -966,8 +990,13 @@ def main():
     isPanning = False
     
     print("Main loop:", os.getpid())
+    pid = os.getpid()
+    proc = psutil.Process()
+    proc.cpu_affinity([num_producers])
+    print(pid, " on ", proc.cpu_affinity())
     # infinite loop
     while running :
+        #print(pid, " on ", proc.cpu_affinity())
         #snapshot1 = tracemalloc.take_snapshot()
         #start_time = pygame.time.get_ticks()
         #clear screen
@@ -985,6 +1014,7 @@ def main():
             rain_b_inc += [[random.randint(1*active_city.weather_effect.severity, 3*active_city.weather_effect.severity) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 
             day_cnt = 0
+            days_passed += 1
             
                 
         #Update the active_city's pixels (data)
@@ -1095,22 +1125,29 @@ def main():
                 #"""
                 for i in range(0, len(producers)):
                     stop_q.put("BREAK")
-                
+                print(producers)
                 for idx, prod in enumerate(producers):
                         print("    Waiting for producer.join() index %s" % idx)
-                        if not prod.is_alive():
-                            prod.join()  # Wait for consumer() to finish
+                        #if not prod.is_alive():
+                        prod.join()  # Wait for consumer() to finish
+                        print(days.value)
                         print("        producer() idx:%s is done" % idx)
                 #stop_q.put("BREAK")
                 """
                 for wbt in wbthreads:
-                    stop_q.put("BREAK")
+                    stop_q.put("BREAK")5
                     if not wbt.is_alive():
                         wbt.join()
                 """
                 #if not wb_q_thread.is_alive():
                 #    wb_q_thread.join()
                 #"""
+                stop_q.close()
+                [i.close() for i in to_background_qs]
+                [i.close() for i in wb_qs]
+                
+                print("Main process days passed: ", days_passed)
+                
                 pygame.display.quit()
                 sys.exit()
                 
@@ -1246,7 +1283,7 @@ def main():
         day_cnt += 1
         
         #print("Day_Tick: ", day_cnt)
-        fpsClock.tick(FPS)
+        
         #time.sleep(1./120)
         #time_since_enter = pygame.time.get_ticks() - start_time
         #print('Milliseconds since enter: ', str(time_since_enter), flush=True)
@@ -1255,6 +1292,14 @@ def main():
         #top_stats = snapshot2.compare_to(snapshot1, 'lineno')       
         #for stat in top_stats[:10]:
         #    print(stat)
+        """
+        try:
+            #print("Waiting in barrier...0", flush=True)
+            barrier.wait()
+            #print("Passed barrier...0", flush=True)
+        except Exception as bbe: print(bbe)
+        #"""
+        fpsClock.tick(FPS)
     
 def Load_Images(pygame):
     images = {}
@@ -1478,11 +1523,11 @@ if __name__ == "__main__":
     #manager = mp.Manager()
     #cities = []#manager.list()
     cities = list()#mp.Array('Synchronized', range(3))
-    for i in range(0, CONSTANTS.types['CITY_NUM'], 3):
+    for i in range(0, CONSTANTS.types['CITY_NUM'], 1):
         cities.append(City(i, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i], centers[i], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
         for z in cities[-1].zones:
             Init_Explored_Zones(cities[-1].data, z)
-        #"""
+        """
         cities.append(City(i+1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+1], centers[i+1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
         for z in cities[-1].zones:
             Init_Explored_Zones(cities[-1].data, z)

@@ -150,7 +150,7 @@ class City:
         if self.consumption == 0:
             self.consumption = 1
         
-        print("City Resources: " + str(self.goods_amounts))
+        print("City Resources: " + str(self.goods_amounts), flush=True)
         
         # Calculate surplus
         avail_goods_cnt = 0
@@ -162,20 +162,20 @@ class City:
             amount = int(cons) * self.consumption
             if self.goods_amounts[i] >= amount:
                 self.goods_amounts[i] -= amount
-                print("City consumed " + str(amount) + " of " + str(i))
+                print("City consumed " + str(amount) + " of " + str(i), flush=True)
                 self.reserve += amount * self.goods_prices[i]
                 avail_goods_cnt += 1
             elif self.goods_amounts[i] > 0:
-                print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i))
+                print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i), flush=True)
                 self.goods_amounts[i] = 0
                 self.reserve += self.consumption * self.goods_prices[i]
                 avail_goods_cnt += 1
             else:
-                print("City did not have enough, of resource " + str(i) + ", to consume.")
-            print("City reserve: " + str(self.reserve))
+                print("City did not have enough, of resource " + str(i) + ", to consume.", flush=True)
+            print("City reserve: " + str(self.reserve), flush=True)
             i += 1
         #print(avail_goods_cnt)
-        print("City Surplus: " + str(self.goods_amounts))
+        print("City Surplus: " + str(self.goods_amounts), flush=True)
         
         # Enforce Policy                
         if self.consumption_policy == CONSUMPTION_POLICY.types['DOMESTIC_CONS']:
@@ -197,21 +197,21 @@ class City:
         
         if avail_goods_cnt > 1:
             self.population = self.population + 30
-            print("City " + str(self.id) + " grew by 30 people -> " + str(self.population))
+            print("City " + str(self.id) + " grew by 30 people -> " + str(self.population), flush=True)
         elif avail_goods_cnt == 1:
             self.population = self.population + 10
-            print("City " + str(self.id) + " grew by 10 people -> " + str(self.population))
+            print("City " + str(self.id) + " grew by 10 people -> " + str(self.population), flush=True)
         elif avail_goods_cnt == 0:
             self.population = self.population - 10
-            print("City " + str(self.id) + " diminished by 10 people -> " + str(self.population))
+            print("City " + str(self.id) + " diminished by 10 people -> " + str(self.population), flush=True)
         
-        print("City " + str(self.id) + " consumed " + str(avail_goods_cnt) + " goods.")
+        print("City " + str(self.id) + " consumed " + str(avail_goods_cnt) + " goods.", flush=True)
     
     def Consume_Traded_Goods(self):
         for i in range(0, len(self.goods_amounts)):
             self.goods_amounts[i] = self.goods_amounts[i] + self._in[i]
             self._in[i] = 0
-        print("added traded goods to stockpiles: " + str(self.goods_amounts))
+        print("added traded goods to stockpiles: " + str(self.goods_amounts), flush=True)
     
     def Crop_Growth(self):
         #global zones, time_cnt, data, pygame
@@ -256,13 +256,13 @@ class City:
     
     def Plot(self, plot):
         if plot == True:
-            print("Drawing plot")
+            print("Drawing plot", flush=True)
             #TODO: Draw the plot
         elif plot == False:
-            print("Hiding plot")
+            print("Hiding plot", flush=True)
             #TODO: Hide the plot
         else:
-            print("something went wrong with <plot> variable")
+            print("something went wrong with <plot> variable", flush=True)
             return
     
     def Re_Init_After_Flood(self):
@@ -293,7 +293,7 @@ class City:
                 self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = self.b
                 self.river = self.b
                 
-                print("field reinitialized")
+                print("field reinitialized", flush=True)
                 
     def Overflow_River(self):
         self.end = time.time()
