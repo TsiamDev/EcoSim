@@ -137,6 +137,8 @@ class City:
         
         self.stop_updating_terrain = False
         
+        self.days_passed = 0
+        
                
     """DEPRECATED
     def Produce(self):        
@@ -150,7 +152,7 @@ class City:
         if self.consumption == 0:
             self.consumption = 1
         
-        print("City Resources: " + str(self.goods_amounts), flush=True)
+        #print("City Resources: " + str(self.goods_amounts), flush=True)
         
         # Calculate surplus
         avail_goods_cnt = 0
@@ -162,20 +164,20 @@ class City:
             amount = int(cons) * self.consumption
             if self.goods_amounts[i] >= amount:
                 self.goods_amounts[i] -= amount
-                print("City consumed " + str(amount) + " of " + str(i), flush=True)
+                #print("City consumed " + str(amount) + " of " + str(i), flush=True)
                 self.reserve += amount * self.goods_prices[i]
                 avail_goods_cnt += 1
             elif self.goods_amounts[i] > 0:
-                print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i), flush=True)
+                #print("City consumed " + str(self.goods_amounts[i]) + " of " + str(i), flush=True)
                 self.goods_amounts[i] = 0
                 self.reserve += self.consumption * self.goods_prices[i]
                 avail_goods_cnt += 1
-            else:
-                print("City did not have enough, of resource " + str(i) + ", to consume.", flush=True)
-            print("City reserve: " + str(self.reserve), flush=True)
+            #else:
+                #print("City did not have enough, of resource " + str(i) + ", to consume.", flush=True)
+            #print("City reserve: " + str(self.reserve), flush=True)
             i += 1
         #print(avail_goods_cnt)
-        print("City Surplus: " + str(self.goods_amounts), flush=True)
+        #print("City Surplus: " + str(self.goods_amounts), flush=True)
         
         # Enforce Policy                
         if self.consumption_policy == CONSUMPTION_POLICY.types['DOMESTIC_CONS']:
@@ -197,15 +199,15 @@ class City:
         
         if avail_goods_cnt > 1:
             self.population = self.population + 30
-            print("City " + str(self.id) + " grew by 30 people -> " + str(self.population), flush=True)
+            #print("City " + str(self.id) + " grew by 30 people -> " + str(self.population), flush=True)
         elif avail_goods_cnt == 1:
             self.population = self.population + 10
-            print("City " + str(self.id) + " grew by 10 people -> " + str(self.population), flush=True)
+            #print("City " + str(self.id) + " grew by 10 people -> " + str(self.population), flush=True)
         elif avail_goods_cnt == 0:
             self.population = self.population - 10
-            print("City " + str(self.id) + " diminished by 10 people -> " + str(self.population), flush=True)
+            #print("City " + str(self.id) + " diminished by 10 people -> " + str(self.population), flush=True)
         
-        print("City " + str(self.id) + " consumed " + str(avail_goods_cnt) + " goods.", flush=True)
+        #print("City " + str(self.id) + " consumed " + str(avail_goods_cnt) + " goods.", flush=True)
     
     def Consume_Traded_Goods(self):
         for i in range(0, len(self.goods_amounts)):
@@ -438,7 +440,13 @@ class City:
             
             #river flows normally
             self.Move_River()
-            
+    
+    def Animals_Flee(self):
+        for zone in self.zones:
+            if zone.type == CONST.types['PASTURE']:
+                for an in zone.pasture.animals:
+                    an.Flee(self.weather_effect, zone)
+    
     #Update the city parameters
     def Draw(self):     
         
@@ -447,6 +455,7 @@ class City:
             #print("True")
             if self.weather_effect.type == WEATHER.types['RAIN']:
                 if self.weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                    self.Animals_Flee()
                     self.Overflow_River()
                     #self.Move_River()
                     self.stop_updating_terrain = True

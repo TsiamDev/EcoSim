@@ -28,7 +28,7 @@ class CONSTANTS(object):
     def __init__(self):
         self.types = {}
         #CITY_NUM should be divisible by 3
-        self.types['CITY_NUM'] = 8
+        self.types['CITY_NUM'] = 9
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         

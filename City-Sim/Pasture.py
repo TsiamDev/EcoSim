@@ -16,7 +16,7 @@ from threading import Thread
 class Pasture:
     def __init__(self, _rect):
         self.animal_type = ANIMAL.types['COW']
-        self.animals_num = 10#random.randint(1, 10)
+        self.animals_num = 1#10#random.randint(1, 10)
         self.animals = []
         self._rect = MyRect(_rect=_rect)
         """
