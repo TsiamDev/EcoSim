@@ -27,3 +27,7 @@ class MyRect:
     def move(self, _x, _y):
         self.x = _x
         self.y = _y
+        
+    def translate(self, _x, _y):
+        self.x += _x
+        self.y += _y

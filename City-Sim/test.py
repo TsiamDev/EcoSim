@@ -730,10 +730,9 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, ba
     new_city_id = None
     
     day_cnt = 0
-    days_passed = 0
     
     proc = psutil.Process()
-    proc.cpu_affinity([_id])
+    proc.cpu_affinity([0])
     print(pid, " on ", proc.cpu_affinity(), flush=True)
     while True:
         #print(pid, " on ", proc.cpu_affinity())
@@ -792,8 +791,8 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, ba
                 if day_cnt >= DAY.TICKS_TILL_DAY:
                     city_chunk[cnt].Consume()
                     day_cnt = 0
-                    days_passed += 1
-                    print("Producer: ", pid, " days passed: ", days_passed, flush = True)
+                    city_chunk[cnt].days_passed += 1
+                    #print("Producer: ", pid, " days passed: ", days_passed, flush = True)
                 else:
                     day_cnt += 1
                 cnt += 1
@@ -808,13 +807,13 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, ba
             if day_cnt >= DAY.TICKS_TILL_DAY:
                 city_chunk[0].Consume()
                 day_cnt = 0
-                days_passed += 1
-                print("Producer: ", pid, " days passed: ", days_passed, flush = True)
+                city_chunk[0].days_passed += 1
+                #print("Producer: ", pid, " days passed: ", days_passed, flush = True)
             else:
                 day_cnt += 1
         #else:
         #print("len(ind) is ", len(ind))
-        fps_cnt = 0
+        #fps_cnt = 0
         #else:
         #    fps_cnt += 1
         #time.sleep(1./120)
@@ -825,8 +824,8 @@ def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc, ba
         if not stop_q.empty():
             msg = stop_q.get(True)
             print(pid, " exited with msg ", msg, flush=True)
-            print("Producer: ", pid, " days passed: ", days_passed, flush = True)
-            days.value = days_passed
+            for c in city_chunk:
+                print("Producer: ", pid, " city: ", c.id, " days passed: ", c.days_passed, flush = True)
             return
         """
         try:
@@ -929,7 +928,7 @@ def main():
     
     #events_proc = Process(target=Init_Event_Proc).start()
     
-    FPS = 60 # frames per second setting
+    FPS = 30 # frames per second setting
     fpsClock = pygame.time.Clock()
     
     #direction: from the main process to the subprocesses
@@ -942,7 +941,7 @@ def main():
     
     lock = mp.Lock()
     
-    num_producers = 4#mp.cpu_count()
+    num_producers = 3#mp.cpu_count()
     #consumers = Weather_Effect_To_Ground_Proc3(cities, num_producers)
     #print(q_consumers)
     #l = mp.Lock()
@@ -980,7 +979,7 @@ def main():
     plot = False
     
     day_cnt = 0
-    days_passed = 0
+    
     
     #zoom controls
     zoom = 750
@@ -992,7 +991,7 @@ def main():
     print("Main loop:", os.getpid())
     pid = os.getpid()
     proc = psutil.Process()
-    proc.cpu_affinity([num_producers])
+    proc.cpu_affinity([0])
     print(pid, " on ", proc.cpu_affinity())
     # infinite loop
     while running :
@@ -1014,7 +1013,8 @@ def main():
             rain_b_inc += [[random.randint(1*active_city.weather_effect.severity, 3*active_city.weather_effect.severity) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 
             day_cnt = 0
-            days_passed += 1
+            active_city.days_passed += 1
+            print("Main Process: ", pid, " days passed: ", active_city.days_passed, flush = True)
             
                 
         #Update the active_city's pixels (data)
@@ -1146,7 +1146,7 @@ def main():
                 [i.close() for i in to_background_qs]
                 [i.close() for i in wb_qs]
                 
-                print("Main process days passed: ", days_passed)
+                print("Main process days passed: ", active_city.days_passed)
                 
                 pygame.display.quit()
                 sys.exit()

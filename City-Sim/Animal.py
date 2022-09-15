@@ -11,7 +11,7 @@ import numpy as np
 
 from perlin_noise import PerlinNoise
 
-from Const import ANIMAL, ANIMAL_SIZE, DISPLAY, GOODS
+from Const import ANIMAL, ANIMAL_SIZE, DISPLAY, GOODS, WEATHER_SEVERITY
 from MyRect import MyRect
 
 
@@ -36,9 +36,59 @@ class Animal:
             #print(self.img_rect)
     
         self.w = None
+        self.isFleeing = False
         
         self.noise = PerlinNoise(octaves=10, seed=42)
-        
+    
+    def Flee(self, weather_effect, zone):
+        if weather_effect.is_active == True:
+            if weather_effect.severity == WEATHER_SEVERITY.types['HIGH']:
+                if self.isFleeing == False:
+                    self.w = []
+                    self.w.append(zone.pasture.shelter_rect.center)
+                    self.isFleeing = True
+                #print(self.w)
+                    
+                #move to shelter
+                if self.w is not None:
+                    if len(self.w) > 0:      
+                        if self.w[0][1] - self.img_rect.y < 0:
+                            y_dir = -1
+                        elif self.w[0][1] - self.img_rect.y > 0:
+                            y_dir = 1
+                        else:
+                            y_dir = 0
+                            
+                        if y_dir == 0:
+                            if self.w[0][0] - self.img_rect.x < 0:
+                                x_dir = -1
+                            elif self.w[0][0] - self.img_rect.x > 0:
+                                x_dir = 1
+                            else:
+                                x_dir = 0
+                        else:
+                            x_dir = 0
+                        
+                        self.x = self.x + x_dir
+                        self.y = self.y + y_dir
+                        #print(self.x, self.y, x_dir, y_dir)
+                        
+                        if (x_dir == 0) & (y_dir == 0):
+                            del self.w[0]
+                            if len(self.w) == 0:
+                                self.w = None
+                        
+                        self.img_rect.move(self.x, self.y)
+        else:
+            self.isFleeing = False
+            
+            self.w = []
+            #Randomize the go-to location to break out of 
+            #the random walk's local minima's
+            _x = random.randint(zone.rect.topleft[0], zone.rect.topright[0] - self.size)
+            _y = random.randint(zone.rect.topright[1], zone.rect.bottomright[1] - self.size)
+            self.w.append((_x, _y))
+          
     def act(self, zone, data, city):
         if self.w is None:
             self.eat(zone, data, city)
