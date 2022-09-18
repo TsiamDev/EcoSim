@@ -1024,6 +1024,8 @@ def main():
         #draw map view
         if selected_view == VIEW.types['MAP_VIEW']:            
             city_rects = Draw(display_surface, scouts, lakes, forests, cities, images)
+        elif plot == True:
+            Draw_Line_Graph()
         #draw active city view
         elif selected_view == VIEW.types['CITY_VIEW']:           
             #If active city has changed, request update from process that
@@ -1229,6 +1231,10 @@ def main():
                     if city_statistics_btn.collidepoint(pygame.mouse.get_pos()):
                         plot = not plot
                         active_city.Plot(plot)
+                        if (selected_view == VIEW.types['CITY_VIEW']) | (selected_view == VIEW.types['MAP_VIEW']):
+                            selected_view = VIEW.types['CITY_STATISTICS']
+                        else:#if selected_view == OVERLAY.types['MAP_VIEW']:
+                            selected_view = VIEW.types['CITY_VIEW']
                     
                     if selected_view == VIEW.types['CITY_VIEW']:
                         # Explore clicked zone
@@ -1380,6 +1386,85 @@ def Init_Rects():
         wp.img = images[wp.img_key]
         wp.rect = wp.img.get_rect().move(wp.pos.x, wp.pos.y)
 
+def Draw_Line_Graph():
+    global pygame, window, display_surface
+    
+    
+    background_colour = (255,255,255)
+    
+    color = (176, 73, 0)
+    blip = (24, 58, 55)
+    bg = (243, 255, 185)
+    closed = False
+    
+    myfont = pygame.font.SysFont("monospace", 15)
+    label = myfont.render("City Population vs Days passed", 1, (0,0,0))
+    days_label = myfont.render("Days", 1, (0,0,0))
+    pop_label = myfont.render("Population", 1, (0,0,0))
+    pop_label = pygame.transform.rotate(pop_label, 90)
+
+
+    off = 50
+    
+    x_ls = []
+    y_ls = []
+    amnt_ls = []
+    #points = deque([(0,50), (50, 40), (100, 160), (150, 20)])
+    #points = [(x + off, y + off) for x in range(0, 400-25, 25) for y in range(0, 400-25, 25)]
+    x = off
+    y = off
+    w = h = 400
+    points = []
+    days_ls = []
+    amnt_ls.append(myfont.render(str(0), 1, (0,0,0)))
+    #days_ls.append(myfont.render(str(0), 1, (0,0,0)))
+    for i in range(0, 15):
+        points.append((x, random.randint(y, h)))
+        x_ls.append(x)
+        y_ls.append(y-25)
+        amnt_ls.append(myfont.render(str(x), 1, (0,0,0)))
+        days_ls.append(myfont.render(str(i), 1, (0,0,0)))
+        x += 25
+        y += 25
+    amnt_ls.reverse()
+    d = [x for x in range(off, h+1, 25)]
+    f = [x for x in range(off, h+1, 25)]
+    xs = []
+    for x in range(0, len(d)):
+        xs.append((f[x], off))
+        xs.append((f[x], h))
+    
+    ys = []
+    for y in range(0, len(d)):
+        ys.append((off, f[y]))
+        ys.append((w, f[y]))
+    
+    #points.rotate(1)
+    #print(off)
+    pygame.draw.rect(display_surface, bg, (off, off, w-off, h-off))
+    #surface.blit(img, (0,0))
+    for l in range(0, len(xs)-1, 2):
+        pygame.draw.lines(display_surface, (0, 0, 0), closed, (xs[l], xs[l+1]), 2)
+        pygame.draw.lines(display_surface, (0, 0, 0), closed, (ys[l], ys[l+1]), 2)
+    
+    
+    for i in range(0, len(x_ls)):
+        display_surface.blit(amnt_ls[i], (15, y_ls[i]+15))
+        display_surface.blit(days_ls[i], (x_ls[i], h))
+    display_surface.blit(label, (w/2 - 120, 12))
+    display_surface.blit(pop_label, (-5, h/2))
+    display_surface.blit(days_label, (w/2, h + 15))
+    
+    
+    pygame.draw.lines(display_surface, color, closed, points, 3)
+    for p in points:
+        pygame.draw.circle(display_surface, blip, p, 3)
+    
+    window = pygame.transform.smoothscale(display_surface, (500, 500))
+    window.fill(background_colour)
+    window.blit(display_surface, (50, 50))    
+    display_surface.fill((255, 255, 255))
+    display_surface.blit(window, (50, 50))
         
 if __name__ == "__main__":
     

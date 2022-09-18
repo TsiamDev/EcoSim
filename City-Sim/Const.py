@@ -28,7 +28,7 @@ class CONSTANTS(object):
     def __init__(self):
         self.types = {}
         #CITY_NUM should be divisible by 3
-        self.types['CITY_NUM'] = 9
+        self.types['CITY_NUM'] = 3
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         
@@ -92,12 +92,13 @@ class OVERLAY(object):
 class VIEW(object):
     def __init__(self):
         self.types ={}        
-        self.types['CITY_VIEW'] = 8
-        self.types['MAP_VIEW'] = 9
+        self.types['CITY_VIEW'] = 1
+        self.types['MAP_VIEW'] = 2
+        self.types['CITY_STATISTICS'] = 3
 
 class DAY(object):
     def __init__(self):
-        self.TICKS_TILL_DAY = 20 * 20 #(FPS * Frame number)
+        self.TICKS_TILL_DAY = 20 * 50 #(FPS * Frame number)
 
 class TIME(object):
     def __init__(self):
