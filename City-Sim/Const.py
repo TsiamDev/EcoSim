@@ -25,7 +25,8 @@ class DISPLAY(object):
 class CONSTANTS(object):
     def __init__(self):
         self.types = {}
-        self.types['CITY_NUM'] = 4
+        #CITY_NUM should be divisible by 3
+        self.types['CITY_NUM'] = 9
         self.types['LAKES_NUM'] = 5
         self.types['FORESTS_NUM'] = 5
         
@@ -53,6 +54,11 @@ class ANIMAL_SIZE(object):
     def __init__(self):
         self.types = {}
         self.types['COW'] = 15
+        
+class CONSTRUCT_SIZE(object):
+    def __init__(self):
+        self.types = {}
+        self.types['SHELTER'] = 15
 
 class TRACTOR_ACTIONS(object):
     def __init__(self):
@@ -79,6 +85,7 @@ class OVERLAY(object):
         self.types['P'] = 5
         self.types['K'] = 6
         self.types['CROP_GROWTH'] = 7
+        self.types['PLANT_FACE'] = 8
         
 class VIEW(object):
     def __init__(self):
@@ -89,7 +96,8 @@ class VIEW(object):
 class TIME(object):
     def __init__(self):
         self.types = {}
-        self.types['CROP'] = 100
+        self.types['CROP'] = 50
+        self.types['ANIMAL_ACT'] = 70
         
 class WEATHER(object):
     def __init__(self):
@@ -117,6 +125,12 @@ class CONSUMPTION(object):
         self.types['GRAIN_CONS'] = 10
         self.types['WOOD_CONS'] = 5
         self.types['WATER_CONS'] = 7
+        
+class TRAILERS(object):
+    def __init__(self):
+        self.TRAILER_S = 500
+        self.TRAILER_M = 1500
+        self.TRAILER_L = 2500
     
 # instantiate Constants
 CONST = CONST()
@@ -143,3 +157,7 @@ GOODS = GOODS()
 CONSUMPTION = CONSUMPTION()
 
 CONSTANTS = CONSTANTS()
+
+CONSTRUCT_SIZE = CONSTRUCT_SIZE()
+
+TRAILERS = TRAILERS()

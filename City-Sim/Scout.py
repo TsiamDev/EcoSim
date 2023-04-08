@@ -21,7 +21,7 @@ class Scout:
         self.map_h = int(WINDOW_H / self.radius)
         
         self.map = [[0]* self.map_w]*self.map_h
-        print(self.map)
+        #print(self.map)
         
         for i in range(0, self.map_w):
             cnt = 0
@@ -29,7 +29,7 @@ class Scout:
                 self.map[i][j] = cnt
                 cnt = cnt + 1
             
-        print(self.map)
+        #print(self.map)
         self.last_search_index = 0
         
         # TODO - resupply at city 

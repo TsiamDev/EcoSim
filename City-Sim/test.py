@@ -12,20 +12,27 @@ import numpy as np
 
 import pygame
 import pygame_menu
-import time
+#import time
 import sys
 import copy
+import os
+#from pprint import pprint
+import math
+import tracemalloc
+import linecache
 
 import cProfile as profile
 #from threading import Thread
 #import threading
 
-#from multiprocessing import Process
-#import multiprocessing as mp
-#from multiprocessing.pool import Pool
+#from multiprocessing.managers import SharedMemoryManager
+from multiprocessing import Process#, shared_memory, current_process, Pool
+import multiprocessing as mp
+
+#from queue import Queue
 
 from Const import CONST, TRACTOR_ACTIONS, OVERLAY, TIME, DISPLAY, WEATHER, TRACTOR_PARAMETERS
-from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE
+from Const import CONSUMPTION_POLICY, CONSTANTS, VIEW, ANIMAL_SIZE, CONSTRUCT_SIZE
 
 from Zone import Zone
 #from Tractor import Tractor
@@ -34,6 +41,9 @@ from City import City
 from Scout import Scout
 from effects.Weather import WeatherEffect
 from Visualization import Draw
+from MyRect import MyRect
+from Animal import Animal
+#from  MyMultiprocessing import Weather_Effect_To_Ground_Proc3
 
 from networking.Networking import Set_Globals, Set_Tractor_Actions
 
@@ -65,31 +75,85 @@ def Display_Roads():
     return left_expz, bot_expz, right_expz, top_expz
 
     
-def Draw_Explored_Zones(data, zones):
-    global display_surface, pygame
+def Init_Explored_Zones(data, zone):
+    global display_surface, pygame, images
     
-    for zone in zones:
+    #for zone in zones:
     
-        if zone.type == CONST.types['FIELD']:
-            if zone.field.has_init == False:
-                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
-                # update the field
-                #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-    
-                #data[15:N+15,15:N+15,0] = r
-                #data[15:N+15,15:N+15,1] = g
-                #data[15:N+15,15:N+15,2] = b
-                print(rect.topleft)
-                print(rect.bottomleft)
-                print(rect.topright)
-                print(rect.bottomright)
-                #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
-                data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
-                
-                zone.field.has_init = True
+    if zone.type == CONST.types['FIELD']:
+        if zone.field.has_init == False:
+            rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
+            # update the field
+            #r = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            #b = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+
+            #data[15:N+15,15:N+15,0] = r
+            #data[15:N+15,15:N+15,1] = g
+            #data[15:N+15,15:N+15,2] = b
+            #print(rect.topleft)
+            #print(rect.bottomleft)
+            #print(rect.topright)
+            #print(rect.bottomright)
+            #data[rect.topleft[0]:(rect.topright[0] - rect.topleft[0]), rect.topright[1]:(rect.bottomright[1] - rect.topright[1]), 1] = g
+            data[rect.topleft[0]:(rect.topright[0]), rect.topright[1]:(rect.bottomright[1]), 1] = g
+            
+            zone.field.has_init = True
+        """
         elif zone.type == CONST.types['BARN_SILO']:
+            #draw the building
+            building_img = pygame.image.load('barn_silo.png')
+            building_img = pygame.transform.scale(building_img, (N, N))
+            bi_rect = building_img.get_rect()
+            bi_rect = bi_rect.move((zone.rect.topleft))
+            display_surface.blit(building_img, bi_rect)
+        """   
+    elif zone.type == CONST.types['PASTURE']:
+        if zone.field.has_init == False:
+            #plant the field
+            #plant a specific plant based on user input
+            #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
+            #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
+            #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
+            
+            #temporary
+            g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
+            
+            rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
+            data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
+            
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 0] = 0
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 1] = g
+            zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 2] = 0
+            #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
+            #unexplored_zones.append(Zone(0, rect))
+            #zones.append(Zone(3, rect, 1))
+            zone.field.has_init = True
+            
+            for i in range(0, zone.pasture.animals_num):
+                #create empty object
+                #pos = type('pos', (), {})()
+                #pos.x = rect.center[0]#random.randint(rect.topleft[0], rect.topright[0])
+                #pos.y = rect.center[1]#random.randint(rect.topright[1], rect.bottomright[1])
+                
+                zone.pasture.animals.append(Animal(zone.pasture._rect, zone.pasture.animal_type))
+        
+        #draw - move the animals
+        #zone.pasture.animals_act(pygame, display_surface, zone, data, images)
+        
+        #draw the shelter
+        #rect = zone.pasture.shelter_rect
+        #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+        #display_surface.blit(images[zone.pasture.shelter_img_key], rect)
+
+def Update_Explored_Zones(city):
+    for zone in city.zones:
+        #print(zone.type, flush=True)
+        #if zone.is_explored == True:
+        #print("A", flush=True)
+        if zone.type == CONST.types['BARN_SILO']:
             #draw the building
             building_img = pygame.image.load('barn_silo.png')
             building_img = pygame.transform.scale(building_img, (N, N))
@@ -98,35 +162,52 @@ def Draw_Explored_Zones(data, zones):
             display_surface.blit(building_img, bi_rect)
             
         elif zone.type == CONST.types['PASTURE']:
-            if zone.field.has_init == False:
-                #plant the field
-                #plant a specific plant based on user input
-                #r = [[random.randint(plant.PH_rng[0], plant.PH_rng[1]) for i in range(N)] for j in range(N)]
-                #g = [[random.randint(plant.heat_rng[0], plant.heat_rng[1]) for i in range(N)] for j in range(N)]
-                #b = [[random.randint(plant.hum_rng[0], plant.hum_rng[1]) for i in range(N)] for j in range(N)]
-                
-                #temporary
-                g = [[random.randint(0, 255) for i in range(N)] for j in range(N)]
-                
-                rect = pygame.Rect(zone.rect.x, zone.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H)
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 0] = 0
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 1] = g
-                data[rect.topleft[0]:rect.topright[0], rect.topright[1]:rect.bottomright[1], 2] = 0
-                
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 0] = 0
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 1] = g
-                zone.field.crop_growth[0:DISPLAY.FIELD_W, 0:DISPLAY.FIELD_H, 2] = 0
-                #rect = pygame.draw.rect(display_surface, black, (15, 15, N+15, N+15))
-                #unexplored_zones.append(Zone(0, rect))
-                #zones.append(Zone(3, rect, 1))
-                zone.field.has_init = True
             
-            #draw - move the animals
-            zone.pasture.animals_act(pygame, display_surface, zone, data)
-            
-            #draw the shelter
-            display_surface.blit(zone.pasture.shelter_img, zone.pasture.shelter_rect)
+            #if animal_act_timer > TIME.types['ANIMAL_ACT']:
+            #print("HERE", flush=True)
+            #move the animals
+            #zone.pasture.animals_act(zone, city.data)                
+            for i in range (0, len(zone.pasture.animals)):
+                zone.pasture.animals[i].act(zone, city.data)
+                #print((zone.pasture.animals[i].rect.x,zone.pasture.animals[i].rect.y))
+            #animal_act_timer = 0
+            #else:
+            #animal_act_timer += 1
+    #return city
 
+def Draw_Explored_Zones(zones):
+    global display_surface, pygame, images
+    #print("EDW")
+    for zone in zones:
+        if zone.type == CONST.types['BARN_SILO']:
+            #draw the building
+            building_img = pygame.image.load('barn_silo.png')
+            building_img = pygame.transform.scale(building_img, (N, N))
+            bi_rect = building_img.get_rect()
+            bi_rect = bi_rect.move((zone.rect.topleft))
+            display_surface.blit(building_img, bi_rect)
+            
+        elif zone.type == CONST.types['PASTURE']:
+            if zone.is_explored == True:             
+                #draw the animals
+                #print("MESA")
+                for an in zone.pasture.animals:
+                    
+                    #an.draw_animal(display_surface, images, pygame)
+                    
+                    #rect = an.img_rect                    
+                    #print("MESA AN ", (rect.x, rect.y))
+                    #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+                    
+                    #rect = pygame.Rect((an.img_rect.x, an.img_rect.y), (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW']))
+                    display_surface.blit(images[an.img_key], pygame.Rect((an.img_rect.x, an.img_rect.y), (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW'])))
+                    #pprint(an.img_rect)
+                #draw the shelter
+                rect = zone.pasture.shelter_rect
+                #rect = pygame.Rect(rect.x, rect.y, rect.topright[0]-rect.topleft[0], rect.topright[1]-rect.bottomright[1])
+                rect = pygame.Rect((rect.x, rect.y), (CONSTRUCT_SIZE.types['SHELTER'], CONSTRUCT_SIZE.types['SHELTER']))
+                display_surface.blit(images[zone.pasture.shelter_img_key], rect)
+                
 def Draw_Unexplored_Zones(unexplored_zones):
     global display_surface, gray, label, pygame
     
@@ -138,7 +219,7 @@ def Draw_Unexplored_Zones(unexplored_zones):
 
 # Player Action Buttons - Crude GUI
 def Draw_Action_Buttons():
-    global display_surface
+    global display_surface, font
     
     #buttons
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn
@@ -149,7 +230,7 @@ def Draw_Action_Buttons():
     btn_w = 70
     btn_padding = 2
     
-    font = pygame.font.SysFont("monospace", 10)
+    #font = pygame.font.SysFont("monospace", 10)
     
     cultivate_btn = pygame.draw.rect(display_surface, brown ,(X-btn_w, 0, btn_w, btn_h))
     label = font.render("Cultivate", 1, blue)
@@ -240,10 +321,10 @@ def start_sim():
 #My plants Menu
 
 def get_heat_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.heat_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -251,13 +332,24 @@ def get_heat_val(rng):
     g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[0]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (plant.c[0], int(g), plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
     
 def get_hum_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.hum_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -265,13 +357,24 @@ def get_hum_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[0]
     plant.c = (plant.c[0], plant.c[1], int(b))
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
 
 def get_PH_val(rng):
-    global plant, pb
+    global plant, transparent_plant_image, plant_img_widget
     
     plant.PH_rng = rng
-    print(rng)
+    #print(rng)
     
     # the middle point of a line segment is calculated as:
     # (b-a)/2 + a
@@ -279,30 +382,50 @@ def get_PH_val(rng):
     #g = (plant.heat_rng[1] - plant.heat_rng[0]) / 2 + plant.heat_rng[1]
     #b = (plant.hum_rng[1] - plant.hum_rng[0]) / 2 + plant.hum_rng[1]
     plant.c = (int(r), plant.c[1], plant.c[2])
-    pb.set_background_color(plant.c)
+    
+    #Update the colour of the plant
+    plant_image = transparent_plant_image.copy()
+    w_surface = plant_img_widget.get_surface()
+    h = w_surface.get_height()
+    w = w_surface.get_width()
+    
+    rect = np.ones((w, h, 3), dtype=np.int32)
+    rect *= plant.c
+    
+    pygame.surfarray.blit_array(w_surface, rect)
+    w_surface.blit(plant_image, (0,0))
+
+def Update_Plant_Img(widget, menu):
+    global plant_img_widget
+    
+    plant_img_widget = widget
+    print(widget)
+    print(menu)
 
 def Main_Menu():
-    global display_surface, menu, plant_menu, running, pygame, plant, pb
+    global display_surface, menu, plant_menu, running, pygame, plant, font
+    
+    global transparent_plant_image, plant_image, plant_img_widget
     
     WINDOW_SIZE = []
-    WINDOW_SIZE.append(700)
-    WINDOW_SIZE.append(700)
+    WINDOW_SIZE.append(850)
+    WINDOW_SIZE.append(850)
     
     display_surface = pygame.display.set_mode((WINDOW_SIZE[0], WINDOW_SIZE[1]), pygame.RESIZABLE)
     pygame.display.set_caption("Pasture Managerv0.01")
     
     menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='Welcome',
         width=WINDOW_SIZE[0] * 0.75
     )
     
     plant_menu = pygame_menu.Menu(
-        height=WINDOW_SIZE[1] * 0.7,
+        height=WINDOW_SIZE[1] * 0.5,
         theme=pygame_menu.themes.THEME_BLUE,
         title='My Plants',
-        width=WINDOW_SIZE[0] * 0.75
+        width=WINDOW_SIZE[0] * 0.8
     )
     
     
@@ -310,7 +433,12 @@ def Main_Menu():
     
     
     #show plant img
-    plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    transparent_plant_image = pygame.image.load('Assets/Pictures/plant2.png')
+    transparent_plant_image = pygame.transform.scale(transparent_plant_image, (0.3*764, 0.3*545))
+    #plant_menu.add.image('barn_silo.png', align=pygame_menu.locals.ALIGN_RIGHT)
+    plant_img_widget = plant_menu.add.image('Assets/Pictures/plant.png', image_id='plant_img_widget', scale=(0.3, 0.3), scale_smooth=True)#, align=pygame_menu.locals.ALIGN_CENTER)
+    plant_img_widget.add_draw_callback(Update_Plant_Img)
+    
     #show sliders for tolerance levels
     i = [i for i in range(0, 256)]
     plant_menu.add.range_slider('Heat tolerance', default=[i[0], i[-1]], range_values=i, increment=1, onchange=get_heat_val)
@@ -322,12 +450,10 @@ def Main_Menu():
     #plant_menu.draw(sur, clear_surface=False)
     #bi = pygame_menu.baseimage.BaseImage('placeholder.png', drawing_mode=pygame_menu.baseimage.IMAGE_MODE_SIMPLE, load_from_file=True)
     #plant_menu.draw(bi.get_surface(), clear_surface=True)
-    pb = plant_menu.add.progress_bar('Preview average color of plant', box_background_color=(255, 0, 0),
-                                progress_text_enabled=False,)
+    #pb = plant_menu.add.progress_bar('Preview average color of plant', default=50, box_progress_color=(255, 0, 0), progress_text_enabled=False)
     plant_menu.add.button('Start', lambda: start_sim() )
-    #TODO:
-        #save changes
-        #add selectable image
+    #TODO save changes
+    #add selectable image
     
     
     
@@ -342,10 +468,13 @@ def Main_Menu():
     menu.enable()
     on_resize()  # Set initial size
     
+    FPS = 60 # frames per second setting
+    fpsClock = pygame.time.Clock()
+    
     #if __name__ == '__main__':
     running = True
     while running:  
-        
+        #display_surface.blit(plant_img, (0,0))
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -363,9 +492,12 @@ def Main_Menu():
             display_surface.fill((25, 0, 50))
             
             menu.update(events)
+            #Draw the current FPS on the screen
+            Render_Current_FPS(str(int(fpsClock.get_fps())), font)
             menu.draw(display_surface)
     
             pygame.display.flip()
+            fpsClock.tick(FPS)
         
     #pygame.display.quit()
     #pygame.quit()
@@ -416,11 +548,12 @@ def Display_Overlay(zones):
     
     #if selected_overlay is None do nothing
     if selected_overlay is not None:
-        data_temp = np.zeros((X, Y, 3), dtype=np.uint8)
+        data_temp = np.zeros((DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8)
         #clear the screen
         #display_surface.fill(black)
         for zone in zones:
             if zone.type is not CONST.types['BARN_SILO']:
+                #print(zone.rect.topleft, zone.rect.topright)
                 if selected_overlay is OVERLAY.types['PH']:
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.PH
                 elif selected_overlay is OVERLAY.types['HUM']:
@@ -435,56 +568,34 @@ def Display_Overlay(zones):
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.K 
                 elif selected_overlay is OVERLAY.types['CROP_GROWTH']:
                     #print(range(zone.rect.topleft[0], zone.rect.topright[0]))
+                    #print(zone.rect.topleft[0], zone.rect.topright[0], zone.rect.topright[1], zone.rect.bottomright[1])
                     data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.crop_growth
-                    
+                elif selected_overlay is OVERLAY.types['PLANT_FACE']:
+                    data_temp[zone.rect.topleft[0]:zone.rect.topright[0], zone.rect.topright[1]:zone.rect.bottomright[1], :] = zone.field.plant_face
                 #pygame.surfarray.blit_array(display_surface, data_temp)
         
         return data_temp
     return None
 
-def Weather_Effect_To_Ground_Proc():
-    global weather_effect, zones, running
-    
-    #Weather effects
-    #weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
-    
-    rain_b_inc = np.zeros( (DISPLAY.FIELD_W, DISPLAY.FIELD_H), dtype=np.int32 )
-    rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
-    
-    
-    while running:
-    
-        if weather_effect.type == WEATHER.types['RAIN']:
-            
-            for z in zones:
-                #print(len(rain_b_inc))
-                #print(len(rain_b_inc[0]))
-                #print((rain_b_inc[0][0]))
-                #print(z.field.hum)
-                #z.field.hum[:, :, 2] += rain_b_inc if any(z.field.hum[:, :, 2] < 255) else 255
-                z.field.hum[:, :, 2] +=  rain_b_inc
-                #z.field.hum += rain_b_inc if z.field.hum[:,:,2] < 255 else 255
-                #i = z.field.hum[:,:,2] + rain_b_inc
-                #i = z.field.hum[:][:][2] < 255
-                #i = z.field.hum[:,:,2] < 255
-                #np.where(i, z.field.hum[i] + rain_b_inc , 255)
-                
-                #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
-                #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
-                z.field.hum[z.field.hum[:, :, 2] > 255] = 255
-        
-        time.sleep(1./120)
-
 def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):    
     if weather_effect.type == WEATHER.types['RAIN']:
-        
+        #print(zones)
+        #for zi in range(0, len(zones)):
+        #arr = []
+        #lock.acquire()
         for z in zones:
             #print(len(rain_b_inc))
             #print(len(rain_b_inc[0]))
             #print((rain_b_inc[0][0]))
             #print(z.field.hum)
             #z.field.hum[:, :, 2] += rain_b_inc if any(z.field.hum[:, :, 2] < 255) else 255
+            
+            #zones[zi].field.hum[zones[zi].field.hum[:, :, 2] + rain_b_inc - 255 >= 0] += rain_b_inc
+            #zones[zi].field.hum[:, :, 2] +=  rain_b_inc
+            #_parent_zones[zi].field.hum[:, :, 2] +=  rain_b_inc
             z.field.hum[:, :, 2] +=  rain_b_inc
+            #zn = z.field.hum[:, :, 2] + rain_b_inc
+                
             #z.field.hum += rain_b_inc if z.field.hum[:,:,2] < 255 else 255
             #i = z.field.hum[:,:,2] + rain_b_inc
             #i = z.field.hum[:][:][2] < 255
@@ -493,9 +604,17 @@ def Weather_Effect_To_Ground(weather_effect, zones, rain_b_inc):
             
             #z.field.hum[z.field.hum[:, :, 0] > 0] = 0
             #z.field.hum[z.field.hum[:, :, 1] > 0] = 0
-            z.field.hum[z.field.hum[:, :, 2] > 255] = 255
             
-    #time.sleep(1./120)
+            #zones[zi].field.hum[zones[zi].field.hum[:, :, 2] > 240] = 240
+            #_parent_zones[zi].field.hum[zones[zi].field.hum[:, :, 2] > 240] = 240
+            z.field.hum[z.field.hum[:, :, 2] > 240] = 240
+            #zn[zn > 240] = 240
+            #arr.append(zn)
+            
+            #print(zones[zi].field.hum)
+        #lock.release()
+        #return arr
+    #return None
     
 def Populate_Tractor_Q(tractor, lst):
     tractor.init_Q(lst)
@@ -512,13 +631,229 @@ def Define_Policies(tractor):
     #lst = Get_Tractor_Actions()
     
     #Populate_Tractor_Q(tractor, lst)
-    
-def init_worker(_running, _zones, _weather_effect):
-    global running, zones, weather_effect
 
-    running = _running
-    zones = zones
-    weather_effect = weather_effect
+def Render_Current_FPS(text, font):
+    global display_surface, blue
+
+    fps_rect = pygame.draw.rect(display_surface, (255, 255, 150), (0, 0, 25, 25))
+    #font = pygame.font.SysFont("monospace", 15)
+    label = font.render(text, 1, (0, 0, 255))
+    label_rect = label.get_rect(center=(fps_rect.center))
+    display_surface.blit(label, label_rect)
+
+def Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc):
+    global cities
+    producers = []
+    indices = []
+    lst = []
+    print("Starting producers...")
+    #chunk_mod = int(math.floor(len(cities) % (num_producers +1)))
+    wb_qs = []
+    to_background_qs = []
+    if num_producers >= len(cities):
+        print("num_producers >= len(cities)")
+        #assign one city to one process
+        for i in range(0, len(cities)):
+            to_background_q = mp.Queue()
+            wb_q = mp.Queue()
+            ind = []
+            city_chunk = []
+            for k in range(i, i+1):
+                ind.append(k)
+                city_chunk.append(cities[k])
+            print("ind:", ind, " cc:", city_chunk)
+            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
+            
+            producer.start()
+            producers.append(producer)
+            
+            to_background_qs.append(mp.Queue())
+            wb_qs.append(wb_q)
+            indices.append(ind)
+            lst.append(city_chunk)
+            
+    else:
+        print("num_producers < len(cities)")
+        chunk = int(math.floor(len(cities) / num_producers))
+        print("chunk:", chunk, flush=True)
+
+        i = 0
+        for i in range(0, num_producers - 1): 
+            to_background_q = mp.Queue()
+            wb_q = mp.Queue()
+            ind = []
+            start = i*chunk
+            end = (i+1)*chunk - 1
+            ind.append(start)
+            if start != end:
+                ind.append(end)
+            
+            if len(ind) > 1:
+                city_chunk = cities[ind[0]:(ind[1]+2)]
+            else:
+                city_chunk = [cities[ind[0]]]
+                
+            print("ind: ", ind, " cc: ", city_chunk)
+            producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
+            
+            producer.start()
+            producers.append(producer)
+            
+            to_background_qs.append(to_background_q)
+            wb_qs.append(wb_q)
+            indices.append(ind)
+            lst.append(city_chunk)
+
+        ind = []
+        to_background_q = mp.Queue()
+        wb_q = mp.Queue()
+        start = (i+1)*chunk
+        end = (i+2)*chunk
+        ind.append(start)
+        ind.append(end)
+        
+        if len(ind) > 1:
+            city_chunk = cities[ind[0]:(ind[1]+2)]
+        else:
+            city_chunk = cities[ind[0]]
+        
+        producer = Process(target=Producer, args=[i, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc])
+        
+        producer.start()
+        producers.append(producer)
+        
+        to_background_qs.append(to_background_q)
+        wb_qs.append(wb_q)
+        indices.append(ind)
+        lst.append(city_chunk)
+            
+    return producers, to_background_qs, wb_qs
+
+def Producer(_id, ind, city_chunk, wb_q, to_background_q, stop_q, rain_b_inc):
+    cnt = 0
+    FPS = 60
+    fps_cnt = 0
+    pid = os.getpid()
+    print("Producer: ", pid, "ind:", ind, " cc: ", city_chunk, flush=True)
+    
+    new_city_id = None
+    
+    while True:
+        #print("Producer:", ind, " cc:", city_chunk)
+        #if a city state-update request has been made
+        if not to_background_q.empty():
+            active_city = to_background_q.get(True)
+            print(pid, ind, ": received ", active_city.id, flush=True)
+            #the parent process has sent you a city state-update
+            #so, update the city
+            for ci in range(0, len(city_chunk)):
+                #new_city is just an integer here!
+                if city_chunk[ci].id == active_city.id:
+                    city_chunk[ci] = active_city
+                    print(pid, ind, ": has ", active_city.id, flush=True)
+                    break
+            
+            new_city_id = to_background_q.get(True)
+            #if you were assigned this city, send a city state-update 
+            #to the parent process
+            found = False
+            for ci in range(0, len(city_chunk)):
+                #new_city is just an integer here!
+                if city_chunk[ci].id == new_city_id:
+                    wb_q.put((_id, city_chunk[ci]))
+                    print(pid, ind, ": sent ", (_id, city_chunk[ci].id), flush=True)
+                    found = True
+                    break
+            
+            #if you don't possess the requested city,
+            #you have to notify the parent process
+            if found == False:
+                wb_q.put((-1, -1))
+                
+        
+        if fps_cnt >= FPS:
+            #print(ind)
+            #print(len(ind))
+            #print("ind[i]:", ind[i])
+            #print("i:", i)
+            if len(ind) > 1:
+                cnt = 0
+                for m in range(ind[0], ind[1]):
+                    #print(m)
+                    if new_city_id is not None:
+                        if m == new_city_id:
+                            continue
+                    Weather_Effect_To_Ground(city_chunk[cnt].weather_effect, city_chunk[cnt].zones, rain_b_inc)
+                    Update_Explored_Zones(city_chunk[cnt])
+                    city_chunk[cnt].Draw()
+                    cnt += 1
+            else:
+                if new_city_id is not None:
+                    if new_city_id != 0:
+                        Weather_Effect_To_Ground(city_chunk[0].weather_effect, city_chunk[0].zones, rain_b_inc)
+                        Update_Explored_Zones(city_chunk[0])
+                        #move river and tractor
+                        city_chunk[0].Draw()
+            fps_cnt = 0
+        else:
+            fps_cnt += 1
+        #time.sleep(1./120)
+        #print()
+        #UNCOMMENT!
+        #wb_q.put((ind, city_chunk))
+        #print(stop_q.qsize(), flush=True)
+        if not stop_q.empty():
+            msg = stop_q.get(True)
+            print(os.getpid(), " exited with msg ", msg, flush=True)
+            #print("Producer: ", cnt)
+            return
+
+#def Event_Loop(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects):
+    
+def display_top(snapshot, key_type='lineno', limit=10):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, frame.filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+def Weather_Effect_To_Ground_Pool(city, rain_b_inc):    
+    if city.weather_effect.type == WEATHER.types['RAIN']:
+        for z in city.zones:
+            z.field.hum[:, :, 2] +=  rain_b_inc
+            z.field.hum[z.field.hum[:, :, 2] > 240] = 240
+
+def Update_Cities(args):
+    Weather_Effect_To_Ground_Pool(args[0], args[1])
+
+    #cities[ci] = Update_Explored_Zones(cities[ci])
+    Update_Explored_Zones(args[0])
+    
+    return args[0]
+
+"""
+def Init_Event_Proc():
+    
+    while running:
+        
+        #TODO implement event handling in a separate subprocess
+"""   
     
 def main():
     global data, selected_overlay, tractor, display_surface, pygame
@@ -528,7 +863,10 @@ def main():
     global switch_scene_btn
     
     global scouts, forests, lakes, cities
-    global rain_b_inc, images
+    global rain_b_inc, images, multiproc_Q
+    
+    global animal_act_timer, weather_effect
+    animal_act_timer = 0
     #crops_thread = Thread(target=Crop_Growth, kwargs=data)
     
     #Define_Policies(tractor)
@@ -537,7 +875,7 @@ def main():
     rain_b_inc += [[random.randint(1, 3) for i in range(DISPLAY.FIELD_W)] for j in range(DISPLAY.FIELD_H)]
 
     running = True
-    selected_view = VIEW.types['MAP_VIEW']
+    selected_view = VIEW.types['CITY_VIEW']
     """
     kw = {}
     #kw['display_surface'] = display_surface
@@ -555,43 +893,138 @@ def main():
     #Snow.draw(display_surface)
     """
     active_city = cities[0]
+    active_city.is_active = True
     city_rects = []
-   
+    
+    #events_proc = Process(target=Init_Event_Proc).start()
+    
     FPS = 60 # frames per second setting
     fpsClock = pygame.time.Clock()
     
+    #direction: from the main process to the subprocesses
+    #q = mp.Queue()
+    #direction: from the subprocesses to the main process
+    wb_q = mp.Queue()
+    stop_q = mp.Queue()
+    #req_upd_q = mp.Queue()
+    print("CPUs", mp.cpu_count())
+    
+    lock = mp.Lock()
+    
+    num_producers = mp.cpu_count()
+    #consumers = Weather_Effect_To_Ground_Proc3(cities, num_producers)
+    #print(q_consumers)
+    #l = mp.Lock()
+    #multiproc_pool = mp.Pool(mp.cpu_count())#, Weather_Effect_To_Ground_Proc, (multiproc_Q, l,))
+    #multiproc_pool.start()# weather_effect.type))
+    #with mp.Pool(num_producers, City_Consumer, (q, wb_q)) as pool:#, Weather_Effect_To_Ground_Proc2, (multiproc_Q,)) as multiproc_pool:
+    #pool.map_async(Q_Consumer6, (q, wb_q))
+    
+    producers, to_background_qs, wb_qs = Deal_Chunks(num_producers, wb_q, stop_q, rain_b_inc)
+    #pool = mp.Pool()
+    print(len(to_background_qs))
+    print(len(producers))
+    print(len(wb_qs))
+    
+    
+    #wbthreads = []
+    #DO NOT DO THIS
+    #for i in range(0, 5):
+        
+    #wb_q_thread = Thread(target=Wb_Q_Thread, args=(wb_q, stop_q, lock))
+    #wb_q_thread.start()
+    
+    #wbthreads.append(wb_q_thread)
+    
+    #event_thread = Thread(target=Event_Loop, args=(pygame, consumers, stop_q, wb_q_thread, selected_overlay, selected_view, active_city, city_rects))
+    #event_thread.start()
+    #timer_cnt = 0
+    
+    origin = None
+    cur_i = None
+    
+    active_city_changed = False
+    
+    print("Main loop:", os.getpid())
     # infinite loop
     while running :
+        #snapshot1 = tracemalloc.take_snapshot()
+        #start_time = pygame.time.get_ticks()
+        #clear screen
+        display_surface.fill(black)
+
+        #update the active city
+        Weather_Effect_To_Ground(active_city.weather_effect, active_city.zones, rain_b_inc)
+        Update_Explored_Zones(active_city)
         
-        for c in cities:
-            Weather_Effect_To_Ground(weather_effect, c.zones, rain_b_inc)
+        #Update the active_city's pixels (data)
+        active_city.Draw()
+        d = Display_Overlay(active_city.zones)
+        #lock.release()
+        if d is not None:
+            active_city.data = d
+        #tractor_img_key, tractor_rect = active_city.Draw()
         
-        if selected_view == VIEW.types['MAP_VIEW']:
-            city_rects = Draw(display_surface, scouts, lakes, forests, cities)    
-        elif selected_view == VIEW.types['CITY_VIEW']:
-    
-            
-            d = Display_Overlay(active_city.zones)
-            if d is not None:
-                active_city.data = d
+        #draw map view
+        if selected_view == VIEW.types['MAP_VIEW']:            
+            city_rects = Draw(display_surface, scouts, lakes, forests, cities)
+        #draw active city view
+        elif selected_view == VIEW.types['CITY_VIEW']:           
+            #If active city has changed, request update from process that
+            #has been simulating the particular city
+            if active_city_changed == True:
+                #push active_city to the background process
+                #push the active_city to all children
+                for p_i in range(0, num_producers):
+                    to_background_qs[p_i].put(active_city)
+                    print("Sent ", active_city.id, " to process ", p_i)
                 
-            active_city.data = move_river(active_city.data) 
-            tractor_img_key, tractor_rect = active_city.Draw()
-            
-            #Crop_Growth()
-            
-            display_surface.fill(black)
+                #request new city
+                #push the new city id
+                for p_i in range(0, num_producers):
+                    to_background_qs[p_i].put(cur_i)
+                    print("Sent ", cur_i, " to process ", p_i)
+                    
+                ctys = []
+                origs = []
+                for p_i in range(0, num_producers):
+                    origin, new_city = wb_qs[p_i].get(True)
+                    ctys.append(new_city)
+                    origs.append(origin)
+                
+                print("Received all messages") 
+                
+                for j in range(0, len(ctys)):
+                    if ctys[j] != -1:
+                        active_city = ctys[j]
+                        print("Received ", active_city.id, " from ", origin)
+                        break
+                
+                active_city_changed = False
+                
+            #draw the active_city's data to screen
             pygame.surfarray.blit_array(display_surface, active_city.data)
-            display_surface.blit(images[tractor_img_key], (tractor_rect.x, tractor_rect.y))
-    
-            Draw_Unexplored_Zones(active_city.unexplored_zones)
-            Draw_Explored_Zones(active_city.data, active_city.zones)
             
+            #Draw tractor of active_city to screen
+            display_surface.blit(images[active_city.tractor.img_key], (active_city.tractor.rect.x, active_city.tractor.rect.y))
+            
+                        
+            if len(active_city.unexplored_zones) > 0:
+                #print("UZ")
+                Draw_Unexplored_Zones(active_city.unexplored_zones)
+           
+            
+            #draw the active city
+            Draw_Explored_Zones(active_city.zones)   
+            
+        
+
+        #draw GUI
         Draw_Action_Buttons()
 
-      
-        weather_effect.draw(display_surface)
-      
+        #draw weather effects on screen
+        active_city.weather_effect.draw(display_surface, pygame, images)
+        
         # Event loop
         # iterate over the list of Event objects
         # that was returned by pygame.event.get() method.
@@ -603,7 +1036,28 @@ def main():
             if event.type == pygame.QUIT :
                 #running = False
                 #snow_thread.join()
+                #weather_effects_proc.join()
+                #multiproc_pool.close()
+                #multiproc_pool.join()
+                #"""
+                for i in range(0, len(producers)):
+                    stop_q.put("BREAK")
                 
+                for idx, prod in enumerate(producers):
+                        print("    Waiting for producer.join() index %s" % idx)
+                        if not prod.is_alive():
+                            prod.join()  # Wait for consumer() to finish
+                        print("        producer() idx:%s is done" % idx)
+                #stop_q.put("BREAK")
+                """
+                for wbt in wbthreads:
+                    stop_q.put("BREAK")
+                    if not wbt.is_alive():
+                        wbt.join()
+                """
+                #if not wb_q_thread.is_alive():
+                #    wb_q_thread.join()
+                #"""
                 pygame.display.quit()
                 sys.exit()
                 
@@ -655,7 +1109,7 @@ def main():
                         selected_overlay = OVERLAY.types['K']
                 elif crop_growth_btn.collidepoint(pygame.mouse.get_pos()):
                     if selected_overlay == OVERLAY.types['CROP_GROWTH']:
-                        selected_overlay = None
+                        selected_overlay = OVERLAY.types['PLANT_FACE']
                     else:#if selected_overlay == None:
                         selected_overlay = OVERLAY.types['CROP_GROWTH']
                 
@@ -670,28 +1124,41 @@ def main():
                     for key, uz in active_city.unexplored_zones.items():
                         if pygame.Rect(uz.rect.x, uz.rect.y, DISPLAY.ZONE_W, DISPLAY.ZONE_H).collidepoint(pygame.mouse.get_pos()):                    
                             print("Expanded to zone " + str(key))
-                            active_city.unexplored_zones[key].explore()
-                            active_city.zones.append(active_city.unexplored_zones[key])
-                    
+                            active_city.zones[key].is_explored = True
+                            Init_Explored_Zones(active_city.data, active_city.zones[key])
+                            
                             if key in active_city.unexplored_zones.keys():
                                 del active_city.unexplored_zones[key]
+                                
                             break
-                    
-                #Click on a city
-                for i in range(0, len(city_rects)):
-                    if city_rects[i].collidepoint(pygame.mouse.get_pos()):
-                        print("clicked on city")
-                        selected_view = VIEW.types['CITY_VIEW']
-                        active_city = cities[i]
-                        break
-                    
+                        
+                elif selected_view == VIEW.types['MAP_VIEW']:
+                    #Click on a city
+                    for i in range(0, len(city_rects)):
+                        if city_rects[i].collidepoint(pygame.mouse.get_pos()):
+                            print("clicked on city")
+                            selected_view = VIEW.types['CITY_VIEW']
+                            
+                            cur_i = i
+                            active_city_changed = True
+                                
+                            break
+        
+        #lock.release()
+        #Draw the current FPS on the screen
+        Render_Current_FPS(str(int(fpsClock.get_fps())), font)
         #Draw the surface object to the screen.  
         pygame.display.update() 
         fpsClock.tick(FPS)
         #time.sleep(1./120)
+        #time_since_enter = pygame.time.get_ticks() - start_time
+        #print('Milliseconds since enter: ', str(time_since_enter), flush=True)
+        #snapshot2 = tracemalloc.take_snapshot()
+        #display_top(snapshot2)
+        #top_stats = snapshot2.compare_to(snapshot1, 'lineno')       
+        #for stat in top_stats[:10]:
+        #    print(stat)
     
-    #weather_effects_proc.join()
-
 def Load_Images(pygame):
     images = {}
     img = pygame.image.load('tractor.jpg')
@@ -702,6 +1169,12 @@ def Load_Images(pygame):
     
     img = pygame.image.load('cow.png')
     images['cow_scaled_img'] = pygame.transform.scale(img, (ANIMAL_SIZE.types['COW'], ANIMAL_SIZE.types['COW']))
+    
+    img = pygame.image.load('effects/snowflake.svg')
+    images['snowflake'] = pygame.transform.scale(img, (10, 10))
+    
+    img = pygame.image.load('effects/drop.png')
+    images['drop'] = pygame.transform.scale(img, (1, 5))
     
     return images
 
@@ -735,25 +1208,35 @@ def Initialize():
     return coords, centers, lakes, forests
 
 def Init_Rects():
-    global images, cities
-    
+    global images, cities, weather_effect
+    """
     for c in cities:
         for key, uz in c.unexplored_zones.items():
-            uz.pasture.shelter_img = images[uz.pasture.shelter_img_key]
-            uz.pasture.shelter_rect = uz.pasture.shelter_img.get_rect()
-            uz.pasture.shelter_rect = uz.pasture.shelter_rect.move(uz.rect.x, uz.rect.y)
+            #shelter_img = images[uz.pasture.shelter_img_key]
+            #rect = shelter_img.get_rect()
+            #uz.pasture.shelter_rect = MyRect(rect)
+            #uz.pasture.shelter_rect = uz.pasture.shelter_rect.move(uz.rect.x, uz.rect.y)
             for a in uz.pasture.animals:
                 a.img = images[a.img_key]
                 a.img_rect = a.img.get_rect()
-                a.img_rect = a.img_rect.move(a.pos.x, a.pos.y)
+                a.img_rect = a.img_rect.move(a.x, a.y)
+    """          
+    for wp in weather_effect.particles:
+        wp.img = images[wp.img_key]
+        wp.rect = wp.img.get_rect().move(wp.pos.x, wp.pos.y)
 
+        
 if __name__ == "__main__":
+    
+    #tracemalloc.start()
+
     global time_cnt, rain_b_inc, tractor
     
     global cultivate_btn, sow_btn, PH_btn, hum_btn, temp_btn, fertilize_btn 
     global N_btn, P_btn, K_btn, crop_growth_btn, harvest_btn, water_btn
     global scouts, forests, lakes, cities
-    global images, cities
+    global images, weather_effect, font
+    
     
     cultivate_btn = None
     sow_btn = None
@@ -773,6 +1256,7 @@ if __name__ == "__main__":
     
     pygame.init()
     plant = Plant()
+    font = pygame.font.SysFont("monospace", 15)
     Main_Menu()
     
     #print(repr(plant))
@@ -799,7 +1283,7 @@ if __name__ == "__main__":
     
     # create the display surface object
     # of specific dimension..e(X, Y).
-    display_surface = pygame.display.set_mode((X, Y ))
+    display_surface = pygame.display.set_mode((DISPLAY.X, DISPLAY.Y ))
     
     # Create a 1024x1024x3 array of 8 bit unsigned integers
     data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
@@ -820,23 +1304,22 @@ if __name__ == "__main__":
     #data[15:N+15,15:N+15,2] = b
     """
     images = Load_Images(pygame)
-    
-    #rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
-    rect = pygame.Rect((DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH), (DISPLAY.N, DISPLAY.N))
-    #unexplored_zones.append(Zone(0, rect))
-    zones.append(Zone(3, rect, CONST.types['FIELD']))
-    zones[0].field.has_init = True
       
     # set the pygame window name
     pygame.display.set_caption('City-Sim')
       
     #expansion zones
-    font = pygame.font.SysFont("monospace", 15)
+    #font = pygame.font.SysFont("monospace", 15)
     label = font.render("Expansion zone", 1, blue)
     
     exp_z_len = len(unexplored_zones)
     rng = range(0, exp_z_len)
     
+    #rect = pygame.draw.rect(display_surface, black, (DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH, DISPLAY.N, DISPLAY.N))
+    rect = pygame.Rect((DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH), (DISPLAY.N, DISPLAY.N))
+    #unexplored_zones.append(Zone(0, rect))
+    zones.append(Zone(0, rect, CONST.types['FIELD']))
+    zones[0].field.has_init = True
     
     
     if len(unexplored_zones) == 0:
@@ -849,68 +1332,67 @@ if __name__ == "__main__":
         unexplored_zones[1] = Zone(1, rect1, images)
         unexplored_zones[2] = Zone(2, rect2, images)
         """
+        #rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
         rect0 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 15), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = type('', (), {})()
-        rect.center = rect0.center
-        rect.topleft = rect0.topleft
-        rect.topright = rect0.topright
-        rect.bottomright = rect0.bottomright
-        rect.x = rect0.x
-        rect.y = rect0.y
-        unexplored_zones[0] = Zone(0, copy.deepcopy(rect))
-        
-        rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = type('', (), {})()
-        rect.center = rect1.center
-        rect.topleft = rect1.topleft
-        rect.topright = rect1.topright
-        rect.bottomright = rect1.bottomright
-        rect.x = rect1.x
-        rect.y = rect1.y
+        rect = MyRect(_rect=rect0)#(rect0.x, rect0.y, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright)
+
+        #unexplored_zones[0] = Zone(0, rect0.center, rect0.topleft, rect0.topright, rect0.bottomright, rect0.x, rect0.y)
         unexplored_zones[1] = Zone(1, copy.deepcopy(rect))
         
-        rect2 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
-        rect = type('', (), {})()
-        rect.center = rect2.center
-        rect.topleft = rect2.topleft
-        rect.topright = rect2.topright
-        rect.bottomright = rect2.bottomright
-        rect.x = rect2.x
-        rect.y = rect2.y
+        
+        #"""
+        rect1 = pygame.Rect((15, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
+        rect = MyRect(_rect=rect1)
+        #unexplored_zones[1] = Zone(1, rect1.center, rect1.topleft, rect1.topright, rect1.bottomright, rect1.x, rect1.y)
         unexplored_zones[2] = Zone(2, copy.deepcopy(rect))
+        
+        rect2 = pygame.Rect((330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, 330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH), (DISPLAY.ZONE_W, DISPLAY.ZONE_H))
+        rect = MyRect(_rect=rect2)
+        #unexplored_zones[2] = Zone(2, rect2.center, rect2.topleft, rect2.topright, rect2.bottomright, rect2.x, rect2.y)
         #print(type(images['shelter_scaled_img']))
+        unexplored_zones[3] = Zone(3, copy.deepcopy(rect))
+        #"""
+    for key, uz in unexplored_zones.items():
+        zones.append(uz)
         
-        
-        
-        
-    
-    
     #Init Cities:
-    #cities = []
-    #cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
-    #cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
-    #cities.append(City(2, [5, 5, 1], CONSUMPTION_POLICY.types['DOMESTIC_CONS'], 1000, unexplored_zones, zones, plant, imgs['tractor_scaled_img']))
-    
     coords, centers, lakes, forests = Initialize()
     #print(coords)
     centered_centers = copy.deepcopy(centers)
     
-    cities = []
-    cities.append(City(0, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[0], centers[0], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-    cities.append(City(1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[1], centers[1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-    cities.append(City(2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[2], centers[2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant)))
-
+    #smm = SharedMemoryManager()
+    #smm.start()
+    
+    
+    
+    #manager = mp.Manager()
+    #cities = []#manager.list()
+    cities = list()#mp.Array('Synchronized', range(3))
+    for i in range(0, CONSTANTS.types['CITY_NUM'], 3):
+        cities.append(City(i, [1, 5, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i], centers[i], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        #"""
+        cities.append(City(i+1, [5, 1, 5], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+1], centers[i+1], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        cities.append(City(i+2, [5, 5, 1], CONSUMPTION_POLICY.types['EXPORT'], 1000, coords[i+2], centers[i+2], copy.deepcopy(unexplored_zones), copy.deepcopy(zones), copy.deepcopy(plant), _has_tractor=True, _has_river=True))
+        for z in cities[-1].zones:
+            Init_Explored_Zones(cities[-1].data, z)
+        #"""
+    #shm = shared_memory.ShareableList(cities, name=c)
+    
     scouts = []
     scouts.append(Scout(centered_centers[0], pygame.Rect(coords[0][0] + DISPLAY.CITY_W/2 - DISPLAY.SCOUT_W/2, coords[0][1] + DISPLAY.CITY_H/2 - DISPLAY.SCOUT_H/2, DISPLAY.SCOUT_W, DISPLAY.SCOUT_H)))
     
     #Weather effects
-    weather_effect = WeatherEffect(pygame, WEATHER.types['RAIN'])
+    weather_effect = WeatherEffect(WEATHER.types['RAIN'])
     
     selected_overlay = None
     
     running = True
     
-    Init_Rects()
+    #Init_Rects()
     
     main()
     #profile.run('main()')

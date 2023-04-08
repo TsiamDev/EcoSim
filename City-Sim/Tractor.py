@@ -7,14 +7,17 @@ Created on Mon Aug  8 03:58:15 2022
 
 import random
 
-from Const import TRACTOR_ACTIONS, TRACTOR_PARAMETERS
-from networking.Networking import Set_Globals, Set_Tractor_Actions
+from MyPoint import MyPoint
+
+#from Const import  TRACTOR_PARAMETERS, 
+from Const import TRACTOR_ACTIONS, DISPLAY, TRAILERS, GOODS
+#from networking.Networking import Set_Globals, Set_Tractor_Actions
 
 class Tractor:
     static_id = 0
     waypoints = []
     
-    def __init__(self, _x, _y, _zone, ):
+    def __init__(self, _x, _y, _zone, _city):
         
         self._id = Tractor.static_id
         Tractor.static_id += 1
@@ -25,22 +28,29 @@ class Tractor:
         #self.img = pygame.transform.scale(self.img, (self.width, self.width))
         self.img_key = 'tractor_scaled_img'
         
-        self.rect = type('', (), {})()
-        self.rect.x = _x#self.img.get_rect().x
-        self.rect.y = _y#self.img.get_rect().y
+        self.rect = MyPoint(_x, _y)
+        #print("Tractor rect:", self.rect)
+        #self.rect = type('', (), {})()
+        #self.rect.x = _x#self.img.get_rect().x
+        #self.rect.y = _y#self.img.get_rect().y
         #self.rect.topleft = self.img.get_rect().topleft
         #self.rect
         #self.rect = self.rect.move(_x, _y)
         
-        
+        self.city = _city
         #self.x = _x
         #self.y = _y
         
         self.zone = _zone
         
+        self.trailer_capacity = TRAILERS.TRAILER_S
+        self.trailer = 0
+        
         #self.move_right = True
         
         self.action = TRACTOR_ACTIONS.types['IDLE']
+        self.action_Q = []
+        self.action_Q_ind = -1
         
         self.tractor_Q = []
         self.tractor_Q_ind = -1
@@ -50,44 +60,51 @@ class Tractor:
         
         self.Define_Policies()
         
-    def move(self, display_surface):
-        
+    def move(self):
+        #print(self.waypoints)
         if len(self.waypoints) > 0:
-            
-            if self.waypoints[0][1] - self.rect.y < 0:
-                y_dir = -1
-            elif self.waypoints[0][1] - self.rect.y > 0:
-                y_dir = 1
-            else:
-                y_dir = 0
-                
-            if y_dir == 0:
-                if self.waypoints[0][0] - self.rect.x < 0:
-                    x_dir = -1
-                elif self.waypoints[0][0] - self.rect.x > 0:
-                    x_dir = 1
-                else:
-                    x_dir = 0
+            if self.waypoints[0][0] - self.rect.x < 0:
+                x_dir = -1
+            elif self.waypoints[0][0] - self.rect.x > 0:
+                x_dir = 1
             else:
                 x_dir = 0
             
-            self.rect = self.rect.move(x_dir*15, y_dir*15)
+                
+            if x_dir == 0:
+                if self.waypoints[0][1] - self.rect.y < 0:
+                    y_dir = -1
+                elif self.waypoints[0][1] - self.rect.y > 0:
+                    y_dir = 1
+                else:
+                    y_dir = 0
+            else:
+                y_dir = 0
             
+            self.rect.move(x_dir*15, y_dir*15)
+            #print(self.rect.x, self.rect.y)
             
             if (x_dir == 0) & (y_dir == 0):
                 del self.waypoints[0]
+                #print(self.waypoints)
                 if len(self.waypoints) == 0:
                     #self.action = TRACTOR_ACTIONS.types['IDLE']
                     lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
-                    self.waypoints  = [item for sublist in lst for item in sublist]
-                    self.tractor_Q = self.waypoints
-                    print(self.waypoints)
-                    print(Tractor.waypoints)
-                    self.tractor_Q_ind += 1
-                    if self.tractor_Q_ind >= len(self.tractor_Q):
-                        self.tractor_Q_ind = 0
-                    self.action = self.tractor_Q[self.tractor_Q_ind]
-                    print(self.action)
+                    #lst = [(15,15), (300,15), (300, 30), (15, 30), (15, 45), (300, 45), (300, 60), (15, 60)]
+                    """
+                    lst.append((15, 15))
+                    lst.append((300, 15))
+                    lst.append((300, 30))
+                    lst.append((30, 30))
+                    lst = [[(15, self.width * i), (300, self.width * (i+1))] for i in range(2, 20, 2)]
+                    """
+                    #print(lst)
+                    self.waypoints = [item for sublist in lst for item in sublist]
+                    #self.waypoints = lst
+                    self.action_Q_ind += 1
+                    if self.action_Q_ind >= len(self.action_Q):
+                        self.action_Q_ind = 0
+                    self.action = self.action_Q[self.action_Q_ind]
         
     def act(self, data, plant):
         if self.action == TRACTOR_ACTIONS.types['IDLE']:
@@ -97,7 +114,7 @@ class Tractor:
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['SOW']:
             data = self.sow(data, plant)
-            print(self.waypoints)
+            #print(self.waypoints)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['WATER']:
             data = self.water(data)
@@ -108,57 +125,139 @@ class Tractor:
             data = self.fertilize_K(data)
             self.move()
         elif self.action == TRACTOR_ACTIONS.types['HARVEST']:
-            data = self.harvest(data)
+            data = self.harvest(data, plant)
             self.move()
         
-        return data, self.img_key, self.rect             
+        #print("tractor rect: ", self.rect)
+        
+        return data#, self.img_key, self.rect             
 
-    def render_soil(self, w, h, _r, _g, _b, data, target, isSowing=None):
+    #is_planted, is a numpy array (:,:,3)
+    def render_soil(self, w, h, _r, _g, _b, data, target, plant_face=None, isCultivating=None, is_planted=None, plant=None, isSowing=None, isHarvesting=None):
         #because tractor x,y is different from zone x,y
         # - 15 => road width
         # if tractor starts at (15,15) => top left corner of field
         x_off = self.rect.x #- 15 
         y_off = self.rect.y #- 15
-        
-        print((x_off, w), (y_off, h))
-        if w - x_off < self.width:
-            x_low = w - self.width
-        else:
-            x_low = x_off
-            
-        x_high = x_off + self.width
-        if x_high > w:
-            x_high = w
-            
-        if h - y_off < self.width:
-            y_low = h - self.width
-        else:
-            y_low = y_off
-            
-        y_high = y_off + self.width
-        if y_high > h:
-            y_high = h
-        #print((x_low, x_high), '-', (y_low, y_high))
+        is_out_of_field_bounds = False
 
+        #Calculate how many of the field's pixels
+        #the tractor will actually change
+        x_low = x_off
+        if (x_low - self.width) < 0:
+            is_out_of_field_bounds = True
+            
+        x_high = x_low + self.width
+        if x_high > (w + self.width):
+            x_high = w + self.width
+        
+        if x_low == x_high:
+            is_out_of_field_bounds = True
+        
+        y_low = y_off
+        if (y_low - self.width) < 0:
+            is_out_of_field_bounds = True
+            
+        y_high = y_low + self.width
+        if y_high > (h + self.width):
+            y_high = h + self.width
+            
+        if y_low == y_high:
+            is_out_of_field_bounds = True
+
+        #print((x_low, x_high), '-', (y_low, y_high))
+        
         # pick random <ground> color
         r = [[random.randint(_r[0], _r[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
         g = [[random.randint(_g[0], _g[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
         b = [[random.randint(_b[0], _b[1]) for i in range(y_low, y_high)] for j in range(x_low, x_high)]
-        
-        #update crop state
-        target[x_low:(x_high), y_low:y_high, 0] = r
-        target[x_low:(x_high), y_low:y_high, 1] = g
-        target[x_low:(x_high), y_low:y_high, 2] = b
 
-        if data is not None:
-            #update displayed field state
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
-            data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+
+        if is_out_of_field_bounds == False:
             
-        if isSowing == True:
-            self.zone.field.is_planted[x_low:(x_high), y_low:y_high] = 1
+            if isHarvesting == True:
+                red = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] 
+                green = target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1]
+                #print(green > 180)
+                #t = any(green > 180) & any(red > 180)
+                t = sum(sum(green + red)) #/ (15 * 15 * 100)
+                #print(t)
+                if t > (15 * 15 * 100):
+                    harvested_amount = sum(sum(green+red)) / 2000
+                    self.trailer = self.trailer + harvested_amount
+                    
+                    #remove the <is_planted> status
+                    is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+                    
+                    #remove the <plant_face> status
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                    plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+                    
+                    self.zone.field.N[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    self.zone.field.P[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    self.zone.field.K[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0 
+                    
+                    #print("is_planted removed")
+                    #if the trailer has reached its' capacity
+                    #put the harvested amount to the city's silo
+                    #print(self.trailer >= self.trailer_capacity)
+                    if self.trailer >= self.trailer_capacity:
+                        
+                        #TODO: go to the city's silo
+                        
+                        #find the appropriate container
+                        ind = None
+                        for key, val in GOODS.types.items():
+                            #print(key, plant.type)
+                            if key == plant.type:
+                                #found the indice
+                                ind = val
+                                #print(self.city.goods_amounts[ind])
+                                
+                                #unload the harvested amount into the city silo
+                                self.city.goods_amounts[ind] += self.trailer
+                                print("New city ", self.city.id ," silo amount for ", key, " ", self.city.goods_amounts[ind])
+                                #empty the trailer
+                                self.trailer = 0
+                                print("Emptied trailer into city silo.", flush=True)
             
+            if isCultivating == True:
+                #remove the <is_planted> status
+                is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, :] = 0
+                
+                #remove the <plant_face> status
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+                plant_face[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = 0
+
+                        
+            #update crop state
+            #target[x_low:(x_high), y_low:y_high, 0] = r
+            #target[x_low:(x_high), y_low:y_high, 1] = g
+            #target[x_low:(x_high), y_low:y_high, 2] = b
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = r
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = g
+            target[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 2] = b
+    
+            if data is not None:
+                #update displayed field state
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+                
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 0] = r
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 1] = g
+                #data[self.rect.x:self.rect.x+self.width, self.rect.y:self.rect.y+self.width, 2] = b
+                
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 0] = target[:, :, 0]
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 1] = target[:, :, 1]
+                data[self.zone.rect.x:w+DISPLAY.ROAD_WIDTH, self.zone.rect.y:h+DISPLAY.ROAD_WIDTH, 2] = target[:, :, 2]
+                
+            if isSowing == True:
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 0] = 1
+                self.zone.field.is_planted[self.rect.x-self.width:self.rect.x, self.rect.y-self.width:self.rect.y, 1] = 1
+                
         return data
 
     def fertilize_N(self, data):
@@ -203,7 +302,7 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, isCultivating=True)
 
     def sow(self, data, plant):
         
@@ -211,11 +310,16 @@ class Tractor:
         w = len(self.zone.field.crop_growth[0])
         h = len(self.zone.field.crop_growth[1])
         
+        #"""
         r = (0, plant.c[0])
         g = (0, plant.c[1])
         b = (0, plant.c[2])
-        
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, True)  
+        """
+        r = (0, 0)
+        g = (0, 255)
+        b = (0, 0)
+        """
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.plant_face, isSowing=True)  
     
     #data is unused here
     def water(self, data):
@@ -229,7 +333,7 @@ class Tractor:
         
         return self.render_soil(w, h, r, g, b, None, self.zone.field.hum) 
     
-    def harvest(self, data):
+    def harvest(self, data, _plant):
        
         #reset <ground> color to <soil> color
         w = len(self.zone.field.crop_growth[0])
@@ -239,13 +343,35 @@ class Tractor:
         g = (45, 50)
         b = (0, 0)
         
-        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth)
+        return self.render_soil(w, h, r, g, b, data, self.zone.field.crop_growth, plant_face=self.zone.field.plant_face, is_planted=self.zone.field.is_planted, plant=_plant, isHarvesting=True)
 
     def Define_Policies(self):
         #TODO prompt users to decide which actions the tractors will perform,
         #and in what order
-        Set_Globals()
-        Set_Tractor_Actions(TRACTOR_ACTIONS.types)
+        #Set_Globals()
+        #Set_Tractor_Actions(TRACTOR_ACTIONS.types)
+        self.action_Q = list([TRACTOR_ACTIONS.types['CULTIVATE'], TRACTOR_ACTIONS.types['SOW'],
+                   TRACTOR_ACTIONS.types['FERTILIZE'], TRACTOR_ACTIONS.types['WATER'],
+                   TRACTOR_ACTIONS.types['HARVEST']])
+        self.action_Q_ind = 0
+        
+        self.action = self.action_Q[self.action_Q_ind]
+        
+        #lst = [(15, 15), (300, 15), (300, 30), (15, 30), (15, 45), (300, 45), (300, 60), (15, 60),
+        #       (15, 75), (300, 75), (300, 90), (15, 90), (15, 105), (300, 105), (300, 120),
+        #       (15, 120), (15, 135), (300, 135), (300, 150), (15, 150), (15, 165)]
+        #lst = [(15, 15), (300, 15), (300, 30), (15, 30)]
+        #lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+        
+        lst = [[(300, 15 + self.width * i), (15, 15 + self.width * (i+1))] for i in range(0, 20, 2)]
+        self.waypoints = [item for sublist in lst for item in sublist]
+        
+        #self.tractor_Q = [item for sublist in lst for item in sublist]
+        #self.tractor_Q = lst
+        #self.tractor_Q_ind = 0
+        
+        #self.waypoints = self.tractor_Q
+        
 
     def init_Q(self, lst):
         self.tractor_Q = lst

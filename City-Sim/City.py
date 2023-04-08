@@ -6,15 +6,22 @@ Created on Mon Mar 28 11:47:03 2022
 """
 
 from Tractor import Tractor
+from effects.Weather import WeatherEffect
 
-from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION
+from Zone import Zone
+from MyRect import MyRect
+from Const import TIME, DISPLAY, GOODS, CONSUMPTION_POLICY, CONSUMPTION, WEATHER, CONST
 
 import numpy as np
 import random
+import copy
 
 class City:
-    def __init__(self, j, prices, cons_policy, reserve, _coords, _center, _unexplored_zones, _zones, _plant):
-        self.id = j
+    def __init__(self, j=None, prices=None, cons_policy=None, reserve=None, _coords=None, _center=None, _unexplored_zones=None, _zones=None, _plant=None, _has_tractor=None, _has_river=None):
+        if j is not None:
+            self.id = j
+        else:
+            self.id = 10
         
         self.pos = _coords
         self.center = _center
@@ -38,39 +45,65 @@ class City:
         
         # Production
         self.production = [0 for i in GOODS.types.items()]
-        self.production[j] = 51
+        #?
+        #self.production[j%3] = 51
         
         # temporary storage for traded resources
         self._in = [0 for i in GOODS.types.items()]
         self._out = [0 for i in GOODS.types.items()]
         
+        
+        
+        self.zones = None
         #Simulation stuff
-        self.zones = _zones
+        if _zones is None:
+            self.zones = []
+            rect = MyRect(_x=DISPLAY.ROAD_WIDTH, _y=DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))#, _topleft=(DISPLAY.ROAD_WIDTH, DISPLAY.ROAD_WIDTH))
+            self.zones.append(Zone(0, copy.deepcopy(rect), CONST.types['FIELD']))
+            self.zones[0].field.has_init = True
+            rect0 = MyRect(_x=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _y=15, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(1, copy.deepcopy(rect0)))
+            rect1 = MyRect(_x=15, _y=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(2, copy.deepcopy(rect1)))
+            rect2 = MyRect(_x=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _y=330+DISPLAY.RIVER_H+DISPLAY.ROAD_WIDTH, _center=(int(DISPLAY.ZONE_W/2), int(DISPLAY.ZONE_H/2)))
+            self.zones.append(Zone(3, copy.deepcopy(rect2)))
+        else:
+            self.zones = _zones
+            self.zones[0].is_explored = True
         self.unexplored_zones = _unexplored_zones
         self.time_cnt = 0
         self.data = np.zeros( (DISPLAY.X, DISPLAY.Y, 3), dtype=np.uint8 )
+        self.is_active = False
         
             #river stuff
-        r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        g = [[random.randint(0, 50) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
-        
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 0] = r
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 1] = g
-        self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = b
+        if _has_river is not None:
+            
+            r = [[random.randint(0, 25) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            g = [[random.randint(0, 50) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            b = [[random.randint(100, 255) for i in range(DISPLAY.RIVER_H)] for j in range(DISPLAY.RIVER_W)]
+            
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 0] = r
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 1] = g
+            self.data[0:DISPLAY.RIVER_W, (DISPLAY.N+DISPLAY.RIVER_H):(DISPLAY.N+60), 2] = b
         
             #plant stuff
         self.plant = _plant
         
             #tractor stuff
-        self.tractor = Tractor(15, 15, self.zones[0])
-                
+        #print("_has_tractor: ", _has_tractor)
+        self.tractor = None
+        if _has_tractor == True:
+            self.tractor = Tractor(15, 15, self.zones[0], self)
+            #self.tractor = Tractor(0, 0, self.zones[0])
         
+        self.weather_effect = WeatherEffect(WEATHER.types['RAIN'])
+    
+    """DEPRECATED
     def Produce(self):        
         for i in range(0, len(GOODS.types.items())):
             self.goods_amounts[i] = self.goods_amounts[i] + self.production[i] 
             print("City " + str(self.id) + " produced " + str(self.production[i]))
-        
+    """ 
     def Consume(self):
         # Calculate consumption rate    
         self.consumption = int(self.population / 100)
@@ -147,28 +180,18 @@ class City:
         
         if self.time_cnt > TIME.types['CROP']:
             for z in self.zones:
+                #if z.type == CONST.types['FIELD']:
                 if z.field is not None:
                     if z.field.has_init == True:
-                        """
                         #crops grow - if <pixel> is planted
-                        #growth_denominator = np.ones((z.rect.width, z.rect.height))
-                        #t = np.where(np.logical_and(z.field.PH>=110, z.field.PH<=140))
-                        #print(t[0])
-                        #growth_denominator = z.field.PH[t]
-                        #print(growth_denominator)
+                        #TODO: handle dividing by zero (z.field.PH)
                         new_growth = (z.field.N * 0.3 + z.field.P * 0.3 + z.field.K * 0.4) / z.field.PH
-                        z.field.crop_growth[z.field.is_planted > 0] += new_growth.astype(int)#(5, 0, 0)
-                        #print(z.field.crop_growth[:, :, 1] > z.field.crop_growth[:, :, 0])
-                        #print(z.field.crop_growth[:, :, 0])
-                        z.field.crop_growth[(z.field.is_planted[:, :] == 1) & (z.field.crop_growth[:, :, 1] < z.field.crop_growth[:, :, 0])] -= (10, 0, 0)
-                        z.field.crop_growth[z.field.crop_growth < 0] = 0
-                        """
-                        #data[z.rect.topleft[0]:z.rect.topright[0], z.rect.topright[1]:z.rect.bottomright[1], :] = z.field.crop_growth
+                        t = z.field.is_planted * new_growth
+                        #print(t)
+                        #print(len(t))
+                        z.field.crop_growth += (z.field.is_planted * new_growth).astype(int)#new_growth.astype(int)#(5, 0, 0)
             self.time_cnt = 0
         
-        #pygame.surfarray.blit_array(display_surface, data)
-        return self.data
-    
     def Move_River(self):
         N = 300
         #circularly shift the river portion of <data>
@@ -182,15 +205,17 @@ class City:
             label_rect = label.get_rect(center=(uz.rect.center))
             display_surface.blit(label, label_rect)
     """
+    
+    #Update the city parameters
     def Draw(self):
-        #self.Crop_Growth()
+        #crops grow
+        self.Crop_Growth()
+        
+        #river flows
         self.Move_River()
         
-        #self.Draw_Unexplored_Zones()
-        
-        d, tractor_img_key, tractor_rect = self.tractor.act(self.data, self.plant)
+        #tractor acts
+        d = self.tractor.act(self.data, self.plant)
         if d is not None:
             self.data = d
             
-        return tractor_img_key, tractor_rect
-        
